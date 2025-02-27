@@ -34,19 +34,22 @@
             width: 100%;
             padding: 10px;
             background: black;
+            flex-wrap: wrap; /* Allow buttons to wrap if screen is too narrow */
         }
         button { 
             padding: 15px 30px; 
             margin: 5px; 
-            font-size: 18px; 
+            font-size: 16px; /* Smaller font for mobile */
             background: #FFD700; 
             border: none; 
             border-radius: 5px; 
             cursor: pointer;
+            flex: 1 1 auto; /* Allow buttons to shrink/grow */
+            min-width: 80px; /* Minimum width for buttons */
         }
         #score { 
             color: white; 
-            font-size: 20px; 
+            font-size: 18px; /* Slightly smaller for mobile */
             margin-top: 10px; 
             text-align: center;
             width: 100%;
