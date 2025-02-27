@@ -89,10 +89,10 @@ function initLevel() {
                 rivets.push({ x: 100 + j * 100, y: platformY[i] - 10, width: 10, height: 10, hit: false, image: null }); // Moved to top (y - 10)
             }
         }
-        // Three separate ladders, moved up slightly to connect to the next platform
-        ladders.push({ x: 506, y: platformY[0] - 35, width: 50, height: 100, image: null }); // Ladder 1: between 1st and 2nd, up to y: 633 (from 628)
-        ladders.push({ x: 94, y: platformY[1] - 35, width: 50, height: 100, image: null }); // Ladder 2: between 2nd and 3rd, up to y: 533 (from 528)
-        ladders.push({ x: 506, y: platformY[2] - 35, width: 50, height: 100, image: null }); // Ladder 3: between 3rd and 4th, up to y: 433 (from 428)
+        // Three separate ladders, moved up to connect properly to the next platform
+        ladders.push({ x: 506, y: platformY[0] - 30, width: 50, height: 100, image: null }); // Ladder 1: between 1st and 2nd, up to y: 638 (from 633)
+        ladders.push({ x: 94, y: platformY[1] - 30, width: 50, height: 100, image: null }); // Ladder 2: between 2nd and 3rd, up to y: 538 (from 533)
+        ladders.push({ x: 506, y: platformY[2] - 30, width: 50, height: 100, image: null }); // Ladder 3: between 3rd and 4th, up to y: 438 (from 433)
 
         mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
         mario.x = 50; // Ensure Mario starts on the left
@@ -221,12 +221,12 @@ function update() {
         if (mario.jumping) {
             mario.y -= 5; // Reduced jump height to just avoid barrels (maintained at 5)
             // Stop jumping just above Mario’s current platform, limited to avoid next platform
-            let stopJumpY = mario.y - 15; // Reduced to ~15 pixels (enough to clear a barrel, 32 height, tighter limit)
+            let stopJumpY = mario.y - 10; // Reduced to ~10 pixels (enough to clear a barrel, 32 height, tighter limit)
             const currentPlatformY = findCurrentPlatformY(mario);
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
-                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > currentPlatformY - mario.height - 15) { // Limit to current platform height + small jump
-                        stopJumpY = platform.y - mario.height - 15; // Stop just above current platform
+                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > currentPlatformY - mario.height - 10) { // Limit to current platform height + small jump
+                        stopJumpY = platform.y - mario.height - 10; // Stop just above current platform
                     }
                 }
             });
@@ -313,14 +313,14 @@ function update() {
                 barrel.y += barrel.dy; // Move very slowly downward targeting Mario
             } else if (barrel.type === 'rolling') {
                 // Rolling barrels on platforms
-                if (barrel.y === canvas.height - 400 && barrel.x <= 506 + 50) { // On top platform, roll left until ladder (x: 506)
+                if (barrel.y === canvas.height - 400 && barrel.x > 506) { // On top platform, roll left until ladder (x: 506)
                     barrel.x += barrel.dx; // Roll left (-0.1)
                     if (barrel.x <= 506) { // Drop at ladder to third platform (y: 468)
                         barrel.y = canvas.height - 300; // Third platform (y: 468)
                         barrel.dx = -0.1; // Continue rolling left on third platform
                         barrel.dy = 0; // No further vertical movement
                     }
-                } else if (barrel.y === canvas.height - 300 && barrel.x >= 94 - 50) { // On third platform, roll left until next ladder (x: 94)
+                } else if (barrel.y === canvas.height - 300 && barrel.x > 94) { // On third platform, roll left until next ladder (x: 94)
                     barrel.x += barrel.dx; // Roll left (-0.1)
                     if (barrel.x <= 94) { // Remove when reaching ladder (no further roll needed)
                         barrels.splice(i, 1);
