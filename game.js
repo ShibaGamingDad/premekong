@@ -74,7 +74,7 @@ function loadImages() {
     }
 }
 
-// Initialize levels with all elements, adjusted for better platform alignment
+// Initialize levels with all elements, adjusted for better platform alignment and ladder/rivet positioning
 function initLevel() {
     console.log('Initializing level with canvas size:', canvas.width, 'x', canvas.height);
     try {
@@ -84,11 +84,16 @@ function initLevel() {
         const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
         for (let i = 0; i < 4; i++) {
             platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null });
-            ladders.push({ x: 300, y: platformY[i] - 50, width: 50, height: 100, image: null });
+            // Position rivets on top of platforms (just below the top edge)
             for (let j = 0; j < 5; j++) {
-                rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 10, height: 10, hit: false, image: null }); // Adjusted rivet size
+                rivets.push({ x: 100 + j * 100, y: platformY[i] - 10, width: 10, height: 10, hit: false, image: null }); // Moved to top (y - 10)
             }
         }
+        // Three separate ladders as requested
+        ladders.push({ x: 506, y: platformY[0] - 50, width: 50, height: 100, image: null }); // Ladder 1: between 1st and 2nd (50% farther right, x: 506)
+        ladders.push({ x: 94, y: platformY[1] - 50, width: 50, height: 100, image: null }); // Ladder 2: between 2nd and 3rd (opposite, x: 94)
+        ladders.push({ x: 506, y: platformY[2] - 50, width: 50, height: 100, image: null }); // Ladder 3: between 3rd and 4th (similar to first, x: 506)
+
         mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
         mario.x = 50; // Ensure Mario starts on the left
         premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
@@ -204,7 +209,7 @@ function draw() {
     }
 }
 
-// Update game logic with improved platform collision, limited jump, ladder exit, targeted barrel direction, and turn end on barrel hit
+// Update game logic with improved platform collision, limited jump, ladder exit, slower barrel direction, probability-based frequency, and turn end on barrel hit
 function update() {
     if (!gameActive || gameOver) return; // Stop updating if game is over
     console.log('Updating frame, gameActive:', gameActive, 'gameOver:', gameOver);
@@ -257,33 +262,34 @@ function update() {
             }
         }
         
-        // Preme Kong static on top platform, barrel throwing (downward targeting Mario with reduced frequency and speed)
+        // Preme Kong static on top platform, barrel throwing (downward targeting Mario with probability-based frequency and much slower speed)
         if (premekong.dropping) {
             premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
-            if (Math.random() < 0.025) { // Maintain reduced frequency
+            if (Math.random() < 0.025) { // Maintain probability-based frequency
                 const startY = canvas.height - 400 - 32; // Start from top platform (above Preme Kong)
                 const targetY = mario.y + 16; // Target Mario’s middle (32 height / 2 + offset for barrel height)
                 const distanceY = targetY - startY; // Vertical distance to Mario
                 const distanceX = canvas.width - premekong.x; // Horizontal distance to right edge
-                const dx = Math.random() * 0.5 + 0.25; // Slower horizontal speed (0.25–0.75)
-                const dy = (distanceY / distanceX) * dx; // Calculate dy to target Mario’s y, ensuring downward motion (positive dy)
-                if (dy < 0) dy = Math.abs(dy); // Ensure downward motion (positive)
+                
+                // Much slower speeds for barrels
+                const dx = Math.random() * 0.1; // Very slow horizontal speed (0–0.1) to significantly slow down movement
+                const dy = Math.random() * 0.2 + 0.1; // Very slow downward speed (0.1–0.3) for significant slowdown
                 barrels.push({ 
                     x: premekong.x, 
                     y: startY, 
-                    dx: dx, // Randomized slow horizontal speed
-                    dy: Math.min(dy, 0.75), // Limit downward speed to max 0.75 for control
+                    dx: dx, // Randomized very slow horizontal speed
+                    dy: dy, // Randomized very slow downward speed
                     image: new Image() 
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', dx, 'dy:', barrels[barrels.length - 1].dy, 'targeting Mario at y:', targetY);
+                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', dx, 'dy:', dy, 'targeting Mario at y:', targetY);
             }
         }
         
-        // Barrels movement and collision (targeted downward paths with turn end on hit)
+        // Barrels movement and collision (very slow targeted downward paths with turn end on hit)
         barrels.forEach((barrel, i) => {
             barrel.x += barrel.dx;
-            barrel.y += barrel.dy; // Move downward targeting Mario
+            barrel.y += barrel.dy; // Move very slowly downward targeting Mario
             console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
             if (barrel.x > canvas.width + 32 || barrel.y > canvas.height + 32) barrels.splice(i, 1); // Remove when off right edge or below canvas
             if (checkCollision(mario, barrel)) {
