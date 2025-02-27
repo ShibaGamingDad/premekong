@@ -15,8 +15,8 @@ if (!canvas) {
 }
 
 let mario = { x: 50, y: canvas.height - 100 - 32, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
-let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: false }; // Keep Preme Kong static on top left platform
-let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Move Pauline slightly to the right (x: 150)
+let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true }; // Enable dropping to throw barrels
+let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Pauline stays on top platform, slightly right
 let barrels = [];
 let score = 0;
 let level = 1;
@@ -93,7 +93,7 @@ function initLevel() {
         premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
         premekong.x = 50; // Keep Preme Kong on left side
         pauline.y = canvas.height - 400 - pauline.height; // Keep Pauline on top platform
-        pauline.x = 150; // Move Pauline slightly to the right (x: 150)
+        pauline.x = 150; // Pauline stays slightly to the right
         console.log('Preme Kong position before draw:', premekong.x, premekong.y);
         console.log('Pauline position before draw:', pauline.x, pauline.y);
         barrels = [];
@@ -211,9 +211,9 @@ function update() {
         if (mario.dx) mario.x += mario.dx * 5;
         if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
         if (mario.jumping) {
-            mario.y -= 15; // Reduced jump height to prevent going off-screen (from 20 to 15)
+            mario.y -= 15; // Maintain jump height but ensure it doesn’t go off-screen
             // Stop jumping when reaching the nearest platform above or canvas top
-            let stopJumpY = Math.max(0, mario.y - 200); // Limit jump height to stay within canvas
+            let stopJumpY = Math.max(0, mario.y - 150); // Reduced max jump height to stay within canvas
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
                     if (platform.y - mario.height < stopJumpY) {
@@ -222,6 +222,7 @@ function update() {
                 }
             });
             if (mario.y <= stopJumpY || mario.y <= 0) mario.jumping = false; // Stop at platform or top of canvas
+            console.log('Mario jumping, current y:', mario.y, 'stopJumpY:', stopJumpY);
         }
         
         // Keep Mario in bounds and apply gravity
@@ -256,7 +257,7 @@ function update() {
         if (premekong.dropping) {
             // Keep Preme Kong static on top platform
             premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
-            if (Math.random() < 0.01) {
+            if (Math.random() < 0.05) { // Increased probability to throw barrels more frequently
                 barrels.push({ x: premekong.x, y: premekong.y, dx: 2, dy: 0, image: new Image() }); // Move left to right
                 barrels[barrels.length - 1].image.src = 'barrel.png';
                 console.log('New barrel created at:', premekong.x, premekong.y, 'with dx:', 2, 'dy:', 0);
