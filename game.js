@@ -6,7 +6,7 @@ canvas.width = 672; // Match your HTML's width
 canvas.height = 768; // Match your HTML's height
 
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
-let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true };
+let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true }; // Ensure Preme Kong is on the right
 let barrels = [];
 let score = 0;
 let level = 1;
@@ -117,7 +117,7 @@ function draw() {
     updateScore();
 }
 
-// Update game logic with improved platform collision
+// Update game logic with improved platform collision and barrel direction
 function update() {
     if (!gameActive) return;
     
@@ -146,19 +146,20 @@ function update() {
         }
     }
     
-    // Preme Kong dropping and barrel throwing
+    // Preme Kong dropping and barrel throwing (leftward movement)
     if (premekong.dropping) {
         premekong.y += 2;
         if (premekong.y > canvas.height - 100) premekong.y = 50; // Reset to top
         if (Math.random() < 0.01) {
-            barrels.push({ x: premekong.x, y: premekong.y, dx: -2, image: new Image() });
+            barrels.push({ x: premekong.x, y: premekong.y, dx: -2, dy: 0, image: new Image() }); // Horizontal movement only
             barrels[barrels.length - 1].image.src = 'barrel.png';
         }
     }
     
-    // Barrels movement and collision
+    // Barrels movement and collision (horizontal only)
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
+        barrel.y += barrel.dy; // Keep vertical position stable
         if (barrel.x < -32) barrels.splice(i, 1);
         if (checkCollision(mario, barrel)) {
             score -= 10;
