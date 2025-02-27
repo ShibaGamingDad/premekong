@@ -11,7 +11,7 @@ if (!canvas) {
 }
 
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
-let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true };
+let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true }; // Ensure Preme Kong is on the right
 let barrels = [];
 let score = 0;
 let level = 1;
