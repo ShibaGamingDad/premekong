@@ -24,6 +24,7 @@ let rivets = [];
 let ladders = [];
 let platforms = [];
 let gameActive = true;
+let gameOver = false; // New state for ending turns
 
 // Load images with fallbacks and debug
 function loadImages() {
@@ -98,6 +99,7 @@ function initLevel() {
         console.log('Pauline position before draw:', pauline.x, pauline.y);
         barrels = [];
         score = 0;
+        gameOver = false; // Reset game state
         updateScore();
     } catch (error) {
         console.error('Error in initLevel:', error);
@@ -106,7 +108,7 @@ function initLevel() {
 
 // Draw game elements with debug, including Pauline, wrapped in try/catch
 function draw() {
-    if (!gameActive) return;
+    if (!gameActive || gameOver) return; // Stop drawing if game is over
     console.log('Drawing frame, Mario at:', mario.x, mario.y, 'Preme Kong at:', premekong.x, premekong.y, 'Pauline at:', pauline.x, pauline.y);
     try {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -202,9 +204,10 @@ function draw() {
     }
 }
 
-// Update game logic with improved platform collision, limited jump, ladder exit, randomized barrel direction, and reset on barrel hit
+// Update game logic with improved platform collision, limited jump, ladder exit, targeted barrel direction, and turn end on barrel hit
 function update() {
-    if (!gameActive) return;
+    if (!gameActive || gameOver) return; // Stop updating if game is over
+    console.log('Updating frame, gameActive:', gameActive, 'gameOver:', gameOver);
     
     try {
         // Mario movement
@@ -213,17 +216,17 @@ function update() {
         if (mario.jumping) {
             mario.y -= 5; // Reduced jump height to just avoid barrels (maintained at 5)
             // Stop jumping just above Mario’s current platform, limited to avoid next platform
-            let stopJumpY = mario.y - 30; // Limit jump to ~30 pixels (enough to clear a barrel, 32 height)
-            const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400]; // Platform levels
+            let stopJumpY = mario.y - 20; // Limit jump to ~20 pixels (enough to clear a barrel, 32 height)
+            const currentPlatformY = findCurrentPlatformY(mario);
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
-                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > mario.y - mario.height - 30) { // Limit to current platform height + small jump
-                        stopJumpY = platform.y - mario.height - 30; // Stop just above current platform
+                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > currentPlatformY - mario.height - 20) { // Limit to current platform height + small jump
+                        stopJumpY = platform.y - mario.height - 20; // Stop just above current platform
                     }
                 }
             });
             if (mario.y <= stopJumpY || mario.y <= 0) mario.jumping = false; // Stop at limited height or top of canvas
-            console.log('Mario jumping, current y:', mario.y, 'stopJumpY:', stopJumpY, 'current platform y:', findCurrentPlatformY(mario));
+            console.log('Mario jumping, current y:', mario.y, 'stopJumpY:', stopJumpY, 'current platform y:', currentPlatformY);
         }
         
         // Keep Mario in bounds and apply gravity
@@ -254,43 +257,47 @@ function update() {
             }
         }
         
-        // Preme Kong static on top platform, barrel throwing (downward with randomized paths)
+        // Preme Kong static on top platform, barrel throwing (downward targeting Mario with reduced frequency and speed)
         if (premekong.dropping) {
             premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
-            if (Math.random() < 0.0375) { // Maintain reduced frequency
+            if (Math.random() < 0.025) { // Maintain reduced frequency
                 const startY = canvas.height - 400 - 32; // Start from top platform (above Preme Kong)
-                const targetY = findCurrentPlatformY(mario) + 16; // Target Mario’s middle on his current platform
-                const dx = Math.random() * 1.5 + 0.5; // Random horizontal speed (0.5 to 2)
-                const dy = Math.random() * 1 + 0.5; // Random downward speed (0.5 to 1.5)
+                const targetY = mario.y + 16; // Target Mario’s middle (32 height / 2 + offset for barrel height)
+                const distanceY = targetY - startY; // Vertical distance to Mario
+                const distanceX = canvas.width - premekong.x; // Horizontal distance to right edge
+                const dx = Math.random() * 0.5 + 0.25; // Slower horizontal speed (0.25–0.75)
+                const dy = (distanceY / distanceX) * dx; // Calculate dy to target Mario’s y, ensuring downward motion (positive dy)
+                if (dy < 0) dy = Math.abs(dy); // Ensure downward motion (positive)
                 barrels.push({ 
                     x: premekong.x, 
                     y: startY, 
-                    dx: dx, // Randomized horizontal speed
-                    dy: dy, // Randomized downward speed
+                    dx: dx, // Randomized slow horizontal speed
+                    dy: Math.min(dy, 0.75), // Limit downward speed to max 0.75 for control
                     image: new Image() 
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', dx, 'dy:', dy, 'targeting Mario at y:', targetY);
+                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', dx, 'dy:', barrels[barrels.length - 1].dy, 'targeting Mario at y:', targetY);
             }
         }
         
-        // Barrels movement and collision (randomized downward paths with reset on hit)
+        // Barrels movement and collision (targeted downward paths with turn end on hit)
         barrels.forEach((barrel, i) => {
             barrel.x += barrel.dx;
-            barrel.y += barrel.dy; // Move with randomized downward path
+            barrel.y += barrel.dy; // Move downward targeting Mario
             console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
             if (barrel.x > canvas.width + 32 || barrel.y > canvas.height + 32) barrels.splice(i, 1); // Remove when off right edge or below canvas
             if (checkCollision(mario, barrel)) {
                 console.log('Mario hit by barrel at:', barrel.x, barrel.y);
-                // Reset Mario to starting position and score to 0
+                // End turn: reset Mario, score, and set gameOver
                 mario.x = 50;
                 mario.y = canvas.height - 100 - mario.height;
                 mario.jumping = false;
                 mario.onLadder = false;
                 score = 0;
+                gameOver = true; // Set game over state
                 barrels.splice(i, 1); // Remove the barrel
                 updateScore();
-                console.log('Mario reset to start, score reset to:', score);
+                console.log('Turn ended, Mario reset to start, score reset to:', score, 'gameOver:', gameOver);
             }
         });
         
@@ -354,11 +361,11 @@ function setupTouchControls() {
         down: document.querySelector('#down')
     };
 
-    buttons.left.addEventListener('touchstart', () => mario.dx = -1);
-    buttons.right.addEventListener('touchstart', () => mario.dx = 1);
-    buttons.jump.addEventListener('touchstart', () => { if (!mario.jumping && !mario.onLadder) mario.jumping = true; }); // Ensure jump works
-    buttons.up.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = -1; });
-    buttons.down.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = 1; });
+    buttons.left.addEventListener('touchstart', () => { if (!gameOver) mario.dx = -1; });
+    buttons.right.addEventListener('touchstart', () => { if (!gameOver) mario.dx = 1; });
+    buttons.jump.addEventListener('touchstart', () => { if (!gameOver && !mario.jumping && !mario.onLadder) mario.jumping = true; });
+    buttons.up.addEventListener('touchstart', () => { if (!gameOver && mario.onLadder) mario.dy = -1; });
+    buttons.down.addEventListener('touchstart', () => { if (!gameOver && mario.onLadder) mario.dy = 1; });
 
     buttons.left.addEventListener('touchend', () => mario.dx = 0);
     buttons.right.addEventListener('touchend', () => mario.dx = 0);
@@ -366,7 +373,15 @@ function setupTouchControls() {
     buttons.down.addEventListener('touchend', () => mario.dy = 0);
 }
 
-// Handle Telegram WebApp data (for bot integration)
+// Function to restart the game (call this when you want to resume after gameOver)
+function restartGame() {
+    console.log('Restarting game...');
+    gameOver = false;
+    initLevel(); // Reset all game state
+    gameLoop(); // Resume game loop
+}
+
+// Handle Telegram WebApp data (for bot integration and potential restart)
 function handleTelegramData() {
     const Telegram = window.Telegram;
     if (Telegram && Telegram.WebApp) {
@@ -378,10 +393,14 @@ function handleTelegramData() {
             if (data.data) {
                 try {
                     const gameData = JSON.parse(data.data);
-                    score = gameData.score || score;
-                    updateScore();
-                    Telegram.WebApp.sendData(JSON.stringify({ score, perfectRun: score >= 400 }));
-                    console.log('Sent Telegram data:', { score, perfectRun: score >= 400 });
+                    if (gameData.restart) {
+                        restartGame(); // Restart game if bot sends restart signal
+                    } else {
+                        score = gameData.score || score;
+                        updateScore();
+                        Telegram.WebApp.sendData(JSON.stringify({ score, perfectRun: score >= 400, gameOver }));
+                        console.log('Sent Telegram data:', { score, perfectRun: score >= 400, gameOver });
+                    }
                 } catch (error) {
                     console.error('Error parsing Telegram data:', error);
                 }
@@ -392,7 +411,7 @@ function handleTelegramData() {
 
 // Game loop
 function gameLoop() {
-    if (!gameActive) return;
+    if (!gameActive || gameOver) return;
     update();
     draw();
     requestAnimationFrame(gameLoop);
