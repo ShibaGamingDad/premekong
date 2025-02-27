@@ -15,8 +15,8 @@ if (!canvas) {
 }
 
 let mario = { x: 50, y: canvas.height - 100 - 32, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
-let premekong = { x: 50, y: 50, width: 64, height: 64, dropping: true }; // Move Preme Kong to left side
-let pauline = { x: 50, y: 50, width: 32, height: 32, image: null }; // Placeholder for Pauline on left
+let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: false }; // Keep Preme Kong on top platform (y = top platform - height)
+let pauline = { x: 100, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Move Pauline to top platform (y = top platform - height)
 let barrels = [];
 let score = 0;
 let level = 1;
@@ -85,10 +85,10 @@ function initLevel() {
     }
     mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
     mario.x = 50; // Ensure Mario starts on the left
-    premekong.y = platformY[0] - premekong.height; // Place Preme Kong on top platform (y = platform top - height)
-    premekong.x = 50; // Move Preme Kong to left side with Pauline
-    pauline.y = platformY[0] - pauline.height; // Place Pauline on top platform
-    pauline.x = 100; // Position Pauline slightly right of Preme Kong
+    premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong on top platform (y = top platform - height)
+    premekong.x = 50; // Keep Preme Kong on left side
+    pauline.y = canvas.height - 400 - pauline.height; // Move Pauline to top platform (y = top platform - height)
+    pauline.x = 100; // Keep Pauline slightly right of Preme Kong
     console.log('Preme Kong position before draw:', premekong.x, premekong.y);
     console.log('Pauline position before draw:', pauline.x, pauline.y);
     barrels = [];
@@ -190,7 +190,7 @@ function draw() {
     updateScore();
 }
 
-// Update game logic with improved platform collision, jump, ladder exit, and barrel direction
+// Update game logic with improved platform collision, jump on all platforms, ladder exit, and barrel direction
 function update() {
     if (!gameActive) return;
     
@@ -198,8 +198,17 @@ function update() {
     if (mario.dx) mario.x += mario.dx * 5;
     if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
     if (mario.jumping) {
-        mario.y -= 20; // High jump to reach platforms
-        if (mario.y <= canvas.height - 200) mario.jumping = false; // Stop jumping at a higher platform
+        mario.y -= 20; // High jump to reach all platforms
+        // Stop jumping when reaching the nearest platform above or a reasonable height
+        let stopJumpY = canvas.height - 200; // Default stop for bottom platform
+        platforms.forEach(platform => {
+            if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
+                if (platform.y - mario.height < stopJumpY) {
+                    stopJumpY = platform.y - mario.height;
+                }
+            }
+        });
+        if (mario.y <= stopJumpY) mario.jumping = false; // Stop jumping at the nearest platform above
     }
     
     // Keep Mario in bounds and apply gravity
@@ -230,123 +239,15 @@ function update() {
         }
     }
     
-    // Preme Kong dropping and barrel throwing (drop to top platform, then leftward)
+    // Preme Kong static on top platform, barrel throwing (left to right)
     if (premekong.dropping) {
-        premekong.y += 2;
-        if (premekong.y > canvas.height - 100) premekong.y = 50; // Reset to top platform (y = 668, top of first platform)
+        // Keep Preme Kong static on top platform
+        premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
         if (Math.random() < 0.01) {
-            barrels.push({ x: premekong.x, y: premekong.y, dx: -2, dy: 0, image: new Image() }); // Start moving leftward
+            barrels.push({ x: premekong.x, y: premekong.y, dx: 2, dy: 0, image: new Image() }); // Move left to right (positive dx)
             barrels[barrels.length - 1].image.src = 'barrel.png';
-            console.log('New barrel created at:', premekong.x, premekong.y, 'with dx:', -2, 'dy:', 0);
+            console.log('New barrel created at:', premekong.x, premekong.y, 'with dx:', 2, 'dy:', 0);
         }
     }
     
-    // Barrels movement and collision (horizontal only after dropping)
-    barrels.forEach((barrel, i) => {
-        barrel.x += barrel.dx;
-        barrel.y += barrel.dy; // Keep vertical position stable after drop
-        console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
-        if (barrel.x < -32) barrels.splice(i, 1);
-        if (checkCollision(mario, barrel)) {
-            score -= 10;
-            barrels.splice(i, 1);
-            if (score < 0) score = 0;
-        }
-    });
-    
-    // Ladder and rivet interaction
-    mario.onLadder = ladders.some(ladder => mario.x < ladder.x + ladder.width && mario.x + mario.width > ladder.x && mario.y < ladder.y + ladder.height && mario.y + mario.height > ladder.y);
-    rivets.forEach(rivet => {
-        if (!rivet.hit && checkCollision(mario, rivet)) {
-            rivet.hit = true;
-            score += 50;
-            if (rivets.every(r => r.hit)) levelUp();
-            console.log('Rivet collected, score now:', score);
-        }
-    });
-}
-
-// Check collision
-function checkCollision(obj1, obj2) {
-    return obj1.x < obj2.x + obj2.width &&
-           obj1.x + obj1.width > obj2.x &&
-           obj1.y < obj2.y + obj2.height &&
-           obj1.y + obj1.height > obj2.y;
-}
-
-// Level up (cycle through 4 levels)
-function levelUp() {
-    level = (level % 4) + 1;
-    initLevel();
-    score += 100;
-    console.log('Level up to:', level, 'Score:', score);
-}
-
-// Update score display
-function updateScore() {
-    const jackpot = 0; // Update via bot later
-    const burn = 0; // Update via bot later
-    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
-    console.log('Score updated:', score);
-}
-
-// Touch controls for mobile, matching your reference (yellow buttons, all controls)
-function setupTouchControls() {
-    const buttons = {
-        left: document.querySelector('#left'),
-        right: document.querySelector('#right'),
-        jump: document.querySelector('#jump'),
-        up: document.querySelector('#up'),
-        down: document.querySelector('#down')
-    };
-
-    buttons.left.addEventListener('touchstart', () => mario.dx = -1);
-    buttons.right.addEventListener('touchstart', () => mario.dx = 1);
-    buttons.jump.addEventListener('touchstart', () => { if (!mario.jumping && !mario.onLadder) mario.jumping = true; }); // Ensure jump works
-    buttons.up.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = -1; });
-    buttons.down.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = 1; });
-
-    buttons.left.addEventListener('touchend', () => mario.dx = 0);
-    buttons.right.addEventListener('touchend', () => mario.dx = 0);
-    buttons.up.addEventListener('touchend', () => mario.dy = 0);
-    buttons.down.addEventListener('touchend', () => mario.dy = 0);
-}
-
-// Handle Telegram WebApp data (for bot integration)
-function handleTelegramData() {
-    const Telegram = window.Telegram;
-    if (Telegram && Telegram.WebApp) {
-        console.log('Telegram WebApp initialized');
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.onEvent('web_app_data', (data) => {
-            console.log('Received web app data:', data);
-            if (data.data) {
-                try {
-                    const gameData = JSON.parse(data.data);
-                    score = gameData.score || score;
-                    updateScore();
-                    Telegram.WebApp.sendData(JSON.stringify({ score, perfectRun: score >= 400 }));
-                    console.log('Sent Telegram data:', { score, perfectRun: score >= 400 });
-                } catch (error) {
-                    console.error('Error parsing Telegram data:', error);
-                }
-            }
-        });
-    }
-}
-
-// Game loop
-function gameLoop() {
-    if (!gameActive) return;
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-// Initialize and start game
-loadImages();
-initLevel();
-setupTouchControls();
-handleTelegramData();
-gameLoop();
+    // Barrels movement and collision (horizontal left to
