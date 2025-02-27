@@ -9,6 +9,9 @@ if (!canvas) {
     canvas.width = 672; // Match your HTML's width
     canvas.height = 768; // Match your HTML's height
     console.log('Actual canvas size after setting:', canvas.width, 'x', canvas.height);
+    if (canvas.width !== 672 || canvas.height !== 768) {
+        console.warn('Canvas size mismatch! Expected 672x768, got', canvas.width, 'x', canvas.height);
+    }
 }
 
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
