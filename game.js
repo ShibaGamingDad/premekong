@@ -1,5 +1,10 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
+// Set canvas to fit mobile screen dynamically
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight - 200; // Leave room for controls and score
+
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
 let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true };
 let barrels = [];
@@ -9,13 +14,6 @@ let rivets = [];
 let ladders = [];
 let platforms = [];
 let gameActive = true;
-
-const Telegram = window.Telegram;
-if (Telegram && Telegram.WebApp) {
-    console.log('Telegram WebApp initialized');
-    Telegram.WebApp.ready();
-    Telegram.WebApp.expand();
-}
 
 // Load images with fallbacks
 function loadImages() {
@@ -30,30 +28,23 @@ function loadImages() {
     const barrelImg = new Image();
     barrelImg.src = 'barrel.png';
     barrelImg.onerror = () => console.error('Barrel image failed');
-    barrels.forEach(barrel => barrel.image = barrelImg || null);
 
     const ladderImg = new Image();
     ladderImg.src = 'ladder.png';
     ladderImg.onerror = () => console.error('Ladder image failed');
-    ladders.forEach(ladder => ladder.image = ladderImg || null);
 
     const platformImg = new Image();
     platformImg.src = 'platform.png';
     platformImg.onerror = () => console.error('Platform image failed');
-    platforms.forEach(platform => platform.image = platformImg || null);
 
     const rivetImg = new Image();
     rivetImg.src = 'rivet.png';
     rivetImg.onerror = () => console.error('Rivet image failed');
+
+    platforms.forEach(platform => platform.image = platformImg || null);
+    ladders.forEach(ladder => ladder.image = ladderImg || null);
     rivets.forEach(rivet => rivet.image = rivetImg || null);
-
-    const hammerImg = new Image();
-    hammerImg.src = 'hammer.png';
-    hammerImg.onerror = () => console.error('Hammer image failed');
-
-    const paulineImg = new Image();
-    paulineImg.src = 'pauline.png';
-    paulineImg.onerror = () => console.error('Pauline image failed');
+    barrels.forEach(barrel => barrel.image = barrelImg || null);
 }
 
 // Initialize levels with all elements
@@ -74,7 +65,6 @@ function initLevel() {
     barrels = [];
     score = 0;
     updateScore();
-    console.log('Level initialized with all elements');
 }
 
 // Draw game elements
@@ -108,7 +98,6 @@ function draw() {
     else {
         ctx.fillStyle = 'white';
         ctx.fillRect(mario.x, mario.y, mario.width, mario.height); // Fallback
-        console.log('Using fallback for Mario');
     }
     
     // Draw Preme Kong
@@ -116,7 +105,6 @@ function draw() {
     else {
         ctx.fillStyle = 'blue';
         ctx.fillRect(premekong.x, premekong.y, premekong.width, premekong.height); // Fallback
-        console.log('Using fallback for Preme Kong');
     }
     
     // Draw barrels
@@ -124,14 +112,12 @@ function draw() {
     barrels.forEach(barrel => {
         if (barrel.image && barrel.image.complete) ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
         else ctx.fillRect(barrel.x, barrel.y, 32, 32);
-        console.log('Drawing barrel:', barrel.x, barrel.y);
     });
     
     updateScore();
-    requestAnimationFrame(draw);
 }
 
-// Update game logic
+// Update game logic with platform collision
 function update() {
     if (!gameActive) return;
     
@@ -145,7 +131,16 @@ function update() {
     
     // Keep Mario in bounds and apply gravity
     mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
-    if (!mario.onLadder && mario.y < canvas.height - mario.height) mario.y += 5; // Gravity
+    if (!mario.onLadder && !mario.jumping) {
+        mario.y += 5; // Gravity
+        // Check collision with platforms to stop falling
+        platforms.forEach(platform => {
+            if (checkCollision(mario, platform) && mario.y + mario.height <= platform.y + 5) {
+                mario.y = platform.y - mario.height; // Land on platform
+                mario.jumping = false; // Ensure jumping stops
+            }
+        });
+    }
     
     // Preme Kong dropping and barrel throwing
     if (premekong.dropping) {
@@ -177,8 +172,6 @@ function update() {
             if (rivets.every(r => r.hit)) levelUp();
         }
     });
-    
-    console.log('Game updated, Mario at:', mario.x, mario.y);
 }
 
 // Check collision
@@ -194,7 +187,6 @@ function levelUp() {
     level = (level % 4) + 1;
     initLevel();
     score += 100;
-    console.log('Level up to:', level);
 }
 
 // Update score display
@@ -202,22 +194,37 @@ function updateScore() {
     const jackpot = 0; // Update via bot later
     const burn = 0; // Update via bot later
     document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
-    console.log('Score updated:', score);
 }
 
-// Control functions
-function moveLeft() { if (gameActive) mario.dx = -1; console.log('Moving left'); }
-function moveRight() { if (gameActive) mario.dx = 1; console.log('Moving right'); }
-function jump() { if (gameActive && !mario.jumping && !mario.onLadder) mario.jumping = true; console.log('Jumping'); }
-function climbUp() { if (gameActive && mario.onLadder) mario.dy = -1; console.log('Climbing up'); }
-function climbDown() { if (gameActive && mario.onLadder) mario.dy = 1; console.log('Climbing down'); }
-function stopMove() { mario.dx = 0; console.log('Stopped moving'); }
-function stopClimb() { mario.dy = 0; console.log('Stopped climbing'); }
+// Touch controls for mobile
+function setupTouchControls() {
+    const buttons = {
+        left: document.querySelector('#left'),
+        right: document.querySelector('#right'),
+        jump: document.querySelector('#jump'),
+        up: document.querySelector('#up'),
+        down: document.querySelector('#down')
+    };
 
-// Handle Telegram Web App data (for bot integration)
+    buttons.left.addEventListener('touchstart', () => mario.dx = -1);
+    buttons.right.addEventListener('touchstart', () => mario.dx = 1);
+    buttons.jump.addEventListener('touchstart', () => { if (!mario.jumping && !mario.onLadder) mario.jumping = true; });
+    buttons.up.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = -1; });
+    buttons.down.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = 1; });
+
+    buttons.left.addEventListener('touchend', () => mario.dx = 0);
+    buttons.right.addEventListener('touchend', () => mario.dx = 0);
+    buttons.up.addEventListener('touchend', () => mario.dy = 0);
+    buttons.down.addEventListener('touchend', () => mario.dy = 0);
+}
+
+// Handle Telegram WebApp data (for bot integration)
 function handleTelegramData() {
+    const Telegram = window.Telegram;
     if (Telegram && Telegram.WebApp) {
-        console.log('Handling Telegram WebApp data...');
+        console.log('Telegram WebApp initialized');
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
         Telegram.WebApp.onEvent('web_app_data', (data) => {
             console.log('Received web app data:', data);
             if (data.data) {
@@ -235,10 +242,17 @@ function handleTelegramData() {
     }
 }
 
-// Initialize game
+// Game loop
+function gameLoop() {
+    if (!gameActive) return;
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialize and start game
 loadImages();
 initLevel();
-setInterval(update, 1000/60);
-draw();
+setupTouchControls();
 handleTelegramData();
-console.log('Game initialized');
+gameLoop();
