@@ -25,33 +25,33 @@ function loadImages() {
     console.log('Loading images...');
     mario.image = new Image();
     mario.image.src = 'mario.png';
-    mario.image.onload = () => console.log('Mario image loaded');
-    mario.image.onerror = () => { console.error('Mario image failed'); mario.image = null; };
+    mario.image.onload = () => console.log('Mario image loaded at:', mario.image.src);
+    mario.image.onerror = () => { console.error('Mario image failed to load at:', mario.image.src); mario.image = null; };
 
     premekong.image = new Image();
     premekong.image.src = 'premekong.png';
-    premekong.image.onload = () => console.log('Preme Kong image loaded');
-    premekong.image.onerror = () => { console.error('Preme Kong image failed'); premekong.image = null; };
+    premekong.image.onload = () => console.log('Preme Kong image loaded at:', premekong.image.src);
+    premekong.image.onerror = () => { console.error('Preme Kong image failed to load at:', premekong.image.src); premekong.image = null; };
 
     const barrelImg = new Image();
     barrelImg.src = 'barrel.png';
-    barrelImg.onload = () => console.log('Barrel image loaded');
-    barrelImg.onerror = () => console.error('Barrel image failed');
+    barrelImg.onload = () => console.log('Barrel image loaded at:', barrelImg.src);
+    barrelImg.onerror = () => console.error('Barrel image failed to load at:', barrelImg.src);
 
     const ladderImg = new Image();
     ladderImg.src = 'ladder.png';
-    ladderImg.onload = () => console.log('Ladder image loaded');
-    ladderImg.onerror = () => console.error('Ladder image failed');
+    ladderImg.onload = () => console.log('Ladder image loaded at:', ladderImg.src);
+    ladderImg.onerror = () => console.error('Ladder image failed to load at:', ladderImg.src);
 
     const platformImg = new Image();
     platformImg.src = 'platform.png';
-    platformImg.onload = () => console.log('Platform image loaded');
-    platformImg.onerror = () => console.error('Platform image failed');
+    platformImg.onload = () => console.log('Platform image loaded at:', platformImg.src);
+    platformImg.onerror = () => console.error('Platform image failed to load at:', platformImg.src);
 
     const rivetImg = new Image();
     rivetImg.src = 'rivet.png';
-    rivetImg.onload = () => console.log('Rivet image loaded');
-    rivetImg.onerror = () => console.error('Rivet image failed');
+    rivetImg.onload = () => console.log('Rivet image loaded at:', rivetImg.src);
+    rivetImg.onerror = () => console.error('Rivet image failed to load at:', rivetImg.src);
 
     platforms.forEach(platform => platform.image = platformImg || null);
     ladders.forEach(ladder => ladder.image = ladderImg || null);
@@ -92,38 +92,59 @@ function draw() {
     console.log('Drawing platforms, count:', platforms.length);
     ctx.fillStyle = 'red';
     platforms.forEach(platform => {
-        if (platform.image && platform.image.complete) ctx.drawImage(platform.image, platform.x, platform.y, platform.width, platform.height);
-        else ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        if (platform.image && platform.image.complete) {
+            console.log('Drawing platform image at:', platform.x, platform.y);
+            ctx.drawImage(platform.image, platform.x, platform.y, platform.width, platform.height);
+        } else {
+            console.log('Drawing platform fallback at:', platform.x, platform.y);
+            ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
+        }
     });
     
     // Draw ladders
     console.log('Drawing ladders, count:', ladders.length);
     ctx.fillStyle = 'brown';
     ladders.forEach(ladder => {
-        if (ladder.image && ladder.image.complete) ctx.drawImage(ladder.image, ladder.x, ladder.y, ladder.width, ladder.height);
-        else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
+        if (ladder.image && ladder.image.complete) {
+            console.log('Drawing ladder image at:', ladder.x, ladder.y);
+            ctx.drawImage(ladder.image, ladder.x, ladder.y, ladder.width, ladder.height);
+        } else {
+            console.log('Drawing ladder fallback at:', ladder.x, ladder.y);
+            ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
+        }
     });
     
     // Draw rivets
     console.log('Drawing rivets, count:', rivets.length);
     ctx.fillStyle = 'gray';
     rivets.forEach(rivet => {
-        if (!rivet.hit && rivet.image && rivet.image.complete) ctx.drawImage(rivet.image, rivet.x, rivet.y, rivet.width, rivet.height);
-        else if (!rivet.hit) ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height);
+        if (!rivet.hit && rivet.image && rivet.image.complete) {
+            console.log('Drawing rivet image at:', rivet.x, rivet.y);
+            ctx.drawImage(rivet.image, rivet.x, rivet.y, rivet.width, rivet.height);
+        } else if (!rivet.hit) {
+            console.log('Drawing rivet fallback at:', rivet.x, rivet.y);
+            ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height);
+        }
     });
     
     // Draw Mario
     console.log('Drawing Mario at:', mario.x, mario.y);
-    if (mario.image && mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
-    else {
+    if (mario.image && mario.image.complete) {
+        console.log('Drawing Mario image at:', mario.x, mario.y);
+        ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
+    } else {
+        console.log('Drawing Mario fallback at:', mario.x, mario.y);
         ctx.fillStyle = 'white';
         ctx.fillRect(mario.x, mario.y, mario.width, mario.height); // Fallback
     }
     
     // Draw Preme Kong
     console.log('Drawing Preme Kong at:', premekong.x, premekong.y);
-    if (premekong.image && premekong.image.complete) ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
-    else {
+    if (premekong.image && premekong.image.complete) {
+        console.log('Drawing Preme Kong image at:', premekong.x, premekong.y);
+        ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
+    } else {
+        console.log('Drawing Preme Kong fallback at:', premekong.x, premekong.y);
         ctx.fillStyle = 'blue';
         ctx.fillRect(premekong.x, premekong.y, premekong.width, premekong.height); // Fallback
     }
@@ -132,8 +153,13 @@ function draw() {
     console.log('Drawing barrels, count:', barrels.length);
     ctx.fillStyle = 'brown';
     barrels.forEach(barrel => {
-        if (barrel.image && barrel.image.complete) ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
-        else ctx.fillRect(barrel.x, barrel.y, 32, 32);
+        if (barrel.image && barrel.image.complete) {
+            console.log('Drawing barrel image at:', barrel.x, barrel.y);
+            ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
+        } else {
+            console.log('Drawing barrel fallback at:', barrel.x, barrel.y);
+            ctx.fillRect(barrel.x, barrel.y, 32, 32);
+        }
     });
     
     updateScore();
