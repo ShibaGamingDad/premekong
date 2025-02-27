@@ -14,7 +14,7 @@ if (!canvas) {
     }
 }
 
-let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
+let mario = { x: 50, y: canvas.height - 100 - 32, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false }; // Start on bottom platform
 let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true }; // Ensure Preme Kong is on the right
 let barrels = [];
 let score = 0;
@@ -77,7 +77,8 @@ function initLevel() {
             rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 20, height: 10, hit: false, image: null });
         }
     }
-    mario.y = canvas.height - 50; // Ensure Mario starts on the bottom platform
+    mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform (y = platform top - Mario height)
+    mario.x = 50; // Ensure Mario starts on the left
     premekong.y = 50;
     premekong.x = canvas.width - 100; // Ensure Preme Kong is on the right
     console.log('Preme Kong position before draw:', premekong.x, premekong.y);
@@ -169,7 +170,7 @@ function draw() {
     updateScore();
 }
 
-// Update game logic with improved platform collision, slower gravity, and barrel direction
+// Update game logic with improved platform collision and barrel direction
 function update() {
     if (!gameActive) return;
     
@@ -181,10 +182,10 @@ function update() {
         if (mario.y <= canvas.height - 150) mario.jumping = false; // Stop jumping at platform height
     }
     
-    // Keep Mario in bounds and apply slower gravity
+    // Keep Mario in bounds and apply gravity
     mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
     if (!mario.onLadder && !mario.jumping) {
-        mario.y += 2; // Reduced gravity for slower fall
+        mario.y += 2; // Slow gravity to keep Mario visible longer
         let onPlatform = false;
         platforms.forEach(platform => {
             if (checkCollision(mario, platform) && mario.y + mario.height <= platform.y + 5) {
@@ -195,8 +196,8 @@ function update() {
             }
         });
         if (!onPlatform && mario.y < canvas.height - mario.height) {
-            mario.y = canvas.height - mario.height; // Reset to bottom if no platform
-            console.log('Mario reset to bottom:', mario.y);
+            mario.y = canvas.height - 100 - mario.height; // Reset to bottom platform if no platform (y = platform top - Mario height)
+            console.log('Mario reset to bottom platform:', mario.y);
         }
     }
     
