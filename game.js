@@ -170,7 +170,7 @@ function draw() {
     updateScore();
 }
 
-// Update game logic with improved platform collision and barrel direction
+// Update game logic with improved platform collision, higher jump, ladder exit, and barrel direction
 function update() {
     if (!gameActive) return;
     
@@ -178,8 +178,8 @@ function update() {
     if (mario.dx) mario.x += mario.dx * 5;
     if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
     if (mario.jumping) {
-        mario.y -= 10;
-        if (mario.y <= canvas.height - 150) mario.jumping = false; // Stop jumping at platform height
+        mario.y -= 20; // Increased jump height from 10 to 20 for higher jumps
+        if (mario.y <= canvas.height - 200) mario.jumping = false; // Stop jumping at a higher platform (adjust as needed)
     }
     
     // Keep Mario in bounds and apply gravity
@@ -189,15 +189,24 @@ function update() {
         let onPlatform = false;
         platforms.forEach(platform => {
             if (checkCollision(mario, platform) && mario.y + mario.height <= platform.y + 5) {
-                mario.y = platform.y - mario.height; // Land on platform
+                mario.y = platform.y - mario.height; // Land on current platform
                 mario.jumping = false; // Ensure jumping stops
                 onPlatform = true;
                 console.log('Mario landed on platform at:', platform.y);
             }
         });
-        if (!onPlatform && mario.y < canvas.height - mario.height) {
-            mario.y = canvas.height - 100 - mario.height; // Reset to bottom platform if no platform (y = platform top - Mario height)
-            console.log('Mario reset to bottom platform:', mario.y);
+        if (!onPlatform) {
+            // If not on a platform, find the highest platform Mario can land on
+            let highestPlatformY = canvas.height - mario.height;
+            platforms.forEach(platform => {
+                if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x) {
+                    if (platform.y - mario.height < highestPlatformY && platform.y - mario.height > mario.y) {
+                        highestPlatformY = platform.y - mario.height;
+                    }
+                }
+            });
+            mario.y = highestPlatformY; // Set Mario to the highest valid platform or bottom
+            console.log('Mario reset to highest platform or bottom:', mario.y);
         }
     }
     
