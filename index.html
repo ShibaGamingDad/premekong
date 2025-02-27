@@ -8,11 +8,50 @@
     <meta property="og:url" content="https://shibagamingdad.github.io/premekong/" />
     <meta property="telegram:web-app" content="https://shibagamingdad.github.io/premekong/" />
     <style>
-        body { margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; background: black; }
-        canvas { border: 1px solid white; max-width: 100%; height: auto; }
-        #controls { margin-top: 10px; }
-        button { padding: 15px 30px; margin: 5px; font-size: 18px; background: #FFD700; border: none; border-radius: 5px; }
-        #score { color: white; font-size: 20px; margin-top: 10px; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            background: black; 
+            color: white; 
+            font-family: Arial, sans-serif;
+            height: 100vh; /* Ensure full viewport height */
+            overflow: hidden; /* Prevent scrolling */
+        }
+        canvas { 
+            border: 1px solid white; 
+            width: 100%; 
+            max-width: 672px; /* Match your canvas width but scale for mobile */
+            height: auto; 
+            max-height: calc(100vh - 200px); /* Leave room for controls and score */
+        }
+        #controls { 
+            margin-top: 10px; 
+            display: flex; 
+            justify-content: space-around; 
+            width: 100%;
+            padding: 10px;
+            background: black;
+        }
+        button { 
+            padding: 15px 30px; 
+            margin: 5px; 
+            font-size: 18px; 
+            background: #FFD700; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+        #score { 
+            color: white; 
+            font-size: 20px; 
+            margin-top: 10px; 
+            text-align: center;
+            width: 100%;
+            padding: 5px;
+        }
     </style>
 </head>
 <body>
@@ -21,6 +60,8 @@
         <button id="left">Left</button>
         <button id="right">Right</button>
         <button id="jump">Jump</button>
+        <button id="up">Up</button>
+        <button id="down">Down</button>
     </div>
     <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
