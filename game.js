@@ -169,7 +169,7 @@ function draw() {
     updateScore();
 }
 
-// Update game logic with improved platform collision and barrel direction
+// Update game logic with improved platform collision, slower gravity, and barrel direction
 function update() {
     if (!gameActive) return;
     
@@ -181,20 +181,22 @@ function update() {
         if (mario.y <= canvas.height - 150) mario.jumping = false; // Stop jumping at platform height
     }
     
-    // Keep Mario in bounds and apply gravity
+    // Keep Mario in bounds and apply slower gravity
     mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
     if (!mario.onLadder && !mario.jumping) {
-        mario.y += 5; // Gravity
+        mario.y += 2; // Reduced gravity for slower fall
         let onPlatform = false;
         platforms.forEach(platform => {
             if (checkCollision(mario, platform) && mario.y + mario.height <= platform.y + 5) {
                 mario.y = platform.y - mario.height; // Land on platform
                 mario.jumping = false; // Ensure jumping stops
                 onPlatform = true;
+                console.log('Mario landed on platform at:', platform.y);
             }
         });
         if (!onPlatform && mario.y < canvas.height - mario.height) {
             mario.y = canvas.height - mario.height; // Reset to bottom if no platform
+            console.log('Mario reset to bottom:', mario.y);
         }
     }
     
@@ -229,6 +231,7 @@ function update() {
             rivet.hit = true;
             score += 50;
             if (rivets.every(r => r.hit)) levelUp();
+            console.log('Rivet collected, score now:', score);
         }
     });
 }
@@ -246,6 +249,7 @@ function levelUp() {
     level = (level % 4) + 1;
     initLevel();
     score += 100;
+    console.log('Level up to:', level, 'Score:', score);
 }
 
 // Update score display
@@ -253,6 +257,7 @@ function updateScore() {
     const jackpot = 0; // Update via bot later
     const burn = 0; // Update via bot later
     document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
+    console.log('Score updated:', score);
 }
 
 // Touch controls for mobile, matching your reference (yellow buttons, all controls)
