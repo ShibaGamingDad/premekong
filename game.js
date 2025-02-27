@@ -85,7 +85,7 @@ function initLevel() {
             platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null });
             ladders.push({ x: 300, y: platformY[i] - 50, width: 50, height: 100, image: null });
             for (let j = 0; j < 5; j++) {
-                rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 10, height: 10, hit: false, image: null }); // Adjusted rivet size for visibility
+                rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 10, height: 10, hit: false, image: null }); // Adjusted rivet size
             }
         }
         mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
@@ -202,7 +202,7 @@ function draw() {
     }
 }
 
-// Update game logic with improved platform collision, jump on all platforms, ladder exit, and randomized barrel direction
+// Update game logic with improved platform collision, limited jump, ladder exit, downward barrel direction, and reset on barrel hit
 function update() {
     if (!gameActive) return;
     
@@ -211,18 +211,17 @@ function update() {
         if (mario.dx) mario.x += mario.dx * 5;
         if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
         if (mario.jumping) {
-            mario.y -= 10; // Reduced jump height to prevent overshooting (from 15 to 10)
-            // Stop jumping when reaching the nearest platform above or canvas top, limited to platform heights
-            let stopJumpY = Math.max(0, mario.y - 100); // Reduced max jump height to prevent off-screen jumps
-            const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400]; // Platform levels
+            mario.y -= 5; // Reduced jump height to just avoid barrels (from 10 to 5)
+            // Stop jumping just above Mario’s current platform or a small height
+            let stopJumpY = Math.max(mario.y - 50, mario.y - (mario.height + 20)); // Limit jump to ~50 pixels or slightly above current platform
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
-                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height >= platformY[0] - mario.height) { // Ensure within platform range
+                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > mario.y - mario.height - 50) { // Limit to current or next platform height
                         stopJumpY = platform.y - mario.height;
                     }
                 }
             });
-            if (mario.y <= stopJumpY || mario.y <= 0) mario.jumping = false; // Stop at platform or top of canvas
+            if (mario.y <= stopJumpY || mario.y <= 0) mario.jumping = false; // Stop at limited height or top of canvas
             console.log('Mario jumping, current y:', mario.y, 'stopJumpY:', stopJumpY);
         }
         
@@ -254,34 +253,41 @@ function update() {
             }
         }
         
-        // Preme Kong static on top platform, barrel throwing (left to right with randomized drop)
+        // Preme Kong static on top platform, barrel throwing (downward toward Mario with reduced frequency and speed)
         if (premekong.dropping) {
             premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
-            if (Math.random() < 0.05) { // Maintain frequent barrel throwing
-                const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400]; // Platform levels
-                const randomPlatform = platformY[Math.floor(Math.random() * platformY.length)]; // Randomize starting platform
+            if (Math.random() < 0.0375) { // Reduce frequency by 25% (0.05 * 0.75)
+                const targetY = mario.y + 16; // Target Mario’s middle (32 height / 2 + offset for barrel height)
+                const startY = canvas.height - 400 - 32; // Start from top platform (above Preme Kong)
                 barrels.push({ 
                     x: premekong.x, 
-                    y: randomPlatform - 32, // Position barrel above the random platform (32 for barrel height)
-                    dx: 2, // Move left to right
-                    dy: Math.random() * 2 - 1, // Random vertical speed (-1 to 1 for slight drop or rise)
+                    y: startY, 
+                    dx: 1, // Slower horizontal speed (from 2 to 1)
+                    dy: 1, // Downward motion (constant downward speed)
                     image: new Image() 
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', 2, 'dy:', barrels[barrels.length - 1].dy);
+                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', 1, 'dy:', 1, 'targeting Mario at y:', targetY);
             }
         }
         
-        // Barrels movement and collision (horizontal left to right with randomized drop)
+        // Barrels movement and collision (downward toward Mario with reset on hit)
         barrels.forEach((barrel, i) => {
             barrel.x += barrel.dx;
-            barrel.y += barrel.dy; // Allow slight vertical movement
+            barrel.y += barrel.dy; // Move downward
             console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
-            if (barrel.x > canvas.width + 32 || barrel.y < 0 || barrel.y > canvas.height) barrels.splice(i, 1); // Remove when off right edge or out of bounds vertically
+            if (barrel.x > canvas.width + 32 || barrel.y > canvas.height + 32) barrels.splice(i, 1); // Remove when off right edge or below canvas
             if (checkCollision(mario, barrel)) {
-                score -= 10;
-                barrels.splice(i, 1);
-                if (score < 0) score = 0;
+                console.log('Mario hit by barrel at:', barrel.x, barrel.y);
+                // Reset Mario to starting position and score to 0
+                mario.x = 50;
+                mario.y = canvas.height - 100 - mario.height;
+                mario.jumping = false;
+                mario.onLadder = false;
+                score = 0;
+                barrels.splice(i, 1); // Remove the barrel
+                updateScore();
+                console.log('Mario reset to start, score reset to:', score);
             }
         });
         
