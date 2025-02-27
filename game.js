@@ -8,6 +8,7 @@ if (!canvas) {
     console.log('Canvas found, setting size:', 672, 'x', 768);
     canvas.width = 672; // Match your HTML's width
     canvas.height = 768; // Match your HTML's height
+    console.log('Actual canvas size after setting:', canvas.width, 'x', canvas.height);
 }
 
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
@@ -25,32 +26,32 @@ function loadImages() {
     console.log('Loading images...');
     mario.image = new Image();
     mario.image.src = 'mario.png';
-    mario.image.onload = () => console.log('Mario image loaded at:', mario.image.src);
+    mario.image.onload = () => console.log('Mario image loaded at:', mario.image.src, 'Dimensions:', mario.image.width, 'x', mario.image.height);
     mario.image.onerror = () => { console.error('Mario image failed to load at:', mario.image.src); mario.image = null; };
 
     premekong.image = new Image();
     premekong.image.src = 'premekong.png';
-    premekong.image.onload = () => console.log('Preme Kong image loaded at:', premekong.image.src);
+    premekong.image.onload = () => console.log('Preme Kong image loaded at:', premekong.image.src, 'Dimensions:', premekong.image.width, 'x', premekong.image.height);
     premekong.image.onerror = () => { console.error('Preme Kong image failed to load at:', premekong.image.src); premekong.image = null; };
 
     const barrelImg = new Image();
     barrelImg.src = 'barrel.png';
-    barrelImg.onload = () => console.log('Barrel image loaded at:', barrelImg.src);
+    barrelImg.onload = () => console.log('Barrel image loaded at:', barrelImg.src, 'Dimensions:', barrelImg.width, 'x', barrelImg.height);
     barrelImg.onerror = () => console.error('Barrel image failed to load at:', barrelImg.src);
 
     const ladderImg = new Image();
     ladderImg.src = 'ladder.png';
-    ladderImg.onload = () => console.log('Ladder image loaded at:', ladderImg.src);
+    ladderImg.onload = () => console.log('Ladder image loaded at:', ladderImg.src, 'Dimensions:', ladderImg.width, 'x', ladderImg.height);
     ladderImg.onerror = () => console.error('Ladder image failed to load at:', ladderImg.src);
 
     const platformImg = new Image();
     platformImg.src = 'platform.png';
-    platformImg.onload = () => console.log('Platform image loaded at:', platformImg.src);
+    platformImg.onload = () => console.log('Platform image loaded at:', platformImg.src, 'Dimensions:', platformImg.width, 'x', platformImg.height);
     platformImg.onerror = () => console.error('Platform image failed to load at:', platformImg.src);
 
     const rivetImg = new Image();
     rivetImg.src = 'rivet.png';
-    rivetImg.onload = () => console.log('Rivet image loaded at:', rivetImg.src);
+    rivetImg.onload = () => console.log('Rivet image loaded at:', rivetImg.src, 'Dimensions:', rivetImg.width, 'x', rivetImg.height);
     rivetImg.onerror = () => console.error('Rivet image failed to load at:', rivetImg.src);
 
     platforms.forEach(platform => platform.image = platformImg || null);
@@ -76,7 +77,7 @@ function initLevel() {
     mario.y = canvas.height - 50; // Ensure Mario starts on the bottom platform
     premekong.y = 50;
     premekong.x = canvas.width - 100; // Ensure Preme Kong is on the right
-    console.log('Preme Kong position:', premekong.x, premekong.y);
+    console.log('Preme Kong position before draw:', premekong.x, premekong.y);
     barrels = [];
     score = 0;
     updateScore();
@@ -93,7 +94,7 @@ function draw() {
     ctx.fillStyle = 'red';
     platforms.forEach(platform => {
         if (platform.image && platform.image.complete) {
-            console.log('Drawing platform image at:', platform.x, platform.y);
+            console.log('Drawing platform image at:', platform.x, platform.y, 'Dimensions:', platform.image.width, 'x', platform.image.height);
             ctx.drawImage(platform.image, platform.x, platform.y, platform.width, platform.height);
         } else {
             console.log('Drawing platform fallback at:', platform.x, platform.y);
@@ -106,7 +107,7 @@ function draw() {
     ctx.fillStyle = 'brown';
     ladders.forEach(ladder => {
         if (ladder.image && ladder.image.complete) {
-            console.log('Drawing ladder image at:', ladder.x, ladder.y);
+            console.log('Drawing ladder image at:', ladder.x, ladder.y, 'Dimensions:', ladder.image.width, 'x', ladder.image.height);
             ctx.drawImage(ladder.image, ladder.x, ladder.y, ladder.width, ladder.height);
         } else {
             console.log('Drawing ladder fallback at:', ladder.x, ladder.y);
@@ -119,7 +120,7 @@ function draw() {
     ctx.fillStyle = 'gray';
     rivets.forEach(rivet => {
         if (!rivet.hit && rivet.image && rivet.image.complete) {
-            console.log('Drawing rivet image at:', rivet.x, rivet.y);
+            console.log('Drawing rivet image at:', rivet.x, rivet.y, 'Dimensions:', rivet.image.width, 'x', rivet.image.height);
             ctx.drawImage(rivet.image, rivet.x, rivet.y, rivet.width, rivet.height);
         } else if (!rivet.hit) {
             console.log('Drawing rivet fallback at:', rivet.x, rivet.y);
@@ -130,7 +131,7 @@ function draw() {
     // Draw Mario
     console.log('Drawing Mario at:', mario.x, mario.y);
     if (mario.image && mario.image.complete) {
-        console.log('Drawing Mario image at:', mario.x, mario.y);
+        console.log('Drawing Mario image at:', mario.x, mario.y, 'Dimensions:', mario.image.width, 'x', mario.image.height);
         ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
     } else {
         console.log('Drawing Mario fallback at:', mario.x, mario.y);
@@ -141,7 +142,7 @@ function draw() {
     // Draw Preme Kong
     console.log('Drawing Preme Kong at:', premekong.x, premekong.y);
     if (premekong.image && premekong.image.complete) {
-        console.log('Drawing Preme Kong image at:', premekong.x, premekong.y);
+        console.log('Drawing Preme Kong image at:', premekong.x, premekong.y, 'Dimensions:', premekong.image.width, 'x', premekong.image.height);
         ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
     } else {
         console.log('Drawing Preme Kong fallback at:', premekong.x, premekong.y);
@@ -154,7 +155,7 @@ function draw() {
     ctx.fillStyle = 'brown';
     barrels.forEach(barrel => {
         if (barrel.image && barrel.image.complete) {
-            console.log('Drawing barrel image at:', barrel.x, barrel.y);
+            console.log('Drawing barrel image at:', barrel.x, barrel.y, 'Dimensions:', barrel.image.width, 'x', barrel.image.height);
             ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
         } else {
             console.log('Drawing barrel fallback at:', barrel.x, barrel.y);
@@ -201,7 +202,7 @@ function update() {
         if (Math.random() < 0.01) {
             barrels.push({ x: premekong.x, y: premekong.y, dx: -2, dy: 0, image: new Image() });
             barrels[barrels.length - 1].image.src = 'barrel.png';
-            console.log('New barrel created at:', premekong.x, premekong.y);
+            console.log('New barrel created at:', premekong.x, premekong.y, 'with dx:', -2, 'dy:', 0);
         }
     }
     
@@ -209,7 +210,7 @@ function update() {
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
         barrel.y += barrel.dy; // Keep vertical position stable
-        console.log('Barrel position:', barrel.x, barrel.y);
+        console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
         if (barrel.x < -32) barrels.splice(i, 1);
         if (checkCollision(mario, barrel)) {
             score -= 10;
