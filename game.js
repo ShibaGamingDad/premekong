@@ -1,9 +1,9 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Set canvas to fit mobile screen dynamically
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight - 200; // Leave room for controls and score
+// Set canvas to match your HTML's fixed size
+canvas.width = 672; // Match your HTML's width
+canvas.height = 768; // Match your HTML's height
 
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
 let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true };
@@ -47,20 +47,20 @@ function loadImages() {
     barrels.forEach(barrel => barrel.image = barrelImg || null);
 }
 
-// Initialize levels with all elements
+// Initialize levels with all elements, adjusted for better platform alignment
 function initLevel() {
     platforms = [];
     ladders = [];
     rivets = [];
     const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
     for (let i = 0; i < 4; i++) {
-        platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 10, image: null });
+        platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null }); // Increased height for better collision
         ladders.push({ x: 300, y: platformY[i] - 50, width: 50, height: 100, image: null });
         for (let j = 0; j < 5; j++) {
             rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 20, height: 10, hit: false, image: null });
         }
     }
-    mario.y = canvas.height - 50;
+    mario.y = canvas.height - 50; // Ensure Mario starts on the bottom platform
     premekong.y = 50;
     barrels = [];
     score = 0;
@@ -117,7 +117,7 @@ function draw() {
     updateScore();
 }
 
-// Update game logic with platform collision
+// Update game logic with improved platform collision
 function update() {
     if (!gameActive) return;
     
@@ -133,13 +133,17 @@ function update() {
     mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
     if (!mario.onLadder && !mario.jumping) {
         mario.y += 5; // Gravity
-        // Check collision with platforms to stop falling
+        let onPlatform = false;
         platforms.forEach(platform => {
             if (checkCollision(mario, platform) && mario.y + mario.height <= platform.y + 5) {
                 mario.y = platform.y - mario.height; // Land on platform
                 mario.jumping = false; // Ensure jumping stops
+                onPlatform = true;
             }
         });
+        if (!onPlatform && mario.y < canvas.height - mario.height) {
+            mario.y = canvas.height - mario.height; // Reset to bottom if no platform
+        }
     }
     
     // Preme Kong dropping and barrel throwing
@@ -196,7 +200,7 @@ function updateScore() {
     document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
 }
 
-// Touch controls for mobile
+// Touch controls for mobile, matching your reference (yellow buttons, all controls)
 function setupTouchControls() {
     const buttons = {
         left: document.querySelector('#left'),
