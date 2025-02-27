@@ -16,7 +16,7 @@ if (!canvas) {
 
 let mario = { x: 50, y: canvas.height - 100 - 32, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
 let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: false }; // Keep Preme Kong static on top left platform
-let pauline = { x: 100, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Move Pauline to top platform
+let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Move Pauline slightly to the right (x: 150)
 let barrels = [];
 let score = 0;
 let level = 1;
@@ -93,7 +93,7 @@ function initLevel() {
         premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
         premekong.x = 50; // Keep Preme Kong on left side
         pauline.y = canvas.height - 400 - pauline.height; // Keep Pauline on top platform
-        pauline.x = 100; // Keep Pauline slightly right of Preme Kong
+        pauline.x = 150; // Move Pauline slightly to the right (x: 150)
         console.log('Preme Kong position before draw:', premekong.x, premekong.y);
         console.log('Pauline position before draw:', pauline.x, pauline.y);
         barrels = [];
@@ -187,7 +187,7 @@ function draw() {
         console.log('Drawing barrels, count:', barrels.length);
         ctx.fillStyle = 'brown';
         barrels.forEach(barrel => {
-            if (barrel.image && barbl.image.complete) { // Typo fixed here: 'barbl' to 'barrel'
+            if (barrel.image && barrel.image.complete) {
                 console.log('Drawing barrel image at:', barrel.x, barrel.y, 'Dimensions:', barrel.image.width, 'x', barrel.image.height);
                 ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
             } else {
@@ -211,9 +211,9 @@ function update() {
         if (mario.dx) mario.x += mario.dx * 5;
         if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
         if (mario.jumping) {
-            mario.y -= 20; // High jump to reach all platforms
-            // Stop jumping when reaching the nearest platform above or a reasonable height
-            let stopJumpY = mario.y - 200; // Default stop height above current position
+            mario.y -= 15; // Reduced jump height to prevent going off-screen (from 20 to 15)
+            // Stop jumping when reaching the nearest platform above or canvas top
+            let stopJumpY = Math.max(0, mario.y - 200); // Limit jump height to stay within canvas
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
                     if (platform.y - mario.height < stopJumpY) {
@@ -221,7 +221,7 @@ function update() {
                     }
                 }
             });
-            if (mario.y <= stopJumpY) mario.jumping = false; // Stop jumping at the nearest platform above
+            if (mario.y <= stopJumpY || mario.y <= 0) mario.jumping = false; // Stop at platform or top of canvas
         }
         
         // Keep Mario in bounds and apply gravity
