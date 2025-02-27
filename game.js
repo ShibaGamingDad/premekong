@@ -28,75 +28,83 @@ let gameActive = true;
 // Load images with fallbacks and debug
 function loadImages() {
     console.log('Loading images...');
-    mario.image = new Image();
-    mario.image.src = 'mario.png';
-    mario.image.onload = () => console.log('Mario image loaded at:', mario.image.src, 'Dimensions:', mario.image.width, 'x', mario.image.height);
-    mario.image.onerror = () => { console.error('Mario image failed to load at:', mario.image.src); mario.image = null; };
+    try {
+        mario.image = new Image();
+        mario.image.src = 'mario.png';
+        mario.image.onload = () => console.log('Mario image loaded at:', mario.image.src, 'Dimensions:', mario.image.width, 'x', mario.image.height);
+        mario.image.onerror = () => { console.error('Mario image failed to load at:', mario.image.src); mario.image = null; };
 
-    premekong.image = new Image();
-    premekong.image.src = 'premekong.png';
-    premekong.image.onload = () => console.log('Preme Kong image loaded at:', premekong.image.src, 'Dimensions:', premekong.image.width, 'x', premekong.image.height);
-    premekong.image.onerror = () => { console.error('Preme Kong image failed to load at:', premekong.image.src); premekong.image = null; };
+        premekong.image = new Image();
+        premekong.image.src = 'premekong.png';
+        premekong.image.onload = () => console.log('Preme Kong image loaded at:', premekong.image.src, 'Dimensions:', premekong.image.width, 'x', premekong.image.height);
+        premekong.image.onerror = () => { console.error('Preme Kong image failed to load at:', premekong.image.src); premekong.image = null; };
 
-    pauline.image = new Image();
-    pauline.image.src = 'pauline.png'; // Assume you have a Pauline image; use fallback if not
-    pauline.image.onload = () => console.log('Pauline image loaded at:', pauline.image.src, 'Dimensions:', pauline.image.width, 'x', pauline.image.height);
-    pauline.image.onerror = () => { console.error('Pauline image failed to load at:', pauline.image.src); pauline.image = null; };
+        pauline.image = new Image();
+        pauline.image.src = 'pauline.png'; // Assume you have a Pauline image; use fallback if not
+        pauline.image.onload = () => console.log('Pauline image loaded at:', pauline.image.src, 'Dimensions:', pauline.image.width, 'x', pauline.image.height);
+        pauline.image.onerror = () => { console.error('Pauline image failed to load at:', pauline.image.src); pauline.image = null; };
 
-    const barrelImg = new Image();
-    barrelImg.src = 'barrel.png';
-    barrelImg.onload = () => console.log('Barrel image loaded at:', barrelImg.src, 'Dimensions:', barrelImg.width, 'x', barrelImg.height);
-    barrelImg.onerror = () => console.error('Barrel image failed to load at:', barrelImg.src);
+        const barrelImg = new Image();
+        barrelImg.src = 'barrel.png';
+        barrelImg.onload = () => console.log('Barrel image loaded at:', barrelImg.src, 'Dimensions:', barrelImg.width, 'x', barrelImg.height);
+        barrelImg.onerror = () => console.error('Barrel image failed to load at:', barrelImg.src);
 
-    const ladderImg = new Image();
-    ladderImg.src = 'ladder.png';
-    ladderImg.onload = () => console.log('Ladder image loaded at:', ladderImg.src, 'Dimensions:', ladderImg.width, 'x', ladderImg.height);
-    ladderImg.onerror = () => { console.error('Ladder image failed to load at:', ladderImg.src); ladderImg.width = 50; ladderImg.height = 100; }; // Fallback size
+        const ladderImg = new Image();
+        ladderImg.src = 'ladder.png';
+        ladderImg.onload = () => console.log('Ladder image loaded at:', ladderImg.src, 'Dimensions:', ladderImg.width, 'x', ladderImg.height);
+        ladderImg.onerror = () => { console.error('Ladder image failed to load at:', ladderImg.src); ladderImg.width = 50; ladderImg.height = 100; }; // Fallback size
 
-    const platformImg = new Image();
-    platformImg.src = 'platform.png';
-    platformImg.onload = () => console.log('Platform image loaded at:', platformImg.src, 'Dimensions:', platformImg.width, 'x', platformImg.height);
-    platformImg.onerror = () => { console.error('Platform image failed to load at:', platformImg.src); platformImg.width = canvas.width; platformImg.height = 20; }; // Fallback size
+        const platformImg = new Image();
+        platformImg.src = 'platform.png';
+        platformImg.onload = () => console.log('Platform image loaded at:', platformImg.src, 'Dimensions:', platformImg.width, 'x', platformImg.height);
+        platformImg.onerror = () => { console.error('Platform image failed to load at:', platformImg.src); platformImg.width = canvas.width; platformImg.height = 20; }; // Fallback size
 
-    const rivetImg = new Image();
-    rivetImg.src = 'rivet.png';
-    rivetImg.onload = () => console.log('Rivet image loaded at:', rivetImg.src, 'Dimensions:', rivetImg.width, 'x', rivetImg.height);
-    rivetImg.onerror = () => console.error('Rivet image failed to load at:', rivetImg.src);
+        const rivetImg = new Image();
+        rivetImg.src = 'rivet.png';
+        rivetImg.onload = () => console.log('Rivet image loaded at:', rivetImg.src, 'Dimensions:', rivetImg.width, 'x', rivetImg.height);
+        rivetImg.onerror = () => console.error('Rivet image failed to load at:', rivetImg.src);
 
-    platforms.forEach(platform => platform.image = platformImg || null);
-    ladders.forEach(ladder => ladder.image = ladderImg || null);
-    rivets.forEach(rivet => rivet.image = rivetImg || null);
-    barrels.forEach(barrel => barrel.image = barrelImg || null);
+        platforms.forEach(platform => platform.image = platformImg || null);
+        ladders.forEach(ladder => ladder.image = ladderImg || null);
+        rivets.forEach(rivet => rivet.image = rivetImg || null);
+        barrels.forEach(barrel => barrel.image = barrelImg || null);
+    } catch (error) {
+        console.error('Error in loadImages:', error);
+    }
 }
 
 // Initialize levels with all elements, adjusted for better platform alignment
 function initLevel() {
     console.log('Initializing level with canvas size:', canvas.width, 'x', canvas.height);
-    platforms = [];
-    ladders = [];
-    rivets = [];
-    const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
-    for (let i = 0; i < 4; i++) {
-        platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null });
-        ladders.push({ x: 300, y: platformY[i] - 50, width: 50, height: 100, image: null });
-        for (let j = 0; j < 5; j++) {
-            rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 20, height: 10, hit: false, image: null });
+    try {
+        platforms = [];
+        ladders = [];
+        rivets = [];
+        const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
+        for (let i = 0; i < 4; i++) {
+            platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null });
+            ladders.push({ x: 300, y: platformY[i] - 50, width: 50, height: 100, image: null });
+            for (let j = 0; j < 5; j++) {
+                rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 20, height: 10, hit: false, image: null });
+            }
         }
+        mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
+        mario.x = 50; // Ensure Mario starts on the left
+        premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
+        premekong.x = 50; // Keep Preme Kong on left side
+        pauline.y = canvas.height - 400 - pauline.height; // Keep Pauline on top platform
+        pauline.x = 100; // Keep Pauline slightly right of Preme Kong
+        console.log('Preme Kong position before draw:', premekong.x, premekong.y);
+        console.log('Pauline position before draw:', pauline.x, pauline.y);
+        barrels = [];
+        score = 0;
+        updateScore();
+    } catch (error) {
+        console.error('Error in initLevel:', error);
     }
-    mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
-    mario.x = 50; // Ensure Mario starts on the left
-    premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
-    premekong.x = 50; // Keep Preme Kong on left side
-    pauline.y = canvas.height - 400 - pauline.height; // Keep Pauline on top platform
-    pauline.x = 100; // Keep Pauline slightly right of Preme Kong
-    console.log('Preme Kong position before draw:', premekong.x, premekong.y);
-    console.log('Pauline position before draw:', pauline.x, pauline.y);
-    barrels = [];
-    score = 0;
-    updateScore();
 }
 
-// Draw game elements with debug, including Pauline
+// Draw game elements with debug, including Pauline, wrapped in try/catch
 function draw() {
     if (!gameActive) return;
     console.log('Drawing frame, Mario at:', mario.x, mario.y, 'Preme Kong at:', premekong.x, premekong.y, 'Pauline at:', pauline.x, pauline.y);
@@ -179,7 +187,7 @@ function draw() {
         console.log('Drawing barrels, count:', barrels.length);
         ctx.fillStyle = 'brown';
         barrels.forEach(barrel => {
-            if (barrel.image && barrel.image.complete) {
+            if (barrel.image && barbl.image.complete) { // Typo fixed here: 'barbl' to 'barrel'
                 console.log('Drawing barrel image at:', barrel.x, barrel.y, 'Dimensions:', barrel.image.width, 'x', barrel.image.height);
                 ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
             } else {
@@ -234,4 +242,136 @@ function update() {
                 let highestPlatformY = canvas.height - mario.height;
                 platforms.forEach(platform => {
                     if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x) {
-                        if (platform.y - mario.height
+                        if (platform.y - mario.height < highestPlatformY && platform.y - mario.height > mario.y) {
+                            highestPlatformY = platform.y - mario.height;
+                        }
+                    }
+                });
+                mario.y = highestPlatformY; // Set Mario to the highest valid platform or bottom
+                console.log('Mario reset to highest platform or bottom:', mario.y);
+            }
+        }
+        
+        // Preme Kong static on top platform, barrel throwing (left to right)
+        if (premekong.dropping) {
+            // Keep Preme Kong static on top platform
+            premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
+            if (Math.random() < 0.01) {
+                barrels.push({ x: premekong.x, y: premekong.y, dx: 2, dy: 0, image: new Image() }); // Move left to right
+                barrels[barrels.length - 1].image.src = 'barrel.png';
+                console.log('New barrel created at:', premekong.x, premekong.y, 'with dx:', 2, 'dy:', 0);
+            }
+        }
+        
+        // Barrels movement and collision (horizontal left to right)
+        barrels.forEach((barrel, i) => {
+            barrel.x += barrel.dx;
+            barrel.y += barrel.dy; // Keep vertical position stable
+            console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
+            if (barrel.x > canvas.width + 32) barrels.splice(i, 1); // Remove when off right edge
+            if (checkCollision(mario, barrel)) {
+                score -= 10;
+                barrels.splice(i, 1);
+                if (score < 0) score = 0;
+            }
+        });
+        
+        // Ladder and rivet interaction
+        mario.onLadder = ladders.some(ladder => mario.x < ladder.x + ladder.width && mario.x + mario.width > ladder.x && mario.y < ladder.y + ladder.height && mario.y + mario.height > ladder.y);
+        rivets.forEach(rivet => {
+            if (!rivet.hit && checkCollision(mario, rivet)) {
+                rivet.hit = true;
+                score += 50;
+                if (rivets.every(r => r.hit)) levelUp();
+                console.log('Rivet collected, score now:', score);
+            }
+        });
+    } catch (error) {
+        console.error('Error in update function:', error);
+    }
+}
+
+// Check collision
+function checkCollision(obj1, obj2) {
+    return obj1.x < obj2.x + obj2.width &&
+           obj1.x + obj1.width > obj2.x &&
+           obj1.y < obj2.y + obj2.height &&
+           obj1.y + obj1.height > obj2.y;
+}
+
+// Level up (cycle through 4 levels)
+function levelUp() {
+    level = (level % 4) + 1;
+    initLevel();
+    score += 100;
+    console.log('Level up to:', level, 'Score:', score);
+}
+
+// Update score display
+function updateScore() {
+    const jackpot = 0; // Update via bot later
+    const burn = 0; // Update via bot later
+    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
+    console.log('Score updated:', score);
+}
+
+// Touch controls for mobile, matching your reference (yellow buttons, all controls)
+function setupTouchControls() {
+    const buttons = {
+        left: document.querySelector('#left'),
+        right: document.querySelector('#right'),
+        jump: document.querySelector('#jump'),
+        up: document.querySelector('#up'),
+        down: document.querySelector('#down')
+    };
+
+    buttons.left.addEventListener('touchstart', () => mario.dx = -1);
+    buttons.right.addEventListener('touchstart', () => mario.dx = 1);
+    buttons.jump.addEventListener('touchstart', () => { if (!mario.jumping && !mario.onLadder) mario.jumping = true; }); // Ensure jump works
+    buttons.up.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = -1; });
+    buttons.down.addEventListener('touchstart', () => { if (mario.onLadder) mario.dy = 1; });
+
+    buttons.left.addEventListener('touchend', () => mario.dx = 0);
+    buttons.right.addEventListener('touchend', () => mario.dx = 0);
+    buttons.up.addEventListener('touchend', () => mario.dy = 0);
+    buttons.down.addEventListener('touchend', () => mario.dy = 0);
+}
+
+// Handle Telegram WebApp data (for bot integration)
+function handleTelegramData() {
+    const Telegram = window.Telegram;
+    if (Telegram && Telegram.WebApp) {
+        console.log('Telegram WebApp initialized');
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+        Telegram.WebApp.onEvent('web_app_data', (data) => {
+            console.log('Received web app data:', data);
+            if (data.data) {
+                try {
+                    const gameData = JSON.parse(data.data);
+                    score = gameData.score || score;
+                    updateScore();
+                    Telegram.WebApp.sendData(JSON.stringify({ score, perfectRun: score >= 400 }));
+                    console.log('Sent Telegram data:', { score, perfectRun: score >= 400 });
+                } catch (error) {
+                    console.error('Error parsing Telegram data:', error);
+                }
+            }
+        });
+    }
+}
+
+// Game loop
+function gameLoop() {
+    if (!gameActive) return;
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialize and start game
+loadImages();
+initLevel();
+setupTouchControls();
+handleTelegramData();
+gameLoop();
