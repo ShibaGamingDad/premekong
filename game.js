@@ -85,7 +85,7 @@ function initLevel() {
             platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null });
             ladders.push({ x: 300, y: platformY[i] - 50, width: 50, height: 100, image: null });
             for (let j = 0; j < 5; j++) {
-                rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 20, height: 10, hit: false, image: null });
+                rivets.push({ x: 100 + j * 100, y: platformY[i] + 10, width: 10, height: 10, hit: false, image: null }); // Adjusted rivet size for visibility
             }
         }
         mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
@@ -202,7 +202,7 @@ function draw() {
     }
 }
 
-// Update game logic with improved platform collision, jump on all platforms, ladder exit, and barrel direction
+// Update game logic with improved platform collision, jump on all platforms, ladder exit, and randomized barrel direction
 function update() {
     if (!gameActive) return;
     
@@ -211,12 +211,13 @@ function update() {
         if (mario.dx) mario.x += mario.dx * 5;
         if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
         if (mario.jumping) {
-            mario.y -= 15; // Maintain jump height but ensure it doesn’t go off-screen
-            // Stop jumping when reaching the nearest platform above or canvas top
-            let stopJumpY = Math.max(0, mario.y - 150); // Reduced max jump height to stay within canvas
+            mario.y -= 10; // Reduced jump height to prevent overshooting (from 15 to 10)
+            // Stop jumping when reaching the nearest platform above or canvas top, limited to platform heights
+            let stopJumpY = Math.max(0, mario.y - 100); // Reduced max jump height to prevent off-screen jumps
+            const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400]; // Platform levels
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
-                    if (platform.y - mario.height < stopJumpY) {
+                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height >= platformY[0] - mario.height) { // Ensure within platform range
                         stopJumpY = platform.y - mario.height;
                     }
                 }
@@ -253,23 +254,30 @@ function update() {
             }
         }
         
-        // Preme Kong static on top platform, barrel throwing (left to right)
+        // Preme Kong static on top platform, barrel throwing (left to right with randomized drop)
         if (premekong.dropping) {
-            // Keep Preme Kong static on top platform
             premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
-            if (Math.random() < 0.05) { // Increased probability to throw barrels more frequently
-                barrels.push({ x: premekong.x, y: premekong.y, dx: 2, dy: 0, image: new Image() }); // Move left to right
+            if (Math.random() < 0.05) { // Maintain frequent barrel throwing
+                const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400]; // Platform levels
+                const randomPlatform = platformY[Math.floor(Math.random() * platformY.length)]; // Randomize starting platform
+                barrels.push({ 
+                    x: premekong.x, 
+                    y: randomPlatform - 32, // Position barrel above the random platform (32 for barrel height)
+                    dx: 2, // Move left to right
+                    dy: Math.random() * 2 - 1, // Random vertical speed (-1 to 1 for slight drop or rise)
+                    image: new Image() 
+                });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('New barrel created at:', premekong.x, premekong.y, 'with dx:', 2, 'dy:', 0);
+                console.log('New barrel created at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'with dx:', 2, 'dy:', barrels[barrels.length - 1].dy);
             }
         }
         
-        // Barrels movement and collision (horizontal left to right)
+        // Barrels movement and collision (horizontal left to right with randomized drop)
         barrels.forEach((barrel, i) => {
             barrel.x += barrel.dx;
-            barrel.y += barrel.dy; // Keep vertical position stable
+            barrel.y += barrel.dy; // Allow slight vertical movement
             console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy);
-            if (barrel.x > canvas.width + 32) barrels.splice(i, 1); // Remove when off right edge
+            if (barrel.x > canvas.width + 32 || barrel.y < 0 || barrel.y > canvas.height) barrels.splice(i, 1); // Remove when off right edge or out of bounds vertically
             if (checkCollision(mario, barrel)) {
                 score -= 10;
                 barrels.splice(i, 1);
