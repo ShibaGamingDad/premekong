@@ -1,9 +1,14 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Set canvas to match your HTML's fixed size
-canvas.width = 672; // Match your HTML's width
-canvas.height = 768; // Match your HTML's height
+// Set canvas to match your HTML's fixed size with debug
+if (!canvas) {
+    console.error('Canvas not found! Check index.html for <canvas id="gameCanvas">');
+} else {
+    console.log('Canvas found, setting size:', 672, 'x', 768);
+    canvas.width = 672; // Match your HTML's width
+    canvas.height = 768; // Match your HTML's height
+}
 
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
 let premekong = { x: canvas.width - 100, y: 50, width: 64, height: 64, dropping: true }; // Ensure Preme Kong is on the right
@@ -15,30 +20,37 @@ let ladders = [];
 let platforms = [];
 let gameActive = true;
 
-// Load images with fallbacks
+// Load images with fallbacks and debug
 function loadImages() {
+    console.log('Loading images...');
     mario.image = new Image();
     mario.image.src = 'mario.png';
+    mario.image.onload = () => console.log('Mario image loaded');
     mario.image.onerror = () => { console.error('Mario image failed'); mario.image = null; };
 
     premekong.image = new Image();
     premekong.image.src = 'premekong.png';
+    premekong.image.onload = () => console.log('Preme Kong image loaded');
     premekong.image.onerror = () => { console.error('Preme Kong image failed'); premekong.image = null; };
 
     const barrelImg = new Image();
     barrelImg.src = 'barrel.png';
+    barrelImg.onload = () => console.log('Barrel image loaded');
     barrelImg.onerror = () => console.error('Barrel image failed');
 
     const ladderImg = new Image();
     ladderImg.src = 'ladder.png';
+    ladderImg.onload = () => console.log('Ladder image loaded');
     ladderImg.onerror = () => console.error('Ladder image failed');
 
     const platformImg = new Image();
     platformImg.src = 'platform.png';
+    platformImg.onload = () => console.log('Platform image loaded');
     platformImg.onerror = () => console.error('Platform image failed');
 
     const rivetImg = new Image();
     rivetImg.src = 'rivet.png';
+    rivetImg.onload = () => console.log('Rivet image loaded');
     rivetImg.onerror = () => console.error('Rivet image failed');
 
     platforms.forEach(platform => platform.image = platformImg || null);
@@ -49,6 +61,7 @@ function loadImages() {
 
 // Initialize levels with all elements, adjusted for better platform alignment
 function initLevel() {
+    console.log('Initializing level with canvas size:', canvas.width, 'x', canvas.height);
     platforms = [];
     ladders = [];
     rivets = [];
@@ -62,14 +75,17 @@ function initLevel() {
     }
     mario.y = canvas.height - 50; // Ensure Mario starts on the bottom platform
     premekong.y = 50;
+    premekong.x = canvas.width - 100; // Double-check Preme Kong's position
+    console.log('Preme Kong position:', premekong.x, premekong.y);
     barrels = [];
     score = 0;
     updateScore();
 }
 
-// Draw game elements
+// Draw game elements with debug
 function draw() {
     if (!gameActive) return;
+    console.log('Drawing frame, Mario at:', mario.x, mario.y, 'Preme Kong at:', premekong.x, premekong.y);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
     // Draw platforms
@@ -110,6 +126,7 @@ function draw() {
     // Draw barrels
     ctx.fillStyle = 'brown';
     barrels.forEach(barrel => {
+        console.log('Drawing barrel at:', barrel.x, barrel.y);
         if (barrel.image && barrel.image.complete) ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
         else ctx.fillRect(barrel.x, barrel.y, 32, 32);
     });
@@ -153,6 +170,7 @@ function update() {
         if (Math.random() < 0.01) {
             barrels.push({ x: premekong.x, y: premekong.y, dx: -2, dy: 0, image: new Image() }); // Horizontal movement only
             barrels[barrels.length - 1].image.src = 'barrel.png';
+            console.log('New barrel created at:', premekong.x, premekong.y);
         }
     }
     
@@ -160,6 +178,7 @@ function update() {
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
         barrel.y += barrel.dy; // Keep vertical position stable
+        console.log('Barrel position:', barrel.x, barrel.y);
         if (barrel.x < -32) barrels.splice(i, 1);
         if (checkCollision(mario, barrel)) {
             score -= 10;
