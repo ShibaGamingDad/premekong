@@ -14,7 +14,7 @@ if (!canvas) {
     }
 }
 
-let mario = { x: 50, y: canvas.height - 100 - 32, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false };
+let mario = { x: 50, y: canvas.height, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false }; // Start Mario at base (y: 768)
 let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true }; // Enable dropping to throw barrels
 let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Pauline stays on top platform, slightly right
 let barrels = [];
@@ -89,12 +89,12 @@ function initLevel() {
                 rivets.push({ x: 100 + j * 100, y: platformY[i] - 10, width: 10, height: 10, hit: false, image: null }); // Moved to top (y - 10)
             }
         }
-        // Three separate ladders, moved up to connect properly to the next platform
-        ladders.push({ x: 506, y: platformY[0] - 25, width: 50, height: 100, image: null }); // Ladder 1: between 1st and 2nd, up to y: 643 (from 638)
-        ladders.push({ x: 94, y: platformY[1] - 25, width: 50, height: 100, image: null }); // Ladder 2: between 2nd and 3rd, up to y: 543 (from 538)
-        ladders.push({ x: 506, y: platformY[2] - 25, width: 50, height: 100, image: null }); // Ladder 3: between 3rd and 4th, up to y: 443 (from 438)
+        // Three separate ladders, moved down to rest below each platform
+        ladders.push({ x: 506, y: platformY[0] + 50, width: 50, height: 100, image: null }); // Ladder 1: below 1st platform, down to y: 718 (from 643)
+        ladders.push({ x: 94, y: platformY[1] + 50, width: 50, height: 100, image: null }); // Ladder 2: below 2nd platform, down to y: 618 (from 543)
+        ladders.push({ x: 506, y: platformY[2] + 50, width: 50, height: 100, image: null }); // Ladder 3: below 3rd platform, down to y: 518 (from 443)
 
-        mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
+        mario.y = canvas.height - 68; // Start Mario at base below first platform (y: 700, adjusted for height)
         mario.x = 50; // Ensure Mario starts on the left
         premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
         premekong.x = 50; // Keep Preme Kong on left side
@@ -248,17 +248,17 @@ function update() {
                 }
             });
             if (!onPlatform) {
-                // If not on a platform, find the highest platform Mario can land on
-                let highestPlatformY = canvas.height - mario.height;
+                // If not on a platform, find the highest platform or base Mario can land on
+                let highestY = canvas.height - mario.height; // Default to base (y: 736)
                 platforms.forEach(platform => {
                     if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x) {
-                        if (platform.y - mario.height < highestPlatformY && platform.y - mario.height > mario.y) {
-                            highestPlatformY = platform.y - mario.height;
+                        if (platform.y - mario.height < highestY && platform.y - mario.height > mario.y) {
+                            highestY = platform.y - mario.height;
                         }
                     }
                 });
-                mario.y = highestPlatformY; // Set Mario to the highest valid platform or bottom
-                console.log('Mario reset to highest platform or bottom:', mario.y);
+                mario.y = highestY; // Set Mario to the highest valid platform or base
+                console.log('Mario reset to highest platform or base:', mario.y);
             }
         }
         
@@ -288,15 +288,15 @@ function update() {
                 barrels[barrels.length - 1].image.src = 'barrel.png';
                 console.log('New thrown barrel created at:', startX, startY, 'with dx:', dxThrown, 'dy:', dyThrown, 'targeting Mario at y:', targetY);
                 
-                // Rolling barrels (100% chance, start from Preme Kong, move left to right, drop to second platform, roll, drop to bottom)
-                const rollingStartX = premekong.x; // Start from Preme Kong (x: 50)
+                // Rolling barrels (100% chance, start right of Pauline, move right to ladder, drop to third, continue pattern)
+                const rollingStartX = pauline.x + pauline.width + 32; // Start right of Pauline (x: 182, y: 368)
                 barrels.push({ 
                     x: rollingStartX, 
                     y: canvas.height - 400, // Top platform (y: 368)
-                    dx: 0.1, // Roll left to right slowly
+                    dx: 0.1, // Roll rightward slowly
                     dy: 0, // No vertical movement until drop
                     type: 'rolling', // Mark as rolling barrel
-                    stage: 1, // Track rolling stage: 1 = top, 2 = second, 3 = bottom
+                    stage: 1, // Track rolling stage: 1 = top, 2 = third, 3 = second, 4 = bottom
                     image: new Image() 
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
@@ -312,23 +312,31 @@ function update() {
                 barrel.y += barrel.dy; // Move very slowly downward targeting Mario
             } else if (barrel.type === 'rolling') {
                 // Rolling barrels on platforms
-                if (barrel.stage === 1) { // On top platform, roll left to right until ladder (x: 94)
-                    barrel.x += barrel.dx; // Roll left to right (0.1)
-                    if (barrel.x >= 94) { // Drop at ladder to second platform (y: 568)
-                        barrel.y = canvas.height - 200; // Second platform (y: 568)
+                if (barrel.stage === 1) { // On top platform, roll right until ladder (x: 506)
+                    barrel.x += barrel.dx; // Roll right (0.1)
+                    if (barrel.x >= 506) { // Drop at ladder to third platform (y: 468)
+                        barrel.y = canvas.height - 300; // Third platform (y: 468)
                         barrel.dx = Math.random() < 0.8 ? 0.1 : -0.1; // 80% left to right, 20% right to left
-                        barrel.stage = 2; // Move to second platform stage
+                        barrel.stage = 2; // Move to third platform stage
                         barrel.dy = 0; // No further vertical movement
                     }
-                } else if (barrel.stage === 2) { // On second platform, roll until ladder (x: 506)
+                } else if (barrel.stage === 2) { // On third platform, roll until ladder (x: 94)
+                    barrel.x += barrel.dx; // Roll left to right or right to left
+                    if (barrel.x >= 94 || barrel.x <= 0) { // Drop at ladder to second platform (y: 568) or edge
+                        barrel.y = canvas.height - 200; // Second platform (y: 568)
+                        barrel.dx = Math.random() < 0.8 ? 0.1 : -0.1; // 80% left to right, 20% right to left
+                        barrel.stage = 3; // Move to second platform stage
+                        barrel.dy = 0; // No further vertical movement
+                    }
+                } else if (barrel.stage === 3) { // On second platform, roll until ladder (x: 506)
                     barrel.x += barrel.dx; // Roll left to right or right to left
                     if (barrel.x >= 506 || barrel.x <= 0) { // Drop at ladder to bottom platform (y: 668) or edge
                         barrel.y = canvas.height - 100; // Bottom platform (y: 668)
                         barrel.dx = Math.random() < 0.8 ? -0.1 : 0.1; // 80% right to left, 20% left to right
-                        barrel.stage = 3; // Move to bottom platform stage
+                        barrel.stage = 4; // Move to bottom platform stage
                         barrel.dy = 0; // No further vertical movement
                     }
-                } else if (barrel.stage === 3) { // On bottom platform, roll until edge
+                } else if (barrel.stage === 4) { // On bottom platform, roll until edge
                     barrel.x += barrel.dx; // Roll right to left or left to right
                     if (barrel.x <= 0 || barrel.x >= canvas.width - 32) { // Remove when reaching edge
                         barrels.splice(i, 1);
@@ -343,7 +351,7 @@ function update() {
                 console.log('Mario hit by barrel at:', barrel.x, barrel.y);
                 // End turn: reset Mario, score, and set gameOver
                 mario.x = 50;
-                mario.y = canvas.height - 100 - mario.height;
+                mario.y = canvas.height - 68; // Reset Mario to base (y: 700)
                 mario.jumping = false;
                 mario.onLadder = false;
                 score = 0;
@@ -369,7 +377,7 @@ function update() {
     }
 }
 
-// Helper function to find Mario's current platform y-position
+// Helper function to find Mario's current platform or base y-position
 function findCurrentPlatformY(mario) {
     const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
     for (let y of platformY) {
@@ -377,6 +385,7 @@ function findCurrentPlatformY(mario) {
             return y;
         }
     }
+    if (mario.y + mario.height >= canvas.height - 5) return canvas.height; // At base (y: 768)
     return canvas.height - 100; // Default to bottom platform if not found
 }
 
