@@ -317,32 +317,41 @@ function restartGame() {
 function handleTelegramData() {
     const Telegram = window.Telegram;
     if (Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
-        Telegram.WebApp.onEvent('web_app_data', (data) => {
-            if (data && data.data) {
-                try {
-                    const gameData = JSON.parse(data.data);
-                    if (gameData.restart) {
-                        restartGame();
-                    } else {
-                        score = gameData.score || score;
-                        preme = gameData.preme || preme;
-                        updateScore();
-                        Telegram.WebApp.sendData(JSON.stringify({ 
-                            score, 
-                            preme, 
-                            perfectRun: score >= 400, 
-                            gameOver 
-                        }));
+        try {
+            Telegram.WebApp.ready();
+            Telegram.WebApp.expand();
+            console.log('Telegram WebApp initialized and ready');
+            Telegram.WebApp.onEvent('web_app_data', (event) => {
+                console.log('Telegram WebApp event received:', event);
+                if (event && event.data) {
+                    try {
+                        const gameData = JSON.parse(event.data);
+                        console.log('Parsed Telegram data:', gameData);
+                        if (gameData.restart) {
+                            restartGame();
+                            console.log('Game restarted via Telegram');
+                        } else {
+                            score = gameData.score || score;
+                            preme = gameData.preme || preme;
+                            updateScore();
+                            Telegram.WebApp.sendData(JSON.stringify({ 
+                                score, 
+                                preme, 
+                                perfectRun: score >= 400, 
+                                gameOver 
+                            }));
+                            console.log('Sent Telegram data:', { score, preme, perfectRun: score >= 400, gameOver });
+                        }
+                    } catch (parseError) {
+                        console.error('Error parsing Telegram event data:', parseError);
                     }
-                } catch (parseError) {
-                    console.error('Error parsing Telegram data:', parseError);
+                } else {
+                    console.warn('Invalid Telegram event data:', event);
                 }
-            } else {
-                console.warn('Invalid Telegram data received:', data);
-            }
-        });
+            });
+        } catch (initError) {
+            console.error('Error initializing Telegram WebApp:', initError);
+        }
     } else {
         console.warn('Telegram WebApp not available');
     }
