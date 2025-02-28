@@ -322,17 +322,17 @@ function handleTelegramData() {
             Telegram.WebApp.expand();
             console.log('Telegram WebApp initialized and ready');
             Telegram.WebApp.onEvent('web_app_data', (event) => {
-                console.log('Telegram WebApp event received:', event);
-                if (event && event.data) {
+                console.log('Telegram WebApp event received:', JSON.stringify(event));
+                if (event && typeof event.data === 'string' && event.data.trim() !== '') {
                     try {
                         const gameData = JSON.parse(event.data);
                         console.log('Parsed Telegram data:', gameData);
-                        if (gameData.restart) {
+                        if (gameData && typeof gameData.restart === 'boolean' && gameData.restart) {
                             restartGame();
                             console.log('Game restarted via Telegram');
                         } else {
-                            score = gameData.score || score;
-                            preme = gameData.preme || preme;
+                            score = (gameData && typeof gameData.score === 'number') ? gameData.score : score;
+                            preme = (gameData && typeof gameData.preme === 'number') ? gameData.preme : preme;
                             updateScore();
                             Telegram.WebApp.sendData(JSON.stringify({ 
                                 score, 
@@ -343,10 +343,10 @@ function handleTelegramData() {
                             console.log('Sent Telegram data:', { score, preme, perfectRun: score >= 400, gameOver });
                         }
                     } catch (parseError) {
-                        console.error('Error parsing Telegram event data:', parseError);
+                        console.error('Error parsing Telegram event data:', parseError, 'Raw data:', event.data);
                     }
                 } else {
-                    console.warn('Invalid Telegram event data:', event);
+                    console.warn('Invalid or empty Telegram event data:', event);
                 }
             });
         } catch (initError) {
