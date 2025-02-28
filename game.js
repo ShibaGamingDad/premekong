@@ -90,9 +90,9 @@ function initLevel() {
             }
         }
         // Three separate ladders, moved up to connect properly to the next platform
-        ladders.push({ x: 506, y: platformY[0] - 30, width: 50, height: 100, image: null }); // Ladder 1: between 1st and 2nd, up to y: 638 (from 633)
-        ladders.push({ x: 94, y: platformY[1] - 30, width: 50, height: 100, image: null }); // Ladder 2: between 2nd and 3rd, up to y: 538 (from 533)
-        ladders.push({ x: 506, y: platformY[2] - 30, width: 50, height: 100, image: null }); // Ladder 3: between 3rd and 4th, up to y: 438 (from 433)
+        ladders.push({ x: 506, y: platformY[0] - 25, width: 50, height: 100, image: null }); // Ladder 1: between 1st and 2nd, up to y: 643 (from 638)
+        ladders.push({ x: 94, y: platformY[1] - 25, width: 50, height: 100, image: null }); // Ladder 2: between 2nd and 3rd, up to y: 543 (from 538)
+        ladders.push({ x: 506, y: platformY[2] - 25, width: 50, height: 100, image: null }); // Ladder 3: between 3rd and 4th, up to y: 443 (from 438)
 
         mario.y = canvas.height - 100 - mario.height; // Start Mario on the bottom platform
         mario.x = 50; // Ensure Mario starts on the left
@@ -221,12 +221,12 @@ function update() {
         if (mario.jumping) {
             mario.y -= 5; // Reduced jump height to just avoid barrels (maintained at 5)
             // Stop jumping just above Mario’s current platform, limited to avoid next platform
-            let stopJumpY = mario.y - 10; // Reduced to ~10 pixels (enough to clear a barrel, 32 height, tighter limit)
+            let stopJumpY = mario.y - 8; // Reduced to ~8 pixels (enough to clear a barrel, 32 height, tighter limit)
             const currentPlatformY = findCurrentPlatformY(mario);
             platforms.forEach(platform => {
                 if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
-                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > currentPlatformY - mario.height - 10) { // Limit to current platform height + small jump
-                        stopJumpY = platform.y - mario.height - 10; // Stop just above current platform
+                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > currentPlatformY - mario.height - 8) { // Limit to current platform height + small jump
+                        stopJumpY = platform.y - mario.height - 8; // Stop just above current platform
                     }
                 }
             });
@@ -288,20 +288,19 @@ function update() {
                 barrels[barrels.length - 1].image.src = 'barrel.png';
                 console.log('New thrown barrel created at:', startX, startY, 'with dx:', dxThrown, 'dy:', dyThrown, 'targeting Mario at y:', targetY);
                 
-                // Rolling barrels (50% chance, start on top platform, roll left, drop at ladder, roll left on third platform)
-                if (Math.random() < 0.5) { // 50% chance for rolling barrel
-                    const rollingStartX = canvas.width - 32; // Start at right edge of top platform
-                    barrels.push({ 
-                        x: rollingStartX, 
-                        y: canvas.height - 400, // Top platform (y: 368)
-                        dx: -0.1, // Roll leftward slowly
-                        dy: 0, // No vertical movement until drop
-                        type: 'rolling', // Mark as rolling barrel
-                        image: new Image() 
-                    });
-                    barrels[barrels.length - 1].image.src = 'barrel.png';
-                    console.log('New rolling barrel created at:', rollingStartX, canvas.height - 400, 'with dx:', -0.1, 'dy:', 0);
-                }
+                // Rolling barrels (100% chance, start from Preme Kong, move left to right, drop to second platform, roll, drop to bottom)
+                const rollingStartX = premekong.x; // Start from Preme Kong (x: 50)
+                barrels.push({ 
+                    x: rollingStartX, 
+                    y: canvas.height - 400, // Top platform (y: 368)
+                    dx: 0.1, // Roll left to right slowly
+                    dy: 0, // No vertical movement until drop
+                    type: 'rolling', // Mark as rolling barrel
+                    stage: 1, // Track rolling stage: 1 = top, 2 = second, 3 = bottom
+                    image: new Image() 
+                });
+                barrels[barrels.length - 1].image.src = 'barrel.png';
+                console.log('New rolling barrel created at:', rollingStartX, canvas.height - 400, 'with dx:', 0.1, 'dy:', 0, 'stage:', 1);
             }
         }
         
@@ -313,23 +312,32 @@ function update() {
                 barrel.y += barrel.dy; // Move very slowly downward targeting Mario
             } else if (barrel.type === 'rolling') {
                 // Rolling barrels on platforms
-                if (barrel.y === canvas.height - 400 && barrel.x > 506) { // On top platform, roll left until ladder (x: 506)
-                    barrel.x += barrel.dx; // Roll left (-0.1)
-                    if (barrel.x <= 506) { // Drop at ladder to third platform (y: 468)
-                        barrel.y = canvas.height - 300; // Third platform (y: 468)
-                        barrel.dx = -0.1; // Continue rolling left on third platform
+                if (barrel.stage === 1) { // On top platform, roll left to right until ladder (x: 94)
+                    barrel.x += barrel.dx; // Roll left to right (0.1)
+                    if (barrel.x >= 94) { // Drop at ladder to second platform (y: 568)
+                        barrel.y = canvas.height - 200; // Second platform (y: 568)
+                        barrel.dx = Math.random() < 0.8 ? 0.1 : -0.1; // 80% left to right, 20% right to left
+                        barrel.stage = 2; // Move to second platform stage
                         barrel.dy = 0; // No further vertical movement
                     }
-                } else if (barrel.y === canvas.height - 300 && barrel.x > 94) { // On third platform, roll left until next ladder (x: 94)
-                    barrel.x += barrel.dx; // Roll left (-0.1)
-                    if (barrel.x <= 94) { // Remove when reaching ladder (no further roll needed)
+                } else if (barrel.stage === 2) { // On second platform, roll until ladder (x: 506)
+                    barrel.x += barrel.dx; // Roll left to right or right to left
+                    if (barrel.x >= 506 || barrel.x <= 0) { // Drop at ladder to bottom platform (y: 668) or edge
+                        barrel.y = canvas.height - 100; // Bottom platform (y: 668)
+                        barrel.dx = Math.random() < 0.8 ? -0.1 : 0.1; // 80% right to left, 20% left to right
+                        barrel.stage = 3; // Move to bottom platform stage
+                        barrel.dy = 0; // No further vertical movement
+                    }
+                } else if (barrel.stage === 3) { // On bottom platform, roll until edge
+                    barrel.x += barrel.dx; // Roll right to left or left to right
+                    if (barrel.x <= 0 || barrel.x >= canvas.width - 32) { // Remove when reaching edge
                         barrels.splice(i, 1);
                         return;
                     }
                 }
             }
             
-            console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy, 'type:', barrel.type);
+            console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy, 'type:', barrel.type, 'stage:', barrel.stage || 'N/A');
             if (barrel.x < -32 || barrel.x > canvas.width + 32 || barrel.y > canvas.height + 32) barrels.splice(i, 1); // Remove when off left/right edge or below canvas
             if (checkCollision(mario, barrel)) {
                 console.log('Mario hit by barrel at:', barrel.x, barrel.y);
