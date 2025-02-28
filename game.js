@@ -48,13 +48,13 @@ function initLevel() {
             rivets.push({ x: 100 + j * 100, y: baseY[i] - 10 + (j * -5), width: 10, height: 10, hit: false, image: null });
         }
     }
-    // Ladders positioned to touch the bottom of each platform and extend downward 100px
-    // First ladder (bottom of first platform, y: 668, extends to y: 768)
-    ladders.push({ x: 506, y: baseY[0], width: 50, height: 100, image: null });
-    // Second ladder (bottom of second platform, y: 568, extends to y: 668)
-    ladders.push({ x: 94, y: baseY[1], width: 50, height: 100, image: null });
-    // Third ladder (bottom of third platform, y: 468, extends to y: 568)
-    ladders.push({ x: 506, y: baseY[2], width: 50, height: 100, image: null });
+    // Ladders positioned to start at the top of each platform and extend downward 100px
+    // First ladder (top of first platform, y: 668, extends to y: 768)
+    ladders.push({ x: 506, y: baseY[0] - 100, width: 50, height: 100, image: null }); // y: 568 (extends down to 668)
+    // Second ladder (top of second platform, y: 568, extends to y: 668)
+    ladders.push({ x: 94, y: baseY[1] - 100, width: 50, height: 100, image: null }); // y: 468 (extends down to 568)
+    // Third ladder (top of third platform, y: 468, extends to y: 568)
+    ladders.push({ x: 506, y: baseY[2] - 100, width: 50, height: 100, image: null }); // y: 368 (extends down to 468)
 
     mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image };
     premekong.y = canvas.height - 400 - premekong.height;
@@ -158,141 +158,4 @@ function update() {
     // Hammer logic
     if (hammer.active && checkCollision(mario, hammer)) {
         mario.hammer = true;
-        mario.hammerTime = 5000; // 5 seconds
-        hammer.active = false;
-    }
-    if (mario.hammer) {
-        mario.hammerTime -= 16; // ~60fps
-        if (mario.hammerTime <= 0) mario.hammer = false;
-    }
-
-    // Barrel throwing
-    if (premekong.dropping && Math.random() < 0.025 * level) { // Scales with level
-        const offset = Math.random() * 100 - 50;
-        const startX = Math.max(0, Math.min(premekong.x + offset, canvas.width - 32));
-        barrels.push({
-            x: startX,
-            y: canvas.height - 400 - 32,
-            dx: (Math.random() - 0.5) * 0.4, // ±0.2
-            dy: Math.random() * 0.3 + 0.2, // 0.2–0.5
-            type: 'thrown',
-            image: new Image()
-        });
-        barrels[barrels.length - 1].image.src = 'barrel.png';
-
-        // Rolling barrel
-        barrels.push({
-            x: pauline.x + pauline.width + 32,
-            y: canvas.height - 400,
-            dx: 0.2 * level, // Scales with level
-            dy: 0,
-            type: 'rolling',
-            stage: 1,
-            image: new Image()
-        });
-        barrels[barrels.length - 1].image.src = 'barrel.png';
-    }
-
-    // Barrel movement
-    barrels.forEach((b, i) => {
-        if (b.type === 'thrown') {
-            b.x += b.dx;
-            b.y += b.dy;
-        } else if (b.type === 'rolling') {
-            b.x += b.dx;
-            if (b.stage === 1 && b.x >= 506) { b.y = canvas.height - 300; b.dx = -0.2 * level; b.stage = 2; }
-            else if (b.stage === 2 && b.x <= 94) { b.y = canvas.height - 200; b.dx = 0.2 * level; b.stage = 3; }
-            else if (b.stage === 3 && b.x >= 506) { b.y = canvas.height - 100; b.dx = -0.2 * level; b.stage = 4; }
-        }
-        if (b.x < -32 || b.x > canvas.width + 32 || b.y > canvas.height + 32) barrels.splice(i, 1);
-        else if (checkCollision(mario, b)) {
-            if (mario.hammer) { score += 300; barrels.splice(i, 1); }
-            else { gameOver = true; mario.x = 50; mario.y = canvas.height - 68; score = 0; preme = 0; }
-        }
-        // Score for jumping barrels
-        if (!mario.onLadder && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x - b.x) < 32) score += 100;
-    });
-
-    // Ladder, rivet, and win condition
-    mario.onLadder = ladders.some(l => checkCollision(mario, l));
-    rivets.forEach(r => {
-        if (!r.hit && checkCollision(mario, r)) {
-            r.hit = true;
-            score += 50;
-            preme += 0.1;
-            if (rivets.every(r => r.hit)) levelUp();
-        }
-    });
-    if (checkCollision(mario, pauline)) {
-        gameOver = true; // Temporary win state
-        premekong.y += 100; // Basic "cutscene": Preme Kong falls
-        setTimeout(restartGame, 1000); // Restart after 1s
-    }
-}
-
-function checkCollision(obj1, obj2) {
-    return obj1.x < obj2.x + obj2.width && obj1.x + obj1.width > obj2.x && obj1.y < obj2.y + obj2.height && obj1.y + obj1.height > obj2.y;
-}
-
-function levelUp() {
-    level++;
-    initLevel();
-    score += 100;
-}
-
-function updateScore() {
-    document.getElementById('score').innerText = `Score: ${score}  $PREME: ${preme.toFixed(1)}  Jackpot: 0 $PREME  Burn This Month: 0 $PREME`;
-}
-
-function setupTouchControls() {
-    const btns = { left: '#left', right: '#right', jump: '#jump', up: '#up', down: '#down', restart: '#restart' };
-    Object.entries(btns).forEach(([key, id]) => {
-        const btn = document.querySelector(id);
-        btn.addEventListener('touchstart', () => {
-            if (key === 'left') mario.dx = -1;
-            else if (key === 'right') mario.dx = 1;
-            else if (key === 'jump' && !mario.jumping && !mario.onLadder) { mario.jumping = true; mario.dy = -8; } // 32px jump
-            else if (key === 'up' && mario.onLadder) mario.dy = -1;
-            else if (key === 'down' && mario.onLadder) mario.dy = 1;
-            else if (key === 'restart' && gameOver) restartGame();
-        });
-        btn.addEventListener('touchend', () => {
-            if (key === 'left' || key === 'right') mario.dx = 0;
-            else if (key === 'up' || key === 'down') mario.dy = 0;
-        });
-    });
-}
-
-function restartGame() {
-    gameOver = false;
-    initLevel();
-    gameLoop();
-}
-
-function handleTelegramData() {
-    const Telegram = window.Telegram;
-    if (Telegram && Telegram.WebApp) {
-        Telegram.WebApp.onEvent('web_app_data', (data) => {
-            if (data.data) {
-                const gameData = JSON.parse(data.data);
-                if (gameData.restart) restartGame();
-                else {
-                    Telegram.WebApp.sendData(JSON.stringify({ score, preme, perfectRun: score >= 400, gameOver }));
-                }
-            }
-        });
-    }
-}
-
-function gameLoop() {
-    if (!gameActive || gameOver) return;
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
-
-loadImages();
-initLevel();
-setupTouchControls();
-handleTelegramData();
-gameLoop();
+        mario.hammerTime = 5000
