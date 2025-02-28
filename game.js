@@ -104,8 +104,8 @@ function initLevel() {
             }
         }
         // Ladders positioned to start at the top of each platform and extend downward 100px (like Donkey Kong’s vertical connectivity)
-        // New ladder from first platform (y: 668) to ground (y: 768)
-        ladders.push({ x: 300, y: 568, width: 50, height: 100, image: null }); // Starts at bottom of first platform, extends to ground
+        // New ladder from first platform (y: 668) to base (y: 768)
+        ladders.push({ x: 300, y: 668, width: 50, height: 100, image: null }); // Starts at bottom of first platform, extends to ground (y: 768)
         // First ladder (top of first platform, y: 668, extends down to y: 768)
         ladders.push({ x: 506, y: baseY[0] - 100, width: 50, height: 100, image: null }); // y: 568 (extends from 668 to 768)
         // Second ladder (top of second platform, y: 568, extends down to y: 668)
@@ -118,6 +118,8 @@ function initLevel() {
         if (mario.y !== 668) {
             console.warn('Mario position reset to first platform:', mario.x, 668);
             mario.y = 668; // Force Mario to first platform if misplaced
+            mario.dx = 0; // Reset horizontal velocity
+            mario.dy = 0; // Reset vertical velocity
         }
         premekong.y = Math.max(0, Math.min(canvas.height - 400 - premekong.height, canvas.height - premekong.height));
         premekong.x = 50;
@@ -190,7 +192,8 @@ function draw() {
             if (mario.y !== 668 && !mario.jumping && !mario.onLadder) {
                 console.warn('Mario reset to first platform due to incorrect position:', mario.x, 668);
                 mario.y = 668; // Force Mario back to first platform if misplaced
-                mario.dy = 0; // Reset velocity
+                mario.dx = 0; // Reset horizontal velocity
+                mario.dy = 0; // Reset vertical velocity
             }
             if (mario.image && mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
             else { ctx.fillStyle = 'white'; ctx.fillRect(mario.x, mario.y, mario.width, mario.height); }
@@ -259,7 +262,8 @@ function update() {
         if (!mario.jumping && !mario.onLadder && mario.y !== 668) {
             console.warn('Mario reset to first platform due to incorrect position:', mario.x, 668);
             mario.y = 668; // Force Mario back to first platform if misplaced
-            mario.dy = 0; // Reset velocity
+            mario.dx = 0; // Reset horizontal velocity
+            mario.dy = 0; // Reset vertical velocity
         }
         console.log('Mario updated at:', mario.x, mario.y); // Debug log for Mario's position after update
 
