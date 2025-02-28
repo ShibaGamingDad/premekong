@@ -274,8 +274,8 @@ function update() {
             if (mario.hammerTime <= 0) mario.hammer = false;
         }
 
-        // Barrel throwing (removed Preme Kong spawning, only Pauline spawns rolling barrels)
-        if (Math.random() < 0.005 * level) { // Maintain reduced frequency, no Preme Kong check
+        // Barrel spawning (only from Pauline, no Preme Kong)
+        if (Math.random() < 0.005 * level) { // Maintain reduced frequency
             // Rolling barrel (conveyor system starting from Pauline, moving downward)
             barrels.push({
                 x: pauline.x + pauline.width + 32, // Start on right side of Pauline
@@ -287,6 +287,7 @@ function update() {
                 image: new Image()
             });
             barrels[barrels.length - 1].image.src = 'barrel.png';
+            console.log('Barrel spawned at Pauline:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y); // Debug log for spawning position
         }
 
         // Barrel movement (conveyor system, downward path)
@@ -296,6 +297,13 @@ function update() {
                 const currentPlatform = platforms[b.stage - 1];
                 if (currentPlatform && b.y !== currentPlatform.y - 32) {
                     b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
+                }
+
+                // Prevent barrels from spawning or landing on first platform unless via conveyor
+                if (b.stage === 4 && b.y === canvas.height - 100 && b.x < 300 - 32) { // First platform (y: 668) before new ladder
+                    console.warn('Barrel prevented from spawning on first platform, resetting:', b.x, b.y);
+                    barrels.splice(i, 1); // Remove barrel if it tries to spawn or land incorrectly on first platform
+                    return;
                 }
 
                 // Conveyor system: Move right until reaching the new ladder (x: 300), then drop downward
