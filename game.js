@@ -277,56 +277,51 @@ function update() {
         }
 
         // Barrel spawning (only from Pauline, no Preme Kong, strict Pauline platform check)
-        if (Math.random() < 0.005 * level) { // Maintain reduced frequency
-            const paulinePlatformY = canvas.height - 400;
-            if (pauline.y === paulinePlatformY) { // Verify Pauline is on her platform
-                // Rolling barrel (conveyor system starting from Pauline, moving downward)
+        if (Math.random() < 0.005 * level) { 
+            const paulinePlatform = platforms[platforms.length - 1]; // Get the top platform (index 3, y: canvas.height - 400)
+            if (pauline.y === paulinePlatform.y) { // Verify Pauline is on her platform
                 barrels.push({
                     x: pauline.x + pauline.width + 32, // Start on right side of Pauline
-                    y: paulinePlatformY, // Explicitly Pauline's platform y
+                    y: paulinePlatform.y - 32, // Position barrel on top of the platform (32px height for barrel)
                     dx: 0.2 * level, // Start going right
-                    dy: 0,
+                    dy: 0, // No initial downward velocity
                     type: 'rolling',
-                    stage: 1,
+                    stage: 1, // Start on top platform
                     image: new Image()
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('Barrel spawned at Pauline:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'Platform Y:', paulinePlatformY); // Debug log for spawning position
+                console.log('Barrel spawned at Pauline on top platform:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'Platform Y:', paulinePlatform.y);
             } else {
-                console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected:', paulinePlatformY);
+                console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected:', paulinePlatform.y);
             }
         }
 
-        // Barrel movement (conveyor system, downward path, prevent first platform spawn unless via conveyor)
+        // Barrel movement (conveyor system, downward path)
         barrels.forEach((b, i) => {
             if (b.type === 'rolling') {
-                b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
+                // Keep barrel on current platform until it reaches the drop point
                 const currentPlatform = platforms[b.stage - 1];
-                if (currentPlatform && b.y !== currentPlatform.y - 32) {
-                    b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
+                if (currentPlatform) {
+                    b.y = currentPlatform.y - 32; // Ensure barrel stays on top of the platform
                 }
 
-                // Prevent barrels from spawning or landing on first platform unless via conveyor
-                if (b.stage === 4 && b.y === canvas.height - 100 && b.x < 300 - 32) { // First platform (y: 668) before new ladder
-                    console.warn('Barrel prevented from spawning on first platform, resetting:', b.x, b.y);
-                    barrels.splice(i, 1); // Remove barrel if it tries to spawn or land incorrectly on first platform
-                    return;
-                }
+                // Horizontal movement (conveyor)
+                b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
 
-                // Conveyor system: Move right until reaching the new ladder (x: 300), then drop downward
+                // Conveyor system: Move right until reaching the drop points (ladders), then drop downward
                 if (b.stage === 1 && b.x >= 300 - 32) { // Near new ladder at x: 300
-                    b.y = canvas.height - 200; // Drop to second platform (y: 568, downward)
+                    b.y = platforms[1].y - 32; // Drop to second platform (y: canvas.height - 200)
                     b.dx = 0; // Stop horizontal movement before drop
                     b.dy = 0.5; // Small drop velocity
                     b.stage = 2;
                 } else if (b.stage === 2 && b.x >= 506 - 32) { // Near first ladder at x: 506
-                    b.y = canvas.height - 300; // Drop to third platform (y: 468, downward)
-                    b.dx = 0; // Stop before drop
+                    b.y = platforms[2].y - 32; // Drop to third platform (y: canvas.height - 300)
+                    b.dx = 0;
                     b.dy = 0.5;
                     b.stage = 3;
                 } else if (b.stage === 3 && b.x <= 94 + 32) { // Near second ladder at x: 94
-                    b.y = canvas.height - 100; // Drop to fourth platform (y: 668, downward)
-                    b.dx = 0; // Stop before drop
+                    b.y = platforms[3].y - 32; // Drop to fourth platform (y: canvas.height - 100)
+                    b.dx = 0;
                     b.dy = 0.5;
                     b.stage = 4;
                 }
@@ -340,8 +335,8 @@ function update() {
                         b.y = newPlatform.y - 32; // Land on new platform
                         b.dy = 0;
                         b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomize direction after landing
-                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx, 'New Platform Y:', newPlatform.y);
                         b.stage = platforms.indexOf(newPlatform) + 1;
+                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx, 'New Platform Y:', newPlatform.y);
                     }
                 }
 
@@ -382,6 +377,10 @@ function update() {
             premekong.y += 100; // Basic "cutscene": Preme Kong falls
             setTimeout(restartGame, 1000); // Restart after 1s
         }
+
+        // Debug log for barrel and platform positions
+        console.log('Barrel positions:', barrels.map(b => `x: ${b.x}, y: ${b.y}, stage: ${b.stage}`));
+        console.log('Platform assignments:', platforms.map((p, i) => `Stage ${i + 1}: y: ${p.y}`));
     } catch (error) {
         console.error('Error in update function:', error);
     }
