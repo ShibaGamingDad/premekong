@@ -288,7 +288,7 @@ function update() {
             });
             barrels[barrels.length - 1].image.src = 'barrel.png';
 
-            // Rolling barrel (conveyor system starting from Pauline)
+            // Rolling barrel (conveyor system starting from Pauline, moving downward)
             barrels.push({
                 x: pauline.x + pauline.width + 32, // Start on right side of Pauline
                 y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)), // Pauline's platform
@@ -301,7 +301,7 @@ function update() {
             barrels[barrels.length - 1].image.src = 'barrel.png';
         }
 
-        // Barrel movement (conveyor system)
+        // Barrel movement (conveyor system, downward path)
         barrels.forEach((b, i) => {
             if (b.type === 'thrown') {
                 b.x = Math.max(-32, Math.min(b.x + b.dx, canvas.width + 32));
@@ -322,25 +322,22 @@ function update() {
                     b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
                 }
 
-                // Conveyor system: Move right until reaching the new ladder (x: 300), then drop
+                // Conveyor system: Move right until reaching the new ladder (x: 300), then drop downward
                 if (b.stage === 1 && b.x >= 300 - 32) { // Near new ladder at x: 300
-                    b.y = canvas.height - 200; // Drop to second platform (y: 568)
+                    b.y = canvas.height - 200; // Drop to second platform (y: 568, downward)
                     b.dx = 0; // Stop horizontal movement before drop
                     b.dy = 0.5; // Small drop velocity
                     b.stage = 2;
                 } else if (b.stage === 2 && b.x >= 506 - 32) { // Near first ladder at x: 506
-                    b.y = canvas.height - 300; // Drop to third platform (y: 468)
+                    b.y = canvas.height - 300; // Drop to third platform (y: 468, downward)
                     b.dx = 0; // Stop before drop
                     b.dy = 0.5;
                     b.stage = 3;
                 } else if (b.stage === 3 && b.x <= 94 + 32) { // Near second ladder at x: 94
-                    b.y = canvas.height - 100; // Drop to fourth platform (y: 668)
+                    b.y = canvas.height - 100; // Drop to fourth platform (y: 668, downward)
                     b.dx = 0; // Stop before drop
                     b.dy = 0.5;
                     b.stage = 4;
-                } else if (b.stage === 4 && b.x >= 506 - 32) { // Near third ladder at x: 506
-                    b.y = canvas.height - 100; // Stay on fourth platform (no drop beyond this)
-                    b.dx = Math.random() < 0.5 ? -0.2 * level : 0.2 * level; // Random direction on top platform
                 }
 
                 // Apply drop and randomize direction after each drop
