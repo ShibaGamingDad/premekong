@@ -1,477 +1,273 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Debug canvas setup
-if (!canvas) {
-    console.error('Canvas not found! Check index.html for <canvas id="gameCanvas">');
-} else {
-    console.log('Canvas found, setting size:', 672, 'x', 768);
-    canvas.width = 672; // Match your HTML's width
-    canvas.height = 768; // Match your HTML's height
-    console.log('Actual canvas size after setting:', canvas.width, 'x', canvas.height);
-    if (canvas.width !== 672 || canvas.height !== 768) {
-        console.warn('Canvas size mismatch! Expected 672x768, got', canvas.width, 'x', canvas.height);
-    }
+if (!canvas) console.error('Canvas not found!');
+else {
+    console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
 }
 
-let mario = { x: 50, y: canvas.height, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false }; // Start Mario at base (y: 768)
-let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true }; // Enable dropping to throw barrels
-let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null }; // Pauline stays on top platform, slightly right
+let mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 };
+let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true };
+let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null };
 let barrels = [];
+let hammer = { x: 300, y: canvas.height - 200 - 32, width: 32, height: 32, active: true, image: null };
 let score = 0;
+let preme = 0; // $PREME currency
 let level = 1;
 let rivets = [];
 let ladders = [];
 let platforms = [];
 let gameActive = true;
-let gameOver = false; // New state for ending turns
+let gameOver = false;
 
-// Load images with fallbacks and debug
 function loadImages() {
     console.log('Loading images...');
-    try {
-        mario.image = new Image();
-        mario.image.src = 'mario.png';
-        mario.image.onload = () => console.log('Mario image loaded at:', mario.image.src, 'Dimensions:', mario.image.width, 'x', mario.image.height);
-        mario.image.onerror = () => { console.error('Mario image failed to load at:', mario.image.src); mario.image = null; };
-
-        premekong.image = new Image();
-        premekong.image.src = 'premekong.png';
-        premekong.image.onload = () => console.log('Preme Kong image loaded at:', premekong.image.src, 'Dimensions:', premekong.image.width, 'x', premekong.image.height);
-        premekong.image.onerror = () => { console.error('Preme Kong image failed to load at:', premekong.image.src); premekong.image = null; };
-
-        pauline.image = new Image();
-        pauline.image.src = 'pauline.png'; // Assume you have a Pauline image; use fallback if not
-        pauline.image.onload = () => console.log('Pauline image loaded at:', pauline.image.src, 'Dimensions:', pauline.image.width, 'x', pauline.image.height);
-        pauline.image.onerror = () => { console.error('Pauline image failed to load at:', pauline.image.src); pauline.image = null; };
-
-        const barrelImg = new Image();
-        barrelImg.src = 'barrel.png';
-        barrelImg.onload = () => console.log('Barrel image loaded at:', barrelImg.src, 'Dimensions:', barrelImg.width, 'x', barrelImg.height);
-        barrelImg.onerror = () => console.error('Barrel image failed to load at:', barrelImg.src);
-
-        const ladderImg = new Image();
-        ladderImg.src = 'ladder.png';
-        ladderImg.onload = () => console.log('Ladder image loaded at:', ladderImg.src, 'Dimensions:', ladderImg.width, 'x', ladderImg.height);
-        ladderImg.onerror = () => { console.error('Ladder image failed to load at:', ladderImg.src); ladderImg.width = 50; ladderImg.height = 100; }; // Fallback size
-
-        const platformImg = new Image();
-        platformImg.src = 'platform.png';
-        platformImg.onload = () => console.log('Platform image loaded at:', platformImg.src, 'Dimensions:', platformImg.width, 'x', platformImg.height);
-        platformImg.onerror = () => { console.error('Platform image failed to load at:', platformImg.src); platformImg.width = canvas.width; platformImg.height = 20; }; // Fallback size
-
-        const rivetImg = new Image();
-        rivetImg.src = 'rivet.png';
-        rivetImg.onload = () => console.log('Rivet image loaded at:', rivetImg.src, 'Dimensions:', rivetImg.width, 'x', rivetImg.height);
-        rivetImg.onerror = () => console.error('Rivet image failed to load at:', rivetImg.src);
-
-        platforms.forEach(platform => platform.image = platformImg || null);
-        ladders.forEach(ladder => ladder.image = ladderImg || null);
-        rivets.forEach(rivet => rivet.image = rivetImg || null);
-        barrels.forEach(barrel => barrel.image = barrelImg || null);
-    } catch (error) {
-        console.error('Error in loadImages:', error);
-    }
+    mario.image = new Image(); mario.image.src = 'mario.png'; mario.image.onerror = () => mario.image = null;
+    premekong.image = new Image(); premekong.image.src = 'premekong.png'; premekong.image.onerror = () => premekong.image = null;
+    pauline.image = new Image(); pauline.image.src = 'pauline.png'; pauline.image.onerror = () => pauline.image = null;
+    hammer.image = new Image(); hammer.image.src = 'hammer.png'; hammer.image.onerror = () => hammer.image = null;
+    const barrelImg = new Image(); barrelImg.src = 'barrel.png'; barrelImg.onerror = () => console.error('Barrel image failed');
+    const ladderImg = new Image(); ladderImg.src = 'ladder.png'; ladderImg.onerror = () => { ladderImg.width = 50; ladderImg.height = 100; };
+    const platformImg = new Image(); platformImg.src = 'platform.png'; platformImg.onerror = () => { platformImg.width = canvas.width; platformImg.height = 20; };
+    const rivetImg = new Image(); rivetImg.src = 'rivet.png'; rivetImg.onerror = () => console.error('Rivet image failed');
+    platforms.forEach(p => p.image = platformImg || null);
+    ladders.forEach(l => l.image = ladderImg || null);
+    rivets.forEach(r => r.image = rivetImg || null);
+    barrels.forEach(b => b.image = barrelImg || null);
 }
 
-// Initialize levels with all elements, adjusted for better platform alignment, ladder/rivet positioning, and platform tilt
 function initLevel() {
-    console.log('Initializing level with canvas size:', canvas.width, 'x', canvas.height);
-    try {
-        platforms = [];
-        ladders = [];
-        rivets = [];
-        const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
-        for (let i = 0; i < 4; i++) {
-            platforms.push({ x: 0, y: platformY[i], width: canvas.width, height: 20, image: null });
-            // Position rivets on top of platforms (just below the top edge)
-            for (let j = 0; j < 5; j++) {
-                rivets.push({ x: 100 + j * 100, y: platformY[i] - 10, width: 10, height: 10, hit: false, image: null }); // Moved to top (y - 10)
-            }
+    console.log('Initializing level:', level);
+    platforms = [];
+    ladders = [];
+    rivets = [];
+    const baseY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
+    for (let i = 0; i < 4; i++) {
+        // Sloped platforms: y decreases by 20px from left to right
+        platforms.push({ x: 0, y: baseY[i], width: canvas.width, height: 20, slope: -20, image: null });
+        for (let j = 0; j < 5; j++) {
+            rivets.push({ x: 100 + j * 100, y: baseY[i] - 10 + (j * -5), width: 10, height: 10, hit: false, image: null }); // Slight slope adjustment
         }
-        // Three separate ladders, moved down to rest below each platform
-        ladders.push({ x: 506, y: platformY[0] + 50, width: 50, height: 100, image: null }); // Ladder 1: below 1st platform, down to y: 718 (from 643)
-        ladders.push({ x: 94, y: platformY[1] + 50, width: 50, height: 100, image: null }); // Ladder 2: below 2nd platform, down to y: 618 (from 543)
-        ladders.push({ x: 506, y: platformY[2] + 50, width: 50, height: 100, image: null }); // Ladder 3: below 3rd platform, down to y: 518 (from 443)
-
-        mario.y = canvas.height - 68; // Start Mario at base below first platform (y: 700, adjusted for height)
-        mario.x = 50; // Ensure Mario starts on the left
-        premekong.y = canvas.height - 400 - premekong.height; // Keep Preme Kong static on top left platform
-        premekong.x = 50; // Keep Preme Kong on left side
-        pauline.y = canvas.height - 400 - pauline.height; // Keep Pauline on top platform
-        pauline.x = 150; // Pauline stays slightly to the right
-        console.log('Preme Kong position before draw:', premekong.x, premekong.y);
-        console.log('Pauline position before draw:', pauline.x, pauline.y);
-        barrels = [];
-        score = 0;
-        gameOver = false; // Reset game state
-        updateScore();
-    } catch (error) {
-        console.error('Error in initLevel:', error);
     }
+    ladders.push({ x: 506, y: baseY[0] + 50, width: 50, height: 100, image: null });
+    ladders.push({ x: 94, y: baseY[1] + 50, width: 50, height: 100, image: null });
+    ladders.push({ x: 506, y: baseY[2] + 50, width: 50, height: 100, image: null });
+
+    mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image };
+    premekong.y = canvas.height - 400 - premekong.height;
+    premekong.x = 50;
+    pauline.y = canvas.height - 400 - pauline.height;
+    pauline.x = 150;
+    hammer = { x: 300, y: canvas.height - 200 - 32, width: 32, height: 32, active: true, image: hammer.image };
+    barrels = [];
+    score = 0;
+    preme = 0;
+    gameOver = false;
+    updateScore();
 }
 
-// Draw game elements with debug, including Pauline, wrapped in try/catch
 function draw() {
-    if (!gameActive || gameOver) return; // Stop drawing if game is over
-    console.log('Drawing frame, Mario at:', mario.x, mario.y, 'Preme Kong at:', premekong.x, premekong.y, 'Pauline at:', pauline.x, pauline.y);
-    try {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw platforms
-        console.log('Drawing platforms, count:', platforms.length);
-        ctx.fillStyle = 'red';
-        platforms.forEach(platform => {
-            if (platform.image && platform.image.complete) {
-                console.log('Drawing platform image at:', platform.x, platform.y, 'Dimensions:', platform.image.width, 'x', platform.image.height);
-                ctx.drawImage(platform.image, platform.x, platform.y, platform.width, platform.height);
-            } else {
-                console.log('Drawing platform fallback at:', platform.x, platform.y);
-                ctx.fillRect(platform.x, platform.y, platform.width, platform.height);
-            }
-        });
-        
-        // Draw ladders
-        console.log('Drawing ladders, count:', ladders.length);
-        ctx.fillStyle = 'brown';
-        ladders.forEach(ladder => {
-            if (ladder.image && ladder.image.complete) {
-                console.log('Drawing ladder image at:', ladder.x, ladder.y, 'Dimensions:', ladder.image.width, 'x', ladder.image.height);
-                ctx.drawImage(ladder.image, ladder.x, ladder.y, ladder.width, ladder.height);
-            } else {
-                console.log('Drawing ladder fallback at:', ladder.x, ladder.y);
-                ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
-            }
-        });
-        
-        // Draw rivets
-        console.log('Drawing rivets, count:', rivets.length);
-        ctx.fillStyle = 'gray';
-        rivets.forEach(rivet => {
-            if (!rivet.hit && rivet.image && rivet.image.complete) {
-                console.log('Drawing rivet image at:', rivet.x, rivet.y, 'Dimensions:', rivet.image.width, 'x', rivet.image.height);
-                ctx.drawImage(rivet.image, rivet.x, rivet.y, rivet.width, rivet.height);
-            } else if (!rivet.hit) {
-                console.log('Drawing rivet fallback at:', rivet.x, rivet.y);
-                ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height);
-            }
-        });
-        
-        // Draw Mario
-        console.log('Drawing Mario at:', mario.x, mario.y);
-        if (mario.image && mario.image.complete) {
-            console.log('Drawing Mario image at:', mario.x, mario.y, 'Dimensions:', mario.image.width, 'x', mario.image.height);
-            ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
+    if (!gameActive || gameOver) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw sloped platforms
+    ctx.fillStyle = 'red';
+    platforms.forEach(p => {
+        if (p.image && p.image.complete) {
+            ctx.drawImage(p.image, p.x, p.y, p.width, p.height);
         } else {
-            console.log('Drawing Mario fallback at:', mario.x, mario.y);
-            ctx.fillStyle = 'white';
-            ctx.fillRect(mario.x, mario.y, mario.width, mario.height); // Fallback
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + p.width, p.y + p.slope);
+            ctx.lineTo(p.x + p.width, p.y + p.slope + p.height);
+            ctx.lineTo(p.x, p.y + p.height);
+            ctx.closePath();
+            ctx.fill();
         }
-        
-        // Draw Preme Kong
-        console.log('Drawing Preme Kong at:', premekong.x, premekong.y);
-        if (premekong.image && premekong.image.complete) {
-            console.log('Drawing Preme Kong image at:', premekong.x, premekong.y, 'Dimensions:', premekong.image.width, 'x', premekong.image.height);
-            ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
-        } else {
-            console.log('Drawing Preme Kong fallback at:', premekong.x, premekong.y);
-            ctx.fillStyle = 'blue';
-            ctx.fillRect(premekong.x, premekong.y, premekong.width, premekong.height); // Fallback
-        }
-        
-        // Draw Pauline
-        console.log('Drawing Pauline at:', pauline.x, pauline.y);
-        if (pauline.image && pauline.image.complete) {
-            console.log('Drawing Pauline image at:', pauline.x, pauline.y, 'Dimensions:', pauline.image.width, 'x', pauline.image.height);
-            ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
-        } else {
-            console.log('Drawing Pauline fallback at:', pauline.x, pauline.y);
-            ctx.fillStyle = 'pink'; // Fallback color for Pauline
-            ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height); // Fallback
-        }
-        
-        // Draw barrels
-        console.log('Drawing barrels, count:', barrels.length);
-        ctx.fillStyle = 'brown';
-        barrels.forEach(barrel => {
-            if (barrel.image && barrel.image.complete) {
-                console.log('Drawing barrel image at:', barrel.x, barrel.y, 'Dimensions:', barrel.image.width, 'x', barrel.image.height);
-                ctx.drawImage(barrel.image, barrel.x, barrel.y, 32, 32);
-            } else {
-                console.log('Drawing barrel fallback at:', barrel.x, barrel.y);
-                ctx.fillRect(barrel.x, barrel.y, 32, 32);
-            }
-        });
-        
-        updateScore();
-    } catch (error) {
-        console.error('Error in draw function:', error);
+    });
+
+    // Draw ladders, rivets, Mario, Preme Kong, Pauline, barrels (unchanged logic, just reordered)
+    ctx.fillStyle = 'brown';
+    ladders.forEach(l => l.image && l.image.complete ? ctx.drawImage(l.image, l.x, l.y, l.width, l.height) : ctx.fillRect(l.x, l.y, l.width, l.height));
+    ctx.fillStyle = 'gray';
+    rivets.forEach(r => !r.hit && (r.image && r.image.complete ? ctx.drawImage(r.image, r.x, r.y, r.width, r.height) : ctx.fillRect(r.x, r.y, r.width, r.height)));
+    if (mario.image && mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
+    else { ctx.fillStyle = 'white'; ctx.fillRect(mario.x, mario.y, mario.width, mario.height); }
+    if (premekong.image && premekong.image.complete) ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
+    else { ctx.fillStyle = 'blue'; ctx.fillRect(premekong.x, premekong.y, premekong.width, premekong.height); }
+    if (pauline.image && pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
+    else { ctx.fillStyle = 'pink'; ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height); }
+    ctx.fillStyle = 'brown';
+    barrels.forEach(b => b.image && b.image.complete ? ctx.drawImage(b.image, b.x, b.y, 32, 32) : ctx.fillRect(b.x, b.y, 32, 32));
+
+    // Draw hammer
+    if (hammer.active) {
+        if (hammer.image && hammer.image.complete) ctx.drawImage(hammer.image, hammer.x, hammer.y, hammer.width, hammer.height);
+        else { ctx.fillStyle = 'yellow'; ctx.fillRect(hammer.x, hammer.y, hammer.width, hammer.height); }
     }
 }
 
-// Update game logic with improved platform collision, limited jump, ladder exit, slower barrels, reduced frequency, spread out barrels, rolling/thrown barrel mechanics, and turn end on barrel hit
 function update() {
-    if (!gameActive || gameOver) return; // Stop updating if game is over
-    console.log('Updating frame, gameActive:', gameActive, 'gameOver:', gameOver);
-    
-    try {
-        // Mario movement
-        if (mario.dx) mario.x += mario.dx * 5;
-        if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
-        if (mario.jumping) {
-            mario.y -= 5; // Reduced jump height to just avoid barrels (maintained at 5)
-            // Stop jumping just above Mario’s current platform, limited to avoid next platform
-            let stopJumpY = mario.y - 8; // Reduced to ~8 pixels (enough to clear a barrel, 32 height, tighter limit)
-            const currentPlatformY = findCurrentPlatformY(mario);
-            platforms.forEach(platform => {
-                if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x && platform.y < mario.y) {
-                    if (platform.y - mario.height < stopJumpY && platform.y - mario.height > currentPlatformY - mario.height - 8) { // Limit to current platform height + small jump
-                        stopJumpY = platform.y - mario.height - 8; // Stop just above current platform
-                    }
-                }
-            });
-            if (mario.y <= stopJumpY || mario.y <= 0) mario.jumping = false; // Stop at limited height or top of canvas
-            console.log('Mario jumping, current y:', mario.y, 'stopJumpY:', stopJumpY, 'current platform y:', currentPlatformY);
+    if (!gameActive || gameOver) return;
+
+    // Mario movement
+    if (mario.dx) mario.x += mario.dx * 5;
+    if (mario.dy && mario.onLadder) mario.y += mario.dy * 5;
+    if (mario.jumping) {
+        mario.dy -= 1; // Initial upward boost
+        mario.y += mario.dy; // Apply velocity
+        if (mario.dy > 0) mario.jumping = false; // End jump when falling
+        if (mario.y <= 0) { mario.y = 0; mario.jumping = false; mario.dy = 0; }
+    }
+
+    // Gravity and platform collision
+    if (!mario.onLadder && !mario.jumping) mario.dy += 0.5; // Gravity
+    mario.y += mario.dy;
+    mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
+    let onPlatform = false;
+    platforms.forEach(p => {
+        const platformY = p.y + (mario.x / canvas.width) * p.slope; // Adjust for slope
+        if (checkCollision(mario, p) && mario.y + mario.height <= platformY + 5) {
+            mario.y = platformY - mario.height;
+            mario.dy = 0;
+            mario.jumping = false;
+            onPlatform = true;
         }
-        
-        // Keep Mario in bounds and apply gravity
-        mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
-        if (!mario.onLadder && !mario.jumping) {
-            mario.y += 2; // Slow gravity to keep Mario visible longer
-            let onPlatform = false;
-            platforms.forEach(platform => {
-                if (checkCollision(mario, platform) && mario.y + mario.height <= platform.y + 5) {
-                    mario.y = platform.y - mario.height; // Land on current platform
-                    mario.jumping = false; // Ensure jumping stops
-                    onPlatform = true;
-                    console.log('Mario landed on platform at:', platform.y);
-                }
-            });
-            if (!onPlatform) {
-                // If not on a platform, find the highest platform or base Mario can land on
-                let highestY = canvas.height - mario.height; // Default to base (y: 736)
-                platforms.forEach(platform => {
-                    if (mario.x < platform.x + platform.width && mario.x + mario.width > platform.x) {
-                        if (platform.y - mario.height < highestY && platform.y - mario.height > mario.y) {
-                            highestY = platform.y - mario.height;
-                        }
-                    }
-                });
-                mario.y = highestY; // Set Mario to the highest valid platform or base
-                console.log('Mario reset to highest platform or base:', mario.y);
-            }
-        }
-        
-        // Preme Kong static on top platform, barrel throwing (downward targeting Mario with reduced frequency, very slow speed, spread out, plus rolling barrels)
-        if (premekong.dropping) {
-            premekong.y = canvas.height - 400 - premekong.height; // Ensure Preme Kong stays on top platform
-            if (Math.random() < 0.015) { // Reduce frequency to spread out barrels (40% less than 0.025)
-                // Add random offset to spread barrels horizontally
-                const horizontalOffset = Math.random() * 100 - 50; // Random offset (-50 to 50 pixels)
-                const startX = Math.max(0, Math.min(premekong.x + horizontalOffset, canvas.width - 32)); // Start within bounds
-                const startY = canvas.height - 400 - 32; // Start from top platform (above Preme Kong)
-                const targetY = mario.y + 16; // Target Mario’s middle (32 height / 2 + offset for barrel height)
-                const distanceY = targetY - startY; // Vertical distance to Mario
-                const distanceX = canvas.width - startX; // Horizontal distance to right edge
-                
-                // Thrown barrels (targeting Mario, very slow)
-                const dxThrown = Math.random() * 0.1; // Very slow horizontal speed (0–0.1)
-                const dyThrown = Math.random() * 0.2 + 0.1; // Very slow downward speed (0.1–0.3)
-                barrels.push({ 
-                    x: startX, 
-                    y: startY, 
-                    dx: dxThrown, 
-                    dy: dyThrown, 
-                    type: 'thrown', // Mark as thrown barrel
-                    image: new Image() 
-                });
-                barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('New thrown barrel created at:', startX, startY, 'with dx:', dxThrown, 'dy:', dyThrown, 'targeting Mario at y:', targetY);
-                
-                // Rolling barrels (100% chance, start right of Pauline, move right to ladder, drop to third, continue pattern)
-                const rollingStartX = pauline.x + pauline.width + 32; // Start right of Pauline (x: 182, y: 368)
-                barrels.push({ 
-                    x: rollingStartX, 
-                    y: canvas.height - 400, // Top platform (y: 368)
-                    dx: 0.1, // Roll rightward slowly
-                    dy: 0, // No vertical movement until drop
-                    type: 'rolling', // Mark as rolling barrel
-                    stage: 1, // Track rolling stage: 1 = top, 2 = third, 3 = second, 4 = bottom
-                    image: new Image() 
-                });
-                barrels[barrels.length - 1].image.src = 'barrel.png';
-                console.log('New rolling barrel created at:', rollingStartX, canvas.height - 400, 'with dx:', 0.1, 'dy:', 0, 'stage:', 1);
-            }
-        }
-        
-        // Barrels movement and collision (thrown and rolling, very slow, spread out, with turn end on hit)
-        barrels.forEach((barrel, i) => {
-            if (barrel.type === 'thrown') {
-                // Thrown barrels targeting Mario
-                barrel.x += barrel.dx;
-                barrel.y += barrel.dy; // Move very slowly downward targeting Mario
-            } else if (barrel.type === 'rolling') {
-                // Rolling barrels on platforms
-                if (barrel.stage === 1) { // On top platform, roll right until ladder (x: 506)
-                    barrel.x += barrel.dx; // Roll right (0.1)
-                    if (barrel.x >= 506) { // Drop at ladder to third platform (y: 468)
-                        barrel.y = canvas.height - 300; // Third platform (y: 468)
-                        barrel.dx = Math.random() < 0.8 ? 0.1 : -0.1; // 80% left to right, 20% right to left
-                        barrel.stage = 2; // Move to third platform stage
-                        barrel.dy = 0; // No further vertical movement
-                    }
-                } else if (barrel.stage === 2) { // On third platform, roll until ladder (x: 94)
-                    barrel.x += barrel.dx; // Roll left to right or right to left
-                    if (barrel.x >= 94 || barrel.x <= 0) { // Drop at ladder to second platform (y: 568) or edge
-                        barrel.y = canvas.height - 200; // Second platform (y: 568)
-                        barrel.dx = Math.random() < 0.8 ? 0.1 : -0.1; // 80% left to right, 20% right to left
-                        barrel.stage = 3; // Move to second platform stage
-                        barrel.dy = 0; // No further vertical movement
-                    }
-                } else if (barrel.stage === 3) { // On second platform, roll until ladder (x: 506)
-                    barrel.x += barrel.dx; // Roll left to right or right to left
-                    if (barrel.x >= 506 || barrel.x <= 0) { // Drop at ladder to bottom platform (y: 668) or edge
-                        barrel.y = canvas.height - 100; // Bottom platform (y: 668)
-                        barrel.dx = Math.random() < 0.8 ? -0.1 : 0.1; // 80% right to left, 20% left to right
-                        barrel.stage = 4; // Move to bottom platform stage
-                        barrel.dy = 0; // No further vertical movement
-                    }
-                } else if (barrel.stage === 4) { // On bottom platform, roll until edge
-                    barrel.x += barrel.dx; // Roll right to left or left to right
-                    if (barrel.x <= 0 || barrel.x >= canvas.width - 32) { // Remove when reaching edge
-                        barrels.splice(i, 1);
-                        return;
-                    }
-                }
-            }
-            
-            console.log('Barrel position:', barrel.x, barrel.y, 'with dx:', barrel.dx, 'dy:', barrel.dy, 'type:', barrel.type, 'stage:', barrel.stage || 'N/A');
-            if (barrel.x < -32 || barrel.x > canvas.width + 32 || barrel.y > canvas.height + 32) barrels.splice(i, 1); // Remove when off left/right edge or below canvas
-            if (checkCollision(mario, barrel)) {
-                console.log('Mario hit by barrel at:', barrel.x, barrel.y);
-                // End turn: reset Mario, score, and set gameOver
-                mario.x = 50;
-                mario.y = canvas.height - 68; // Reset Mario to base (y: 700)
-                mario.jumping = false;
-                mario.onLadder = false;
-                score = 0;
-                gameOver = true; // Set game over state
-                barrels.splice(i, 1); // Remove the barrel
-                updateScore();
-                console.log('Turn ended, Mario reset to start, score reset to:', score, 'gameOver:', gameOver);
-            }
+    });
+    if (!onPlatform && mario.y > canvas.height - mario.height) {
+        mario.y = canvas.height - mario.height;
+        mario.dy = 0;
+    }
+
+    // Hammer logic
+    if (hammer.active && checkCollision(mario, hammer)) {
+        mario.hammer = true;
+        mario.hammerTime = 5000; // 5 seconds
+        hammer.active = false;
+    }
+    if (mario.hammer) {
+        mario.hammerTime -= 16; // ~60fps
+        if (mario.hammerTime <= 0) mario.hammer = false;
+    }
+
+    // Barrel throwing
+    if (premekong.dropping && Math.random() < 0.025 * level) { // Scales with level
+        const offset = Math.random() * 100 - 50;
+        const startX = Math.max(0, Math.min(premekong.x + offset, canvas.width - 32));
+        barrels.push({
+            x: startX,
+            y: canvas.height - 400 - 32,
+            dx: (Math.random() - 0.5) * 0.4, // ±0.2
+            dy: Math.random() * 0.3 + 0.2, // 0.2–0.5
+            type: 'thrown',
+            image: new Image()
         });
-        
-        // Ladder and rivet interaction
-        mario.onLadder = ladders.some(ladder => mario.x < ladder.x + ladder.width && mario.x + mario.width > ladder.x && mario.y < ladder.y + ladder.height && mario.y + mario.height > ladder.y);
-        rivets.forEach(rivet => {
-            if (!rivet.hit && checkCollision(mario, rivet)) {
-                rivet.hit = true;
-                score += 50;
-                if (rivets.every(r => r.hit)) levelUp();
-                console.log('Rivet collected, score now:', score);
-            }
+        barrels[barrels.length - 1].image.src = 'barrel.png';
+
+        // Rolling barrel
+        barrels.push({
+            x: pauline.x + pauline.width + 32,
+            y: canvas.height - 400,
+            dx: 0.2 * level, // Scales with level
+            dy: 0,
+            type: 'rolling',
+            stage: 1,
+            image: new Image()
         });
-    } catch (error) {
-        console.error('Error in update function:', error);
+        barrels[barrels.length - 1].image.src = 'barrel.png';
+    }
+
+    // Barrel movement
+    barrels.forEach((b, i) => {
+        if (b.type === 'thrown') {
+            b.x += b.dx;
+            b.y += b.dy;
+        } else if (b.type === 'rolling') {
+            b.x += b.dx;
+            if (b.stage === 1 && b.x >= 506) { b.y = canvas.height - 300; b.dx = -0.2 * level; b.stage = 2; }
+            else if (b.stage === 2 && b.x <= 94) { b.y = canvas.height - 200; b.dx = 0.2 * level; b.stage = 3; }
+            else if (b.stage === 3 && b.x >= 506) { b.y = canvas.height - 100; b.dx = -0.2 * level; b.stage = 4; }
+        }
+        if (b.x < -32 || b.x > canvas.width + 32 || b.y > canvas.height + 32) barrels.splice(i, 1);
+        else if (checkCollision(mario, b)) {
+            if (mario.hammer) { score += 300; barrels.splice(i, 1); }
+            else { gameOver = true; mario.x = 50; mario.y = canvas.height - 68; score = 0; preme = 0; }
+        }
+        // Score for jumping barrels
+        if (!mario.onLadder && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x - b.x) < 32) score += 100;
+    });
+
+    // Ladder, rivet, and win condition
+    mario.onLadder = ladders.some(l => checkCollision(mario, l));
+    rivets.forEach(r => {
+        if (!r.hit && checkCollision(mario, r)) {
+            r.hit = true;
+            score += 50;
+            preme += 0.1;
+            if (rivets.every(r => r.hit)) levelUp();
+        }
+    });
+    if (checkCollision(mario, pauline)) {
+        gameOver = true; // Temporary win state
+        premekong.y += 100; // Basic "cutscene": Preme Kong falls
+        setTimeout(restartGame, 1000); // Restart after 1s
     }
 }
 
-// Helper function to find Mario's current platform or base y-position
-function findCurrentPlatformY(mario) {
-    const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
-    for (let y of platformY) {
-        if (Math.abs(mario.y + mario.height - y) < 5) { // Check if Mario is on this platform (within 5 pixels)
-            return y;
-        }
-    }
-    if (mario.y + mario.height >= canvas.height - 5) return canvas.height; // At base (y: 768)
-    return canvas.height - 100; // Default to bottom platform if not found
-}
-
-// Check collision
 function checkCollision(obj1, obj2) {
-    return obj1.x < obj2.x + obj2.width &&
-           obj1.x + obj1.width > obj2.x &&
-           obj1.y < obj2.y + obj2.height &&
-           obj1.y + obj1.height > obj2.y;
+    return obj1.x < obj2.x + obj2.width && obj1.x + obj1.width > obj2.x && obj1.y < obj2.y + obj2.height && obj1.y + obj1.height > obj2.y;
 }
 
-// Level up (cycle through 4 levels)
 function levelUp() {
-    level = (level % 4) + 1;
+    level++;
     initLevel();
     score += 100;
-    console.log('Level up to:', level, 'Score:', score);
 }
 
-// Update score display
 function updateScore() {
-    const jackpot = 0; // Update via bot later
-    const burn = 0; // Update via bot later
-    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
-    console.log('Score updated:', score);
+    document.getElementById('score').innerText = `Score: ${score}  $PREME: ${preme.toFixed(1)}  Jackpot: 0 $PREME  Burn This Month: 0 $PREME`;
 }
 
-// Touch controls for mobile, matching your reference (yellow buttons, all controls)
 function setupTouchControls() {
-    const buttons = {
-        left: document.querySelector('#left'),
-        right: document.querySelector('#right'),
-        jump: document.querySelector('#jump'),
-        up: document.querySelector('#up'),
-        down: document.querySelector('#down')
-    };
-
-    buttons.left.addEventListener('touchstart', () => { if (!gameOver) mario.dx = -1; });
-    buttons.right.addEventListener('touchstart', () => { if (!gameOver) mario.dx = 1; });
-    buttons.jump.addEventListener('touchstart', () => { if (!gameOver && !mario.jumping && !mario.onLadder) mario.jumping = true; });
-    buttons.up.addEventListener('touchstart', () => { if (!gameOver && mario.onLadder) mario.dy = -1; });
-    buttons.down.addEventListener('touchstart', () => { if (!gameOver && mario.onLadder) mario.dy = 1; });
-
-    buttons.left.addEventListener('touchend', () => mario.dx = 0);
-    buttons.right.addEventListener('touchend', () => mario.dx = 0);
-    buttons.up.addEventListener('touchend', () => mario.dy = 0);
-    buttons.down.addEventListener('touchend', () => mario.dy = 0);
+    const btns = { left: '#left', right: '#right', jump: '#jump', up: '#up', down: '#down', restart: '#restart' };
+    Object.entries(btns).forEach(([key, id]) => {
+        const btn = document.querySelector(id);
+        btn.addEventListener('touchstart', () => {
+            if (key === 'left') mario.dx = -1;
+            else if (key === 'right') mario.dx = 1;
+            else if (key === 'jump' && !mario.jumping && !mario.onLadder) { mario.jumping = true; mario.dy = -8; } // 32px jump
+            else if (key === 'up' && mario.onLadder) mario.dy = -1;
+            else if (key === 'down' && mario.onLadder) mario.dy = 1;
+            else if (key === 'restart' && gameOver) restartGame();
+        });
+        btn.addEventListener('touchend', () => {
+            if (key === 'left' || key === 'right') mario.dx = 0;
+            else if (key === 'up' || key === 'down') mario.dy = 0;
+        });
+    });
 }
 
-// Function to restart the game (call this when you want to resume after gameOver)
 function restartGame() {
-    console.log('Restarting game...');
     gameOver = false;
-    initLevel(); // Reset all game state
-    gameLoop(); // Resume game loop
+    initLevel();
+    gameLoop();
 }
 
-// Handle Telegram WebApp data (for bot integration and potential restart)
 function handleTelegramData() {
     const Telegram = window.Telegram;
     if (Telegram && Telegram.WebApp) {
-        console.log('Telegram WebApp initialized');
-        Telegram.WebApp.ready();
-        Telegram.WebApp.expand();
         Telegram.WebApp.onEvent('web_app_data', (data) => {
-            console.log('Received web app data:', data);
             if (data.data) {
-                try {
-                    const gameData = JSON.parse(data.data);
-                    if (gameData.restart) {
-                        restartGame(); // Restart game if bot sends restart signal
-                    } else {
-                        score = gameData.score || score;
-                        updateScore();
-                        Telegram.WebApp.sendData(JSON.stringify({ score, perfectRun: score >= 400, gameOver }));
-                        console.log('Sent Telegram data:', { score, perfectRun: score >= 400, gameOver });
-                    }
-                } catch (error) {
-                    console.error('Error parsing Telegram data:', error);
+                const gameData = JSON.parse(data.data);
+                if (gameData.restart) restartGame();
+                else {
+                    Telegram.WebApp.sendData(JSON.stringify({ score, preme, perfectRun: score >= 400, gameOver }));
                 }
             }
         });
     }
 }
 
-// Game loop
 function gameLoop() {
     if (!gameActive || gameOver) return;
     update();
@@ -479,7 +275,6 @@ function gameLoop() {
     requestAnimationFrame(gameLoop);
 }
 
-// Initialize and start game
 loadImages();
 initLevel();
 setupTouchControls();
