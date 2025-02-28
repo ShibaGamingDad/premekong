@@ -275,7 +275,7 @@ function update() {
         }
 
         // Barrel throwing
-        if (premekong.dropping && Math.random() < 0.005 * level) { // Reduced frequency from 0.025 to 0.005
+        if (premekong.dropping && Math.random() < 0.005 * level) { // Maintain reduced frequency
             const offset = Math.random() * 100 - 50;
             const startX = Math.max(0, Math.min(premekong.x + offset, canvas.width - 32));
             barrels.push({
@@ -290,9 +290,9 @@ function update() {
 
             // Rolling barrel
             barrels.push({
-                x: Math.max(0, Math.min(pauline.x + pauline.width + 32, canvas.width - 32)),
+                x: pauline.x + pauline.width + 32, // Start on right side of Pauline
                 y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)),
-                dx: 0,
+                dx: 0.2 * level, // Start going right
                 dy: 0,
                 type: 'rolling',
                 stage: 1,
@@ -312,8 +312,7 @@ function update() {
                     b.y = platform.y - 32; // Position barrel on top of platform
                     b.dy = 0;
                     b.type = 'rolling';
-                    // Randomize direction when landing
-                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomly go right or left
+                    b.dx = 0.2 * level; // Initially go right when landing
                     b.stage = platforms.indexOf(platform) + 1;
                 }
             } else if (b.type === 'rolling') {
@@ -322,18 +321,32 @@ function update() {
                 if (currentPlatform && b.y !== currentPlatform.y - 32) {
                     b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
                 }
+
+                // Randomize direction at each ladder drop
+                const laddersX = [300, 506, 94, 506]; // X positions of ladders (new, first, second, third)
+                if (laddersX.some(ladderX => Math.abs(b.x - ladderX) < 32 && b.dx !== 0)) { // Barrel near a ladder
+                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomly go right or left
+                    console.log('Barrel randomized direction at ladder:', b.x, b.dx);
+                }
+
                 if (b.stage === 1 && b.x >= 506) {
                     b.y = canvas.height - 300; // Second platform (y: 468)
-                    b.dx = Math.random() < 0.5 ? -0.2 * level : 0.2 * level; // Random direction
+                    b.dx = 0.2 * level; // Initially go right
                     b.stage = 2;
                 } else if (b.stage === 2 && b.x <= 94) {
                     b.y = canvas.height - 200; // Third platform (y: 568)
-                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Random direction
+                    b.dx = 0.2 * level; // Initially go right
                     b.stage = 3;
                 } else if (b.stage === 3 && b.x >= 506) {
                     b.y = canvas.height - 100; // Fourth platform (y: 668)
-                    b.dx = Math.random() < 0.5 ? -0.2 * level : 0.2 * level; // Random direction
+                    b.dx = 0.2 * level; // Initially go right
                     b.stage = 4;
+                }
+
+                // Check for stuck barrels and reset movement if necessary
+                if (b.dx === 0 && b.stage > 0) {
+                    console.warn('Frozen barrel detected, resetting direction:', b.x, b.y);
+                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Reset to random direction
                 }
             }
             if (b.x < -32 || b.x > canvas.width + 32 || b.y > canvas.height + 32) barrels.splice(i, 1);
