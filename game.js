@@ -19,22 +19,15 @@ function initializeGame() {
         const deviceHeight = window.innerHeight;
         console.log('Device dimensions:', deviceWidth, 'x', deviceHeight);
 
-        // Adjust canvas size for mobile screens, prioritizing portrait orientation
+        // Adjust canvas size for mobile screens, prioritizing portrait orientation with tighter bounds
         const aspectRatio = 672 / 768; // Target aspect ratio (width/height)
         let newWidth, newHeight;
 
-        // Try to fit within device dimensions while maintaining aspect ratio
-        if (deviceWidth / deviceHeight < aspectRatio) {
-            // Device is taller than wide (portrait), use height to determine width
-            newHeight = Math.min(deviceHeight, 768);
-            newWidth = newHeight * aspectRatio;
-        } else {
-            // Device is wider than tall (landscape), use width to determine height
-            newWidth = Math.min(deviceWidth, 672);
-            newHeight = newWidth / aspectRatio;
-        }
+        // Prioritize fitting within device height for portrait, with max 672x768
+        newHeight = Math.min(deviceHeight, 768); // Cap height at 768
+        newWidth = Math.min(newHeight * aspectRatio, 672); // Cap width at 672, scale proportionally
 
-        // Ensure canvas fits within device bounds
+        // Ensure canvas fits within device bounds, avoiding overflow
         canvas.width = Math.floor(newWidth);
         canvas.height = Math.floor(newHeight);
         console.log('Adjusted canvas size for Telegram:', canvas.width, 'x', canvas.height);
@@ -324,6 +317,7 @@ function update() {
             premekong.y += 100; // Basic "cutscene": Preme Kong falls
             setTimeout(restartGame, 1000); // Restart after 1s
         }
+        console.log('Mario updated at:', mario.x, mario.y); // Debug log for Mario's position after update
     } catch (error) {
         console.error('Error in update function:', error);
     }
