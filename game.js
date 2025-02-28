@@ -199,8 +199,21 @@ function draw() {
         ctx.fillStyle = 'brown';
         barrels.forEach(b => {
             if (b && b.x >= -32 && b.x <= canvas.width + 32 && b.y >= -32 && b.y <= canvas.height + 32) {
-                if (b.image && b.image.complete) ctx.drawImage(b.image, b.x, b.y, 32, 32);
-                else ctx.fillRect(b.x, b.y, 32, 32);
+                if (b.image && b.image.complete) {
+                    if (b.type === 'rolling') {
+                        // Find the platform the rolling barrel is on and position it on top
+                        const platform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height);
+                        if (platform) {
+                            ctx.drawImage(b.image, b.x, platform.y - 32, 32, 32); // Position barrel on top of platform
+                        } else {
+                            ctx.drawImage(b.image, b.x, b.y, 32, 32); // Default position if no platform
+                        }
+                    } else {
+                        ctx.drawImage(b.image, b.x, b.y, 32, 32); // Thrown barrels maintain original position
+                    }
+                } else {
+                    ctx.fillRect(b.x, b.y, 32, 32);
+                }
             }
         });
 
@@ -262,7 +275,7 @@ function update() {
         }
 
         // Barrel throwing
-        if (premekong.dropping && Math.random() < 0.025 * level) { // Scales with level
+        if (premekong.dropping && Math.random() < 0.005 * level) { // Reduced frequency from 0.025 to 0.005
             const offset = Math.random() * 100 - 50;
             const startX = Math.max(0, Math.min(premekong.x + offset, canvas.width - 32));
             barrels.push({
@@ -279,7 +292,7 @@ function update() {
             barrels.push({
                 x: Math.max(0, Math.min(pauline.x + pauline.width + 32, canvas.width - 32)),
                 y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)),
-                dx: 0.2 * level, // Scales with level
+                dx: 0,
                 dy: 0,
                 type: 'rolling',
                 stage: 1,
@@ -293,11 +306,35 @@ function update() {
             if (b.type === 'thrown') {
                 b.x = Math.max(-32, Math.min(b.x + b.dx, canvas.width + 32));
                 b.y = Math.max(-32, Math.min(b.y + b.dy, canvas.height + 32));
+                // Check if barrel lands on a platform
+                const platform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height && b.x >= 0 && b.x <= canvas.width - 32);
+                if (platform && b.dy > 0) { // Barrel is falling and hits a platform
+                    b.y = platform.y - 32; // Position barrel on top of platform
+                    b.dy = 0;
+                    b.type = 'rolling';
+                    // Randomize direction when landing
+                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomly go right or left
+                    b.stage = platforms.indexOf(platform) + 1;
+                }
             } else if (b.type === 'rolling') {
                 b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
-                if (b.stage === 1 && b.x >= 506) { b.y = canvas.height - 300; b.dx = -0.2 * level; b.stage = 2; }
-                else if (b.stage === 2 && b.x <= 94) { b.y = canvas.height - 200; b.dx = 0.2 * level; b.stage = 3; }
-                else if (b.stage === 3 && b.x >= 506) { b.y = canvas.height - 100; b.dx = -0.2 * level; b.stage = 4; }
+                const currentPlatform = platforms[b.stage - 1];
+                if (currentPlatform && b.y !== currentPlatform.y - 32) {
+                    b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
+                }
+                if (b.stage === 1 && b.x >= 506) {
+                    b.y = canvas.height - 300; // Second platform (y: 468)
+                    b.dx = Math.random() < 0.5 ? -0.2 * level : 0.2 * level; // Random direction
+                    b.stage = 2;
+                } else if (b.stage === 2 && b.x <= 94) {
+                    b.y = canvas.height - 200; // Third platform (y: 568)
+                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Random direction
+                    b.stage = 3;
+                } else if (b.stage === 3 && b.x >= 506) {
+                    b.y = canvas.height - 100; // Fourth platform (y: 668)
+                    b.dx = Math.random() < 0.5 ? -0.2 * level : 0.2 * level; // Random direction
+                    b.stage = 4;
+                }
             }
             if (b.x < -32 || b.x > canvas.width + 32 || b.y > canvas.height + 32) barrels.splice(i, 1);
             else if (checkCollision(mario, b)) {
