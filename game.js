@@ -277,9 +277,13 @@ function update() {
         }
 
         // Barrel spawning (only from Pauline, no Preme Kong, strict Pauline platform check)
-        if (Math.random() < 0.005 * level) { 
-            const paulinePlatform = platforms[platforms.length - 1]; // Get the top platform (index 3, y: canvas.height - 400)
-            if (pauline.y === paulinePlatform.y) { // Verify Pauline is on her platform
+        if (Math.random() < 0.05 * level) { // Increased spawn probability to 5% per frame at level 1
+            const paulinePlatform = platforms.find(p => p.y === canvas.height - 400); // Find platform at top (y: canvas.height - 400)
+            if (!paulinePlatform) {
+                console.error('Top platform not found at y:', canvas.height - 400, 'Platforms:', platforms.map(p => p.y));
+            }
+            console.log('Pauline Y:', pauline.y, 'Pauline Platform Y:', paulinePlatform ? paulinePlatform.y : 'Not found');
+            if (paulinePlatform && Math.abs(pauline.y - paulinePlatform.y) < 5) { // Allow small tolerance for floating-point or scaling issues
                 barrels.push({
                     x: pauline.x + pauline.width + 32, // Start on right side of Pauline
                     y: paulinePlatform.y - 32, // Position barrel on top of the platform (32px height for barrel)
@@ -290,9 +294,10 @@ function update() {
                     image: new Image()
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
+                barrels[barrels.length - 1].image.onerror = () => console.error('Barrel image failed to load for spawned barrel at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y);
                 console.log('Barrel spawned at Pauline on top platform:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'Platform Y:', paulinePlatform.y);
             } else {
-                console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected:', paulinePlatform.y);
+                console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected Platform Y:', paulinePlatform ? paulinePlatform.y : 'Not found');
             }
         }
 
