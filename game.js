@@ -9,6 +9,22 @@ function initializeGame() {
         console.error('Canvas context not available!');
         return null;
     }
+
+    // Handle mobile/Telegram scaling and viewport
+    const isTelegram = window.Telegram?.WebApp;
+    if (isTelegram) {
+        console.log('Running in Telegram WebApp, adjusting viewport...');
+        Telegram.WebApp.expand(); // Ensure full screen in Telegram
+        // Adjust canvas size for mobile screens
+        const deviceWidth = window.innerWidth;
+        const deviceHeight = window.innerHeight;
+        console.log('Device dimensions:', deviceWidth, 'x', deviceHeight);
+        canvas.width = Math.min(deviceWidth, 672); // Cap width at 672
+        canvas.height = Math.min(deviceHeight, 768); // Cap height at 768
+    } else {
+        console.log('Running in browser, using default canvas size:', canvas.width, 'x', canvas.height);
+    }
+
     console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
     return { canvas, ctx };
 }
@@ -16,13 +32,12 @@ function initializeGame() {
 const gameSetup = initializeGame();
 if (!gameSetup) {
     console.error('Game initialization failed. Exiting.');
-    // Exit gracefully without throwing an error to avoid SyntaxError
     return;
 }
 
 const { canvas, ctx } = gameSetup;
 
-let mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 };
+let mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 }; // Moved to first platform (y: 668)
 let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true };
 let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null };
 let barrels = [];
@@ -78,7 +93,7 @@ function initLevel() {
         // Third ladder (top of third platform, y: 468, extends down to y: 568)
         ladders.push({ x: 506, y: baseY[2] - 100, width: 50, height: 100, image: null }); // y: 368 (extends from 468 to 568)
 
-        mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image || null };
+        mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image || null }; // Mario on first platform
         premekong.y = Math.max(0, Math.min(canvas.height - 400 - premekong.height, canvas.height - premekong.height));
         premekong.x = 50;
         pauline.y = Math.max(0, Math.min(canvas.height - 400 - pauline.height, canvas.height - pauline.height));
@@ -261,7 +276,7 @@ function update() {
             if (b.x < -32 || b.x > canvas.width + 32 || b.y > canvas.height + 32) barrels.splice(i, 1);
             else if (checkCollision(mario, b)) {
                 if (mario.hammer) { score += 300; barrels.splice(i, 1); }
-                else { gameOver = true; mario.x = 50; mario.y = canvas.height - 68; score = 0; preme = 0; }
+                else { gameOver = true; mario.x = 50; mario.y = 668; score = 0; preme = 0; } // Reset to first platform on game over
             }
             // Score for jumping barrels
             if (!mario.onLadder && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x - b.x) < 32) score += 100;
