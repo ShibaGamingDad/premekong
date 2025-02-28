@@ -55,7 +55,7 @@ if (!canvas || !ctx) {
     gameActive = false;
 }
 
-let mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 }; // Mario on first platform
+let mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 }; // Mario on base
 let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true };
 let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null };
 let barrels = [];
@@ -68,6 +68,7 @@ let ladders = [];
 let platforms = [];
 let gameActive = true;
 let gameOver = false;
+let perfectRunsToday = 0; // Track perfect runs per day (max 5)
 
 function loadImages() {
     console.log('Loading images...');
@@ -113,14 +114,8 @@ function initLevel() {
         // Third ladder (top of third platform, y: 468, extends down to y: 568)
         ladders.push({ x: 506, y: baseY[2] - 100, width: 50, height: 100, image: null }); // y: 368 (extends from 468 to 568)
 
-        mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image || null }; // Mario on first platform
+        mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image || null }; // Mario on base
         console.log('Mario initialized at:', mario.x, mario.y); // Debug log for Mario's position
-        if (mario.y !== 668) {
-            console.warn('Mario position reset to first platform:', mario.x, 668);
-            mario.y = 668; // Force Mario to first platform if misplaced
-            mario.dx = 0; // Reset horizontal velocity
-            mario.dy = 0; // Reset vertical velocity
-        }
         premekong.y = Math.max(0, Math.min(canvas.height - 400 - premekong.height, canvas.height - premekong.height));
         premekong.x = 50;
         pauline.y = Math.max(0, Math.min(canvas.height - 400 - pauline.height, canvas.height - pauline.height));
@@ -130,6 +125,7 @@ function initLevel() {
         score = 0;
         preme = 0;
         gameOver = false;
+        perfectRunsToday = 0; // Reset perfect runs on level init
         updateScore();
         console.log('Platforms initialized:', platforms.map(p => `x: ${p.x}, y: ${p.y}`));
         console.log('Ladders initialized:', ladders.map(l => `x: ${l.x}, y: ${l.y}`));
@@ -189,12 +185,6 @@ function draw() {
         });
         if (mario && mario.x >= 0 && mario.x <= canvas.width && mario.y >= 0 && mario.y <= canvas.height) {
             console.log('Drawing Mario at:', mario.x, mario.y); // Debug log for Mario's position
-            if (mario.y !== 668 && !mario.jumping && !mario.onLadder) {
-                console.warn('Mario reset to first platform due to incorrect position:', mario.x, 668);
-                mario.y = 668; // Force Mario back to first platform if misplaced
-                mario.dx = 0; // Reset horizontal velocity
-                mario.dy = 0; // Reset vertical velocity
-            }
             if (mario.image && mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
             else { ctx.fillStyle = 'white'; ctx.fillRect(mario.x, mario.y, mario.width, mario.height); }
         }
@@ -258,13 +248,6 @@ function update() {
             mario.dy = 0;
         }
 
-        // Ensure Mario stays on first platform if not moving or jumping
-        if (!mario.jumping && !mario.onLadder && mario.y !== 668) {
-            console.warn('Mario reset to first platform due to incorrect position:', mario.x, 668);
-            mario.y = 668; // Force Mario back to first platform if misplaced
-            mario.dx = 0; // Reset horizontal velocity
-            mario.dy = 0; // Reset vertical velocity
-        }
         console.log('Mario updated at:', mario.x, mario.y); // Debug log for Mario's position after update
 
         // Hammer logic
@@ -319,7 +302,7 @@ function update() {
             if (b.x < -32 || b.x > canvas.width + 32 || b.y > canvas.height + 32) barrels.splice(i, 1);
             else if (checkCollision(mario, b)) {
                 if (mario.hammer) { score += 300; barrels.splice(i, 1); }
-                else { gameOver = true; mario.x = 50; mario.y = 668; score = 0; preme = 0; } // Reset to first platform on game over
+                else { gameOver = true; mario.x = 50; mario.y = canvas.height - 68; score = 0; preme = 0; } // Reset to base on game over
             }
             // Score for jumping barrels
             if (!mario.onLadder && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x - b.x) < 32) score += 100;
@@ -330,9 +313,16 @@ function update() {
         rivets.forEach(r => {
             if (!r.hit && checkCollision(mario, r)) {
                 r.hit = true;
-                score += 50;
-                preme += 0.1;
-                if (rivets.every(r => r.hit)) levelUp();
+                score += 50; // Reverted rivets back to 50 points each
+                preme += 0.1; // Keep $PREME increment per rivet
+                if (rivets.every(r => r.hit)) {
+                    levelUp();
+                    if (score >= 400 && perfectRunsToday < 5) { // Check for perfect run (score >= 400) and daily limit
+                        preme += 50; // Award 50 $PREME for perfect run
+                        perfectRunsToday++;
+                        console.log(`Perfect run awarded! $PREME: ${preme}, Perfect Runs Today: ${perfectRunsToday}`);
+                    }
+                }
             }
         });
         if (checkCollision(mario, pauline)) {
