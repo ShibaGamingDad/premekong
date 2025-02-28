@@ -317,19 +317,34 @@ function restartGame() {
 function handleTelegramData() {
     const Telegram = window.Telegram;
     if (Telegram && Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
         Telegram.WebApp.onEvent('web_app_data', (data) => {
-            if (data.data) {
+            if (data && data.data) {
                 try {
                     const gameData = JSON.parse(data.data);
-                    if (gameData.restart) restartGame();
-                    else {
-                        Telegram.WebApp.sendData(JSON.stringify({ score, preme, perfectRun: score >= 400, gameOver }));
+                    if (gameData.restart) {
+                        restartGame();
+                    } else {
+                        score = gameData.score || score;
+                        preme = gameData.preme || preme;
+                        updateScore();
+                        Telegram.WebApp.sendData(JSON.stringify({ 
+                            score, 
+                            preme, 
+                            perfectRun: score >= 400, 
+                            gameOver 
+                        }));
                     }
-                } catch (error) {
-                    console.error('Error parsing Telegram data:', error);
+                } catch (parseError) {
+                    console.error('Error parsing Telegram data:', parseError);
                 }
+            } else {
+                console.warn('Invalid Telegram data received:', data);
             }
         });
+    } else {
+        console.warn('Telegram WebApp not available');
     }
 }
 
