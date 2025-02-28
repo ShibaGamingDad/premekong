@@ -29,15 +29,24 @@ function initializeGame() {
     return { canvas, ctx };
 }
 
-const gameSetup = initializeGame();
-if (!gameSetup) {
-    console.error('Game initialization failed. Exiting.');
-    return;
+function startGame() {
+    const gameSetup = initializeGame();
+    if (!gameSetup) {
+        console.error('Game initialization failed. Game cannot start.');
+        // Exit gracefully without using return at top level
+        gameActive = false;
+        return;
+    }
+    return gameSetup;
 }
 
-const { canvas, ctx } = gameSetup;
+const { canvas, ctx } = startGame();
+if (!canvas || !ctx) {
+    console.error('Failed to initialize canvas or context. Game cannot start.');
+    gameActive = false;
+}
 
-let mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 }; // Moved to first platform (y: 668)
+let mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 }; // Mario on first platform
 let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true };
 let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null };
 let barrels = [];
