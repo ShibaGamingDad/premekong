@@ -104,6 +104,8 @@ function initLevel() {
             }
         }
         // Ladders positioned to start at the top of each platform and extend downward 100px (like Donkey Kong’s vertical connectivity)
+        // New ladder from first platform (y: 668) to ground (y: 768)
+        ladders.push({ x: 300, y: 568, width: 50, height: 100, image: null }); // Starts at bottom of first platform, extends to ground
         // First ladder (top of first platform, y: 668, extends down to y: 768)
         ladders.push({ x: 506, y: baseY[0] - 100, width: 50, height: 100, image: null }); // y: 568 (extends from 668 to 768)
         // Second ladder (top of second platform, y: 568, extends down to y: 668)
@@ -113,6 +115,10 @@ function initLevel() {
 
         mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image || null }; // Mario on first platform
         console.log('Mario initialized at:', mario.x, mario.y); // Debug log for Mario's position
+        if (mario.y !== 668) {
+            console.warn('Mario position reset to first platform:', mario.x, 668);
+            mario.y = 668; // Force Mario to first platform if misplaced
+        }
         premekong.y = Math.max(0, Math.min(canvas.height - 400 - premekong.height, canvas.height - premekong.height));
         premekong.x = 50;
         pauline.y = Math.max(0, Math.min(canvas.height - 400 - pauline.height, canvas.height - pauline.height));
@@ -181,6 +187,11 @@ function draw() {
         });
         if (mario && mario.x >= 0 && mario.x <= canvas.width && mario.y >= 0 && mario.y <= canvas.height) {
             console.log('Drawing Mario at:', mario.x, mario.y); // Debug log for Mario's position
+            if (mario.y !== 668 && !mario.jumping && !mario.onLadder) {
+                console.warn('Mario reset to first platform due to incorrect position:', mario.x, 668);
+                mario.y = 668; // Force Mario back to first platform if misplaced
+                mario.dy = 0; // Reset velocity
+            }
             if (mario.image && mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
             else { ctx.fillStyle = 'white'; ctx.fillRect(mario.x, mario.y, mario.width, mario.height); }
         }
@@ -243,6 +254,14 @@ function update() {
             mario.y = canvas.height - mario.height;
             mario.dy = 0;
         }
+
+        // Ensure Mario stays on first platform if not moving or jumping
+        if (!mario.jumping && !mario.onLadder && mario.y !== 668) {
+            console.warn('Mario reset to first platform due to incorrect position:', mario.x, 668);
+            mario.y = 668; // Force Mario back to first platform if misplaced
+            mario.dy = 0; // Reset velocity
+        }
+        console.log('Mario updated at:', mario.x, mario.y); // Debug log for Mario's position after update
 
         // Hammer logic
         if (hammer.active && checkCollision(mario, hammer)) {
@@ -317,7 +336,6 @@ function update() {
             premekong.y += 100; // Basic "cutscene": Preme Kong falls
             setTimeout(restartGame, 1000); // Restart after 1s
         }
-        console.log('Mario updated at:', mario.x, mario.y); // Debug log for Mario's position after update
     } catch (error) {
         console.error('Error in update function:', error);
     }
