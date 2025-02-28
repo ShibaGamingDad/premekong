@@ -50,10 +50,10 @@ function initLevel() {
         rivets = [];
         const baseY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400]; // Platform y-positions (668, 568, 468, 368)
         for (let i = 0; i < 4; i++) {
-            // Straightened platforms (no slope)
+            // Level platforms (no slope)
             platforms.push({ x: 0, y: baseY[i], width: canvas.width, height: 20, image: null });
             for (let j = 0; j < 5; j++) {
-                rivets.push({ x: 100 + j * 100, y: baseY[i] - 10, width: 10, height: 10, hit: false, image: null }); // Removed slope adjustment
+                rivets.push({ x: 100 + j * 100, y: baseY[i] - 10, width: 10, height: 10, hit: false, image: null });
             }
         }
         // Ladders positioned to go up one full level (100px), starting at the top of the platform below and extending to the top of the platform above
@@ -95,7 +95,7 @@ function draw() {
         // Draw level platforms
         ctx.fillStyle = 'red';
         platforms.forEach(p => {
-            if (!p || isNaN(p.y) || p.y < 0 || p.y > canvas.height) {
+            if (!p || isNaN(p.y) || p.y < 0 || p.y > canvas.height || p.y + p.height < 0) {
                 console.warn('Invalid platform position:', p);
                 return;
             }
@@ -110,7 +110,7 @@ function draw() {
         console.log('Drawing ladders, count:', ladders.length);
         ctx.fillStyle = 'brown';
         ladders.forEach(l => {
-            if (!l || isNaN(l.y) || l.y < 0 || l.y + l.height > canvas.height) {
+            if (!l || isNaN(l.y) || l.y < 0 || l.y + l.height > canvas.height || l.y + l.height < 0) {
                 console.warn('Invalid ladder position:', l);
                 return;
             }
