@@ -288,10 +288,10 @@ function update() {
             });
             barrels[barrels.length - 1].image.src = 'barrel.png';
 
-            // Rolling barrel
+            // Rolling barrel (conveyor system starting from Pauline)
             barrels.push({
                 x: pauline.x + pauline.width + 32, // Start on right side of Pauline
-                y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)),
+                y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)), // Pauline's platform
                 dx: 0.2 * level, // Start going right
                 dy: 0,
                 type: 'rolling',
@@ -301,19 +301,19 @@ function update() {
             barrels[barrels.length - 1].image.src = 'barrel.png';
         }
 
-        // Barrel movement
+        // Barrel movement (conveyor system)
         barrels.forEach((b, i) => {
             if (b.type === 'thrown') {
                 b.x = Math.max(-32, Math.min(b.x + b.dx, canvas.width + 32));
                 b.y = Math.max(-32, Math.min(b.y + b.dy, canvas.height + 32));
-                // Check if barrel lands on a platform
+                // Check if barrel lands on Pauline's platform
                 const platform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height && b.x >= 0 && b.x <= canvas.width - 32);
-                if (platform && b.dy > 0) { // Barrel is falling and hits a platform
+                if (platform && b.dy > 0 && platform.y === canvas.height - 400) { // Only on Pauline's platform
                     b.y = platform.y - 32; // Position barrel on top of platform
                     b.dy = 0;
                     b.type = 'rolling';
-                    b.dx = 0.2 * level; // Initially go right when landing
-                    b.stage = platforms.indexOf(platform) + 1;
+                    b.dx = 0.2 * level; // Initially go right on Pauline's platform
+                    b.stage = 1;
                 }
             } else if (b.type === 'rolling') {
                 b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
@@ -322,25 +322,39 @@ function update() {
                     b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
                 }
 
-                // Randomize direction at each ladder drop
-                const laddersX = [300, 506, 94, 506]; // X positions of ladders (new, first, second, third)
-                if (laddersX.some(ladderX => Math.abs(b.x - ladderX) < 32 && b.dx !== 0)) { // Barrel near a ladder
-                    b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomly go right or left
-                    console.log('Barrel randomized direction at ladder:', b.x, b.dx);
+                // Conveyor system: Move right until reaching the new ladder (x: 300), then drop
+                if (b.stage === 1 && b.x >= 300 - 32) { // Near new ladder at x: 300
+                    b.y = canvas.height - 200; // Drop to second platform (y: 568)
+                    b.dx = 0; // Stop horizontal movement before drop
+                    b.dy = 0.5; // Small drop velocity
+                    b.stage = 2;
+                } else if (b.stage === 2 && b.x >= 506 - 32) { // Near first ladder at x: 506
+                    b.y = canvas.height - 300; // Drop to third platform (y: 468)
+                    b.dx = 0; // Stop before drop
+                    b.dy = 0.5;
+                    b.stage = 3;
+                } else if (b.stage === 3 && b.x <= 94 + 32) { // Near second ladder at x: 94
+                    b.y = canvas.height - 100; // Drop to fourth platform (y: 668)
+                    b.dx = 0; // Stop before drop
+                    b.dy = 0.5;
+                    b.stage = 4;
+                } else if (b.stage === 4 && b.x >= 506 - 32) { // Near third ladder at x: 506
+                    b.y = canvas.height - 100; // Stay on fourth platform (no drop beyond this)
+                    b.dx = Math.random() < 0.5 ? -0.2 * level : 0.2 * level; // Random direction on top platform
                 }
 
-                if (b.stage === 1 && b.x >= 506) {
-                    b.y = canvas.height - 300; // Second platform (y: 468)
-                    b.dx = 0.2 * level; // Initially go right
-                    b.stage = 2;
-                } else if (b.stage === 2 && b.x <= 94) {
-                    b.y = canvas.height - 200; // Third platform (y: 568)
-                    b.dx = 0.2 * level; // Initially go right
-                    b.stage = 3;
-                } else if (b.stage === 3 && b.x >= 506) {
-                    b.y = canvas.height - 100; // Fourth platform (y: 668)
-                    b.dx = 0.2 * level; // Initially go right
-                    b.stage = 4;
+                // Apply drop and randomize direction after each drop
+                if (b.dy > 0) {
+                    b.y += b.dy; // Apply drop velocity
+                    b.dy += 0.5; // Gravity
+                    const newPlatform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height && b.x >= 0 && b.x <= canvas.width - 32);
+                    if (newPlatform) {
+                        b.y = newPlatform.y - 32; // Land on new platform
+                        b.dy = 0;
+                        b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomize direction after landing
+                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx);
+                        b.stage = platforms.indexOf(newPlatform) + 1;
+                    }
                 }
 
                 // Check for stuck barrels and reset movement if necessary
