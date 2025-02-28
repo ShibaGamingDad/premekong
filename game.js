@@ -15,12 +15,29 @@ function initializeGame() {
     if (isTelegram) {
         console.log('Running in Telegram WebApp, adjusting viewport...');
         Telegram.WebApp.expand(); // Ensure full screen in Telegram
-        // Adjust canvas size for mobile screens
         const deviceWidth = window.innerWidth;
         const deviceHeight = window.innerHeight;
         console.log('Device dimensions:', deviceWidth, 'x', deviceHeight);
-        canvas.width = Math.min(deviceWidth, 672); // Cap width at 672
-        canvas.height = Math.min(deviceHeight, 768); // Cap height at 768
+
+        // Adjust canvas size for mobile screens, prioritizing portrait orientation
+        const aspectRatio = 672 / 768; // Target aspect ratio (width/height)
+        let newWidth, newHeight;
+
+        // Try to fit within device dimensions while maintaining aspect ratio
+        if (deviceWidth / deviceHeight < aspectRatio) {
+            // Device is taller than wide (portrait), use height to determine width
+            newHeight = Math.min(deviceHeight, 768);
+            newWidth = newHeight * aspectRatio;
+        } else {
+            // Device is wider than tall (landscape), use width to determine height
+            newWidth = Math.min(deviceWidth, 672);
+            newHeight = newWidth / aspectRatio;
+        }
+
+        // Ensure canvas fits within device bounds
+        canvas.width = Math.floor(newWidth);
+        canvas.height = Math.floor(newHeight);
+        console.log('Adjusted canvas size for Telegram:', canvas.width, 'x', canvas.height);
     } else {
         console.log('Running in browser, using default canvas size:', canvas.width, 'x', canvas.height);
     }
@@ -33,7 +50,6 @@ function startGame() {
     const gameSetup = initializeGame();
     if (!gameSetup) {
         console.error('Game initialization failed. Game cannot start.');
-        // Exit gracefully without using return at top level
         gameActive = false;
         return;
     }
