@@ -119,6 +119,7 @@ function initLevel() {
         ladders.push({ x: 506, y: baseY[2] - 100, width: 50, height: 100, image: null }); // y: 368 (extends from 468 to 568)
 
         mario = { x: 50, y: 668, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: mario.image || null }; // Mario on first platform
+        console.log('Mario initialized at:', mario.x, mario.y); // Debug log for Mario's position
         premekong.y = Math.max(0, Math.min(canvas.height - 400 - premekong.height, canvas.height - premekong.height));
         premekong.x = 50;
         pauline.y = Math.max(0, Math.min(canvas.height - 400 - pauline.height, canvas.height - pauline.height));
@@ -186,6 +187,7 @@ function draw() {
             }
         });
         if (mario && mario.x >= 0 && mario.x <= canvas.width && mario.y >= 0 && mario.y <= canvas.height) {
+            console.log('Drawing Mario at:', mario.x, mario.y); // Debug log for Mario's position
             if (mario.image && mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
             else { ctx.fillStyle = 'white'; ctx.fillRect(mario.x, mario.y, mario.width, mario.height); }
         }
