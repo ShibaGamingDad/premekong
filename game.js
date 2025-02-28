@@ -1,20 +1,11 @@
-function initializeCanvas() {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas?.getContext('2d');
-
-    if (!canvas) {
-        console.error('Canvas not found! Check index.html for <canvas id="gameCanvas">');
-        return null;
-    }
-    console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
-    return { canvas, ctx };
-}
-
-const { canvas, ctx } = initializeCanvas();
-if (!canvas || !ctx) {
-    console.error('Failed to initialize canvas or context. Game cannot start.');
+// Canvas initialization
+const canvas = document.getElementById('gameCanvas');
+if (!canvas) {
+    console.error('Canvas not found! Check index.html for <canvas id="gameCanvas">');
     throw new Error('Canvas initialization failed');
 }
+const ctx = canvas.getContext('2d');
+console.log('Canvas initialized:', canvas.width, 'x', canvas.height);
 
 let mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 };
 let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true };
