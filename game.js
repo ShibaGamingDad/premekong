@@ -156,6 +156,9 @@ function draw() {
             } else {
                 ctx.fillRect(p.x, p.y, p.width, p.height);
             }
+            // Visual debug: Draw platform outlines
+            ctx.strokeStyle = 'red';
+            ctx.strokeRect(p.x, p.y, p.width, p.height);
         });
 
         // Draw ladders
@@ -195,6 +198,9 @@ function draw() {
         if (pauline && pauline.x >= 0 && pauline.x <= canvas.width && pauline.y >= 0 && pauline.y <= canvas.height) {
             if (pauline.image && pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
             else { ctx.fillStyle = 'pink'; ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height); }
+            // Visual debug: Draw Pauline outline
+            ctx.strokeStyle = 'green';
+            ctx.strokeRect(pauline.x, pauline.y, pauline.width, pauline.height);
         }
         ctx.fillStyle = 'brown';
         barrels.forEach(b => {
@@ -215,6 +221,7 @@ function draw() {
                     }
                 } else {
                     ctx.fillRect(b.x, b.y, 32, 32);
+                    console.warn('Barrel image not loaded, drawing fallback:', b.x, b.y);
                 }
             }
         });
@@ -277,13 +284,13 @@ function update() {
         }
 
         // Barrel spawning (only from Pauline, no Preme Kong, strict Pauline platform check)
-        if (Math.random() < 0.05 * level) { // Increased spawn probability to 5% per frame at level 1
+        if (Math.random() < 0.2 * level) { // Increased spawn probability to 20% per frame at level 1 for testing
             const paulinePlatform = platforms.find(p => p.y === canvas.height - 400); // Find platform at top (y: canvas.height - 400)
             if (!paulinePlatform) {
                 console.error('Top platform not found at y:', canvas.height - 400, 'Platforms:', platforms.map(p => p.y));
             }
             console.log('Pauline Y:', pauline.y, 'Pauline Platform Y:', paulinePlatform ? paulinePlatform.y : 'Not found');
-            if (paulinePlatform && Math.abs(pauline.y - paulinePlatform.y) < 5) { // Allow small tolerance for floating-point or scaling issues
+            if (paulinePlatform && Math.abs(pauline.y - paulinePlatform.y) < 10) { // Increased tolerance to 10 pixels
                 barrels.push({
                     x: pauline.x + pauline.width + 32, // Start on right side of Pauline
                     y: paulinePlatform.y - 32, // Position barrel on top of the platform (32px height for barrel)
@@ -294,7 +301,11 @@ function update() {
                     image: new Image()
                 });
                 barrels[barrels.length - 1].image.src = 'barrel.png';
-                barrels[barrels.length - 1].image.onerror = () => console.error('Barrel image failed to load for spawned barrel at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y);
+                barrels[barrels.length - 1].image.onload = () => console.log('Barrel image loaded successfully for:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y);
+                barrels[barrels.length - 1].image.onerror = () => {
+                    console.error('Barrel image failed to load for spawned barrel at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y);
+                    barrels[barrels.length - 1].image = { width: 32, height: 32 }; // Fallback to a plain rectangle
+                };
                 console.log('Barrel spawned at Pauline on top platform:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'Platform Y:', paulinePlatform.y);
             } else {
                 console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected Platform Y:', paulinePlatform ? paulinePlatform.y : 'Not found');
