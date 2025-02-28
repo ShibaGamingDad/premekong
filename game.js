@@ -56,7 +56,7 @@ if (!canvas || !ctx) {
 }
 
 let mario = { x: 50, y: canvas.height - 68, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0 }; // Mario on base
-let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true }; // Keep dropping for animation, but no barrel spawning
+let premekong = { x: 50, y: canvas.height - 400 - 64, width: 64, height: 64, dropping: true };
 let pauline = { x: 150, y: canvas.height - 400 - 32, width: 32, height: 32, image: null };
 let barrels = [];
 let hammer = { x: 300, y: canvas.height - 200 - 32, width: 32, height: 32, active: true, image: null };
@@ -156,9 +156,6 @@ function draw() {
             } else {
                 ctx.fillRect(p.x, p.y, p.width, p.height);
             }
-            // Visual debug: Draw platform outlines
-            ctx.strokeStyle = 'red';
-            ctx.strokeRect(p.x, p.y, p.width, p.height);
         });
 
         // Draw ladders
@@ -198,9 +195,6 @@ function draw() {
         if (pauline && pauline.x >= 0 && pauline.x <= canvas.width && pauline.y >= 0 && pauline.y <= canvas.height) {
             if (pauline.image && pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
             else { ctx.fillStyle = 'pink'; ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height); }
-            // Visual debug: Draw Pauline outline
-            ctx.strokeStyle = 'green';
-            ctx.strokeRect(pauline.x, pauline.y, pauline.width, pauline.height);
         }
         ctx.fillStyle = 'brown';
         barrels.forEach(b => {
@@ -211,17 +205,14 @@ function draw() {
                         const platform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height);
                         if (platform) {
                             ctx.drawImage(b.image, b.x, platform.y - 32, 32, 32); // Position barrel on top of platform
-                            console.log('Drawing barrel on platform:', b.x, platform.y - 32, 'Platform:', platform.y); // Debug log for barrel position
                         } else {
                             ctx.drawImage(b.image, b.x, b.y, 32, 32); // Default position if no platform
-                            console.warn('Barrel not on platform, position:', b.x, b.y); // Debug log for misplaced barrels
                         }
                     } else {
                         ctx.drawImage(b.image, b.x, b.y, 32, 32); // Thrown barrels maintain original position
                     }
                 } else {
                     ctx.fillRect(b.x, b.y, 32, 32);
-                    console.warn('Barrel image not loaded, drawing fallback:', b.x, b.y);
                 }
             }
         });
@@ -283,61 +274,68 @@ function update() {
             if (mario.hammerTime <= 0) mario.hammer = false;
         }
 
-        // Barrel spawning (only from Pauline, no Preme Kong, strict Pauline platform check)
-        if (Math.random() < 0.2 * level) { // Increased spawn probability to 20% per frame at level 1 for testing
-            const paulinePlatform = platforms.find(p => p.y === canvas.height - 400); // Find platform at top (y: canvas.height - 400)
-            if (!paulinePlatform) {
-                console.error('Top platform not found at y:', canvas.height - 400, 'Platforms:', platforms.map(p => p.y));
-            }
-            console.log('Pauline Y:', pauline.y, 'Pauline Platform Y:', paulinePlatform ? paulinePlatform.y : 'Not found');
-            if (paulinePlatform && Math.abs(pauline.y - paulinePlatform.y) < 10) { // Increased tolerance to 10 pixels
-                barrels.push({
-                    x: pauline.x + pauline.width + 32, // Start on right side of Pauline
-                    y: paulinePlatform.y - 32, // Position barrel on top of the platform (32px height for barrel)
-                    dx: 0.2 * level, // Start going right
-                    dy: 0, // No initial downward velocity
-                    type: 'rolling',
-                    stage: 1, // Start on top platform
-                    image: new Image()
-                });
-                barrels[barrels.length - 1].image.src = 'barrel.png';
-                barrels[barrels.length - 1].image.onload = () => console.log('Barrel image loaded successfully for:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y);
-                barrels[barrels.length - 1].image.onerror = () => {
-                    console.error('Barrel image failed to load for spawned barrel at:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y);
-                    barrels[barrels.length - 1].image = { width: 32, height: 32 }; // Fallback to a plain rectangle
-                };
-                console.log('Barrel spawned at Pauline on top platform:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'Platform Y:', paulinePlatform.y);
-            } else {
-                console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected Platform Y:', paulinePlatform ? paulinePlatform.y : 'Not found');
-            }
+        // Barrel throwing
+        if (premekong.dropping && Math.random() < 0.005 * level) { // Maintain reduced frequency
+            const offset = Math.random() * 100 - 50;
+            const startX = Math.max(0, Math.min(premekong.x + offset, canvas.width - 32));
+            barrels.push({
+                x: startX,
+                y: Math.max(0, Math.min(canvas.height - 400 - 32, canvas.height - 32)),
+                dx: (Math.random() - 0.5) * 0.4, // ±0.2
+                dy: Math.random() * 0.3 + 0.2, // 0.2–0.5
+                type: 'thrown',
+                image: new Image()
+            });
+            barrels[barrels.length - 1].image.src = 'barrel.png';
+
+            // Rolling barrel (conveyor system starting from Pauline, moving downward)
+            barrels.push({
+                x: pauline.x + pauline.width + 32, // Start on right side of Pauline
+                y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)), // Pauline's platform
+                dx: 0.2 * level, // Start going right
+                dy: 0,
+                type: 'rolling',
+                stage: 1,
+                image: new Image()
+            });
+            barrels[barrels.length - 1].image.src = 'barrel.png';
         }
 
         // Barrel movement (conveyor system, downward path)
         barrels.forEach((b, i) => {
-            if (b.type === 'rolling') {
-                // Keep barrel on current platform until it reaches the drop point
+            if (b.type === 'thrown') {
+                b.x = Math.max(-32, Math.min(b.x + b.dx, canvas.width + 32));
+                b.y = Math.max(-32, Math.min(b.y + b.dy, canvas.height + 32));
+                // Check if barrel lands on Pauline's platform
+                const platform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height && b.x >= 0 && b.x <= canvas.width - 32);
+                if (platform && b.dy > 0 && platform.y === canvas.height - 400) { // Only on Pauline's platform
+                    b.y = platform.y - 32; // Position barrel on top of platform
+                    b.dy = 0;
+                    b.type = 'rolling';
+                    b.dx = 0.2 * level; // Initially go right on Pauline's platform
+                    b.stage = 1;
+                }
+            } else if (b.type === 'rolling') {
+                b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
                 const currentPlatform = platforms[b.stage - 1];
-                if (currentPlatform) {
-                    b.y = currentPlatform.y - 32; // Ensure barrel stays on top of the platform
+                if (currentPlatform && b.y !== currentPlatform.y - 32) {
+                    b.y = currentPlatform.y - 32; // Ensure barrel stays on top of platform
                 }
 
-                // Horizontal movement (conveyor)
-                b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
-
-                // Conveyor system: Move right until reaching the drop points (ladders), then drop downward
+                // Conveyor system: Move right until reaching the new ladder (x: 300), then drop downward
                 if (b.stage === 1 && b.x >= 300 - 32) { // Near new ladder at x: 300
-                    b.y = platforms[1].y - 32; // Drop to second platform (y: canvas.height - 200)
+                    b.y = canvas.height - 200; // Drop to second platform (y: 568, downward)
                     b.dx = 0; // Stop horizontal movement before drop
                     b.dy = 0.5; // Small drop velocity
                     b.stage = 2;
                 } else if (b.stage === 2 && b.x >= 506 - 32) { // Near first ladder at x: 506
-                    b.y = platforms[2].y - 32; // Drop to third platform (y: canvas.height - 300)
-                    b.dx = 0;
+                    b.y = canvas.height - 300; // Drop to third platform (y: 468, downward)
+                    b.dx = 0; // Stop before drop
                     b.dy = 0.5;
                     b.stage = 3;
                 } else if (b.stage === 3 && b.x <= 94 + 32) { // Near second ladder at x: 94
-                    b.y = platforms[3].y - 32; // Drop to fourth platform (y: canvas.height - 100)
-                    b.dx = 0;
+                    b.y = canvas.height - 100; // Drop to fourth platform (y: 668, downward)
+                    b.dx = 0; // Stop before drop
                     b.dy = 0.5;
                     b.stage = 4;
                 }
@@ -351,8 +349,8 @@ function update() {
                         b.y = newPlatform.y - 32; // Land on new platform
                         b.dy = 0;
                         b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomize direction after landing
+                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx);
                         b.stage = platforms.indexOf(newPlatform) + 1;
-                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx, 'New Platform Y:', newPlatform.y);
                     }
                 }
 
@@ -393,10 +391,6 @@ function update() {
             premekong.y += 100; // Basic "cutscene": Preme Kong falls
             setTimeout(restartGame, 1000); // Restart after 1s
         }
-
-        // Debug log for barrel and platform positions
-        console.log('Barrel positions:', barrels.map(b => `x: ${b.x}, y: ${b.y}, stage: ${b.stage}`));
-        console.log('Platform assignments:', platforms.map((p, i) => `Stage ${i + 1}: y: ${p.y}`));
     } catch (error) {
         console.error('Error in update function:', error);
     }
