@@ -205,8 +205,10 @@ function draw() {
                         const platform = platforms.find(p => b.y + 32 >= p.y && b.y <= p.y + p.height);
                         if (platform) {
                             ctx.drawImage(b.image, b.x, platform.y - 32, 32, 32); // Position barrel on top of platform
+                            console.log('Drawing barrel on platform:', b.x, platform.y - 32, 'Platform:', platform.y); // Debug log for barrel position
                         } else {
                             ctx.drawImage(b.image, b.x, b.y, 32, 32); // Default position if no platform
+                            console.warn('Barrel not on platform, position:', b.x, b.y); // Debug log for misplaced barrels
                         }
                     } else {
                         ctx.drawImage(b.image, b.x, b.y, 32, 32); // Thrown barrels maintain original position
@@ -274,23 +276,28 @@ function update() {
             if (mario.hammerTime <= 0) mario.hammer = false;
         }
 
-        // Barrel spawning (only from Pauline, no Preme Kong)
+        // Barrel spawning (only from Pauline, no Preme Kong, strict Pauline platform check)
         if (Math.random() < 0.005 * level) { // Maintain reduced frequency
-            // Rolling barrel (conveyor system starting from Pauline, moving downward)
-            barrels.push({
-                x: pauline.x + pauline.width + 32, // Start on right side of Pauline
-                y: Math.max(0, Math.min(canvas.height - 400, canvas.height - 64)), // Pauline's platform
-                dx: 0.2 * level, // Start going right
-                dy: 0,
-                type: 'rolling',
-                stage: 1,
-                image: new Image()
-            });
-            barrels[barrels.length - 1].image.src = 'barrel.png';
-            console.log('Barrel spawned at Pauline:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y); // Debug log for spawning position
+            const paulinePlatformY = canvas.height - 400;
+            if (pauline.y === paulinePlatformY) { // Verify Pauline is on her platform
+                // Rolling barrel (conveyor system starting from Pauline, moving downward)
+                barrels.push({
+                    x: pauline.x + pauline.width + 32, // Start on right side of Pauline
+                    y: paulinePlatformY, // Explicitly Pauline's platform y
+                    dx: 0.2 * level, // Start going right
+                    dy: 0,
+                    type: 'rolling',
+                    stage: 1,
+                    image: new Image()
+                });
+                barrels[barrels.length - 1].image.src = 'barrel.png';
+                console.log('Barrel spawned at Pauline:', barrels[barrels.length - 1].x, barrels[barrels.length - 1].y, 'Platform Y:', paulinePlatformY); // Debug log for spawning position
+            } else {
+                console.warn('Pauline not on correct platform, skipping barrel spawn. Pauline Y:', pauline.y, 'Expected:', paulinePlatformY);
+            }
         }
 
-        // Barrel movement (conveyor system, downward path)
+        // Barrel movement (conveyor system, downward path, prevent first platform spawn unless via conveyor)
         barrels.forEach((b, i) => {
             if (b.type === 'rolling') {
                 b.x = Math.max(0, Math.min(b.x + b.dx, canvas.width - 32));
@@ -333,7 +340,7 @@ function update() {
                         b.y = newPlatform.y - 32; // Land on new platform
                         b.dy = 0;
                         b.dx = Math.random() < 0.5 ? 0.2 * level : -0.2 * level; // Randomize direction after landing
-                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx);
+                        console.log('Barrel landed and randomized direction at:', b.x, b.y, b.dx, 'New Platform Y:', newPlatform.y);
                         b.stage = platforms.indexOf(newPlatform) + 1;
                     }
                 }
