@@ -287,7 +287,7 @@ function update(canvas) {
 
         // If not on a platform, check for falling (only fall through gaps or down ladders)
         if (!onPlatform && b.type === 'rolling') {
-            // Check if barrel is above a gap (no platform below)
+            // Check if barrel is above a gap (no platform below) or near a ladder
             let falling = true;
             for (let p of platforms) {
                 if (b.x + 32 > p.x && b.x < p.x + p.width && b.y + 32 < p.y) {
