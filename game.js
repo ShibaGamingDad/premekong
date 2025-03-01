@@ -149,7 +149,7 @@ function draw(ctx, canvas) {
         console.error('Background image failed to load for level', level, '. Check file path or format.');
     }
 
-    // Draw platforms with slope, removing red lines for cleaner visuals
+    // Draw platforms with slope, using platform image for natural ramp appearance
     platforms.forEach(p => {
         if (p.image && p.image.complete) {
             // Draw sloped platform using the platform image, stretched to fit the slope
@@ -198,7 +198,7 @@ function draw(ctx, canvas) {
 function update(canvas) {
     if (!gameActive || gameOver || !canvas) return;
 
-    // Mario movement
+    // Mario movement on sloped platforms
     mario.x += mario.dx * 3;
     if (mario.onLadder) mario.y += mario.dy * 3;
     if (mario.jumping) {
@@ -219,13 +219,19 @@ function update(canvas) {
     let onLadder = ladders.some(l => checkCollision(mario, l));
     let currentPlatform = null;
     platforms.forEach(p => {
-        if (checkCollision(mario, p) && mario.y + mario.height <= getPlatformY(p, mario.x + mario.width / 2) + p.height / 2) {
-            mario.y = getPlatformY(p, mario.x + mario.width / 2) - mario.height;
-            mario.dy = 0;
+        const platformY = getPlatformY(p, mario.x + mario.width / 2);
+        if (checkCollision(mario, p) && mario.y + mario.height <= platformY + p.height / 2) {
+            mario.y = platformY - mario.height;
+            mario.dy = 0; // Reset vertical velocity on platform
             mario.jumping = false;
             mario.groundY = mario.y;
             onPlatform = true;
             currentPlatform = p;
+            // Apply slight downward movement on slope when moving right
+            if (mario.dx > 0) {
+                mario.y += p.slope * mario.dx * 3; // Move down slope based on 20% slope and movement speed
+                mario.groundY = mario.y;
+            }
         }
     });
     if (!onPlatform && !onLadder && mario.y >= canvas.height - mario.height) {
@@ -258,7 +264,7 @@ function update(canvas) {
 
     // Spawn rolling barrels on the top platform (conveyor system) at regular intervals
     if (Math.random() < 0.01 * level) { // Less frequent than thrown barrels for balance
-        const topPlatformY = canvas.height - 664; // Top platform where Preme Kong is (all levels)
+        const topPlatformY = getPlatformY(platforms[3], premekong.x); // Use sloped y-position for top platform
         barrels.push({
             x: premekong.x, y: topPlatformY, dx: 2, dy: 0, image: images.barrel, type: 'rolling', platformIndex: 3 // Mark as rolling barrel on top platform, starting from Preme Kong's left edge, track starting platform
         });
@@ -381,11 +387,11 @@ function update(canvas) {
         levelUp();
         // Reset Mario, Pauline, and Preme Kong to starting positions for Level 2
         mario.x = 50;
-        mario.y = canvas.height - 52;
+        mario.y = getPlatformY(platforms[0], 50) - 52; // Reset to bottom platform, adjusted for slope
         pauline.x = canvas.width - 82;
-        pauline.y = canvas.height - 632; // Adjust for Level 2 starting position
+        pauline.y = getPlatformY(platforms[3], canvas.width - 82) - 32; // Adjust for top platform slope
         premekong.x = 50;
-        premekong.y = canvas.height - 664; // Adjust for Level 2 starting position
+        premekong.y = getPlatformY(platforms[3], 50) - 64; // Adjust for top platform slope
         // Reset rivets for the next level
         rivets.forEach(r => r.hit = false);
         // Clear barrels for new level
