@@ -19,14 +19,14 @@ function initializeGame() {
         return null;
     }
 
-    // Adjust canvas for mobile and laptop screens
+    // Adjust canvas for mobile and laptop screens, prioritizing tighter fit
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
-    let newWidth = Math.min(window.innerWidth * 0.8, maxWidth); // Reduced to 80% of screen width
+    let newWidth = Math.min(window.innerWidth * 0.7, maxWidth); // Reduced to 70% of screen width
     let newHeight = newWidth / aspectRatio;
-    if (newHeight > window.innerHeight * 0.6) { // Reduced to 60% of screen height
-        newHeight = window.innerHeight * 0.6;
+    if (newHeight > window.innerHeight * 0.5) { // Reduced to 50% of screen height
+        newHeight = window.innerHeight * 0.5;
         newWidth = newHeight * aspectRatio;
     }
     canvas.width = newWidth;
@@ -225,7 +225,11 @@ function update(canvas) {
             if (mario.hammer) { score += 300; barrels.splice(i, 1); }
             else { gameOver = true; restartGame(); }
         }
-        if (!mario.onLadder && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x - b.x) < 32) score += 100;
+        // Only award points for jumping over barrels when Mario is not on a ladder and not jumping
+        if (!mario.onLadder && !mario.jumping && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+            score += 100;
+            barrels.splice(i, 1); // Remove barrel after scoring
+        }
     });
 
     // Ladder, rivet, and win condition
