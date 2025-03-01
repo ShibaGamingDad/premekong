@@ -30,12 +30,12 @@ function initializeGame() {
     if (isTelegram) {
         Telegram.WebApp.expand();
         newWidth = Math.min(window.innerWidth, maxWidth);
-        newHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of Telegram height
+        newHeight = Math.min(window.innerHeight * 0.5, maxHeight); // Reduced to 50% of Telegram height for tighter fit
     } else {
-        newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Increased to 50% of screen width for better visibility
+        newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Reduced to 40% of screen width for smaller size
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.45) { // Increased to 45% of screen height
-            newHeight = window.innerHeight * 0.45;
+        if (newHeight > window.innerHeight * 0.35) { // Reduced to 35% of screen height
+            newHeight = window.innerHeight * 0.35;
             newWidth = newHeight * aspectRatio;
         }
     }
@@ -247,7 +247,7 @@ function update(canvas) {
             else { gameOver = true; restartGame(); }
         }
         // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and above the barrel
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 5 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 10 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
