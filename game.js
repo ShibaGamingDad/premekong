@@ -23,10 +23,10 @@ function initializeGame() {
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
-    let newWidth = Math.min(window.innerWidth * 0.9, maxWidth); // 90% of screen width
+    let newWidth = Math.min(window.innerWidth * 0.8, maxWidth); // Reduced to 80% of screen width
     let newHeight = newWidth / aspectRatio;
-    if (newHeight > window.innerHeight * 0.7) { // Cap at 70% of screen height
-        newHeight = window.innerHeight * 0.7;
+    if (newHeight > window.innerHeight * 0.6) { // Reduced to 60% of screen height
+        newHeight = window.innerHeight * 0.6;
         newWidth = newHeight * aspectRatio;
     }
     canvas.width = newWidth;
@@ -50,7 +50,7 @@ function loadImages() {
     images.ladder.src = 'ladder.png';
     images.platform.src = 'platform.png';
     images.rivet.src = 'rivet.png';
-    images.bg1.src = 'background1.png'; // Add these files
+    images.bg1.src = 'background1.png';
     images.bg2.src = 'background2.png';
     images.bg3.src = 'background3.png';
 
