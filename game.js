@@ -68,7 +68,7 @@ function loadImages() {
         bg1: new Image(), bg2: new Image(), bg3: new Image()
     };
     images.mario.src = 'mario.png';
-    images.premekong.src = 'premekekong.png';
+    images.premekong.src = 'premekong.png'; // Fixed typo from 'premekekong.png' to 'premekong.png'
     images.pauline.src = 'pauline.png';
     images.hammer.src = 'hammer.png';
     images.barrel.src = 'barrel.png';
@@ -251,7 +251,7 @@ function update(canvas) {
 
     // Spawn rolling barrels on the top platform (conveyor system) at regular intervals
     if (Math.random() < 0.01 * level) { // Less frequent than thrown barrels for balance
-        const topPlatformY = canvas.height - 664; // Top platform where Preme Kong is (Level 1 and 2)
+        const topPlatformY = canvas.height - 664; // Top platform where Preme Kong is (all levels)
         barrels.push({
             x: 50, y: topPlatformY, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform
         });
@@ -289,6 +289,7 @@ function update(canvas) {
         if (!onPlatform && b.type === 'rolling') {
             b.dy += 0.3; // Gravity
             b.y += b.dy;
+            b.dx = 0; // Stop horizontal movement while falling
         }
 
         // Check collision with ladders to fall to lower platforms
@@ -297,6 +298,16 @@ function update(canvas) {
                 b.dy = 0.5; // Small downward speed to fall down ladder
                 b.y += b.dy;
                 b.dx = 0; // Stop horizontal movement while falling
+            }
+        });
+
+        // Resume rolling on next platform after falling
+        platforms.forEach(p => {
+            if (checkCollision(b, p) && b.dy > 0 && b.y + 32 <= p.y + p.height / 2) {
+                b.y = p.y - 32;
+                b.dy = 0;
+                b.dx = 2; // Resume rightward roll on landing
+                b.type = 'rolling';
             }
         });
 
