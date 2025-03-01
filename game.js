@@ -248,7 +248,7 @@ function update(canvas) {
         });
     }
 
-    // Barrel movement (top-down)
+    // Barrel movement (top-down) with conveyor system
     barrels.forEach((b, i) => {
         b.x += b.dx;
         b.y += b.dy;
@@ -257,7 +257,8 @@ function update(canvas) {
             if (checkCollision(b, p) && b.y + 32 <= p.y + p.height / 2) {
                 b.y = p.y - 32;
                 b.dy = 0;
-                b.dx = Math.random() < 0.5 ? 2 : -2;
+                // Simulate conveyor movement on platforms (left to right)
+                b.dx = Math.abs(b.dx) * (Math.random() < 0.5 ? 2 : -2); // Random direction on platform, but typically right
             }
         });
         if (b.x < -32 || b.x > canvas.width || b.y > canvas.height) barrels.splice(i, 1);
@@ -266,7 +267,7 @@ function update(canvas) {
             else { gameOver = true; restartGame(); }
         }
         // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and clearly above the barrel
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 25 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 30 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
@@ -287,9 +288,15 @@ function update(canvas) {
         }
     });
     if (checkCollision(mario, pauline)) {
-        gameOver = true;
-        premekong.y += 100;
-        setTimeout(restartGame, 1000);
+        // Progress to next level instead of ending game
+        levelUp();
+        // Move Pauline and Preme Kong to new positions for level 2
+        pauline.y -= 200; // Move Pauline up for level 2
+        premekong.y -= 200; // Move Preme Kong up for level 2
+        // Reset rivets for the next level
+        rivets.forEach(r => r.hit = false);
+        // Keep score intact
+        updateScore();
     }
 
     updateScore();
@@ -303,8 +310,28 @@ function checkCollision(obj1, obj2) {
 
 function levelUp() {
     level++;
-    initLevel();
-    score += 100;
+    // Keep score and other state intact, just update positions and reset rivets
+    const { canvas } = initializeGame();
+    platforms = [
+        { x: 0, y: canvas.height - 20, width: canvas.width, height: 20, image: images.platform },
+        { x: 0, y: canvas.height - 200, width: canvas.width, height: 20, image: images.platform },
+        { x: 0, y: canvas.height - 400, width: canvas.width, height: 20, image: images.platform },
+        { x: 0, y: canvas.height - 600, width: canvas.width, height: 20, image: images.platform }
+    ];
+    ladders = [
+        { x: canvas.width / 2 - 25, y: canvas.height - 200, width: 50, height: 180, image: images.ladder },
+        { x: canvas.width / 4, y: canvas.height - 400, width: 50, height: 180, image: images.ladder },
+        { x: 3 * canvas.width / 4, y: canvas.height - 600, width: 50, height: 180, image: images.ladder }
+    ];
+    rivets = [];
+    for (let i = 0; i < platforms.length; i++) {
+        for (let j = 0; j < 5; j++) {
+            rivets.push({ x: 50 + j * 100, y: platforms[i].y - 20, width: 20, height: 20, hit: false, image: images.rivet });
+        }
+    }
+    score += 100; // Bonus for level up
+    barrels = []; // Clear barrels for new level
+    updateScore();
 }
 
 function updateScore() {
