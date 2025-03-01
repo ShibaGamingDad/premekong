@@ -31,8 +31,8 @@ function initializeGame() {
         Telegram.WebApp.expand();
         // Use dynamic sizing based on Telegram's actual viewport after expansion
         newWidth = Math.min(window.innerWidth * 0.98, maxWidth); // Use 98% of Telegram width for near-full visibility
-        // Ensure height is at least 90% of the viewport height, but cap at maxHeight
-        newHeight = Math.min(window.innerHeight * 0.9, maxHeight);
+        // Ensure height is at least 95% of the viewport height, but cap at maxHeight
+        newHeight = Math.min(window.innerHeight * 0.95, maxHeight);
         // Adjust height to maintain aspect ratio if necessary
         if (newHeight / aspectRatio < newWidth) {
             newHeight = newWidth * aspectRatio;
@@ -40,10 +40,10 @@ function initializeGame() {
             newWidth = newHeight / aspectRatio;
         }
     } else {
-        newWidth = Math.min(window.innerWidth * 0.45, maxWidth); // Increase to 45% of screen width for better visibility on non-Telegram
+        newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Increase to 50% of screen width for better visibility on non-Telegram
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.4) { // Increase to 40% of screen height
-            newHeight = window.innerHeight * 0.4;
+        if (newHeight > window.innerHeight * 0.45) { // Increase to 45% of screen height
+            newHeight = window.innerHeight * 0.45;
             newWidth = newHeight * aspectRatio;
         }
     }
