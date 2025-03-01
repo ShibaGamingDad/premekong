@@ -105,12 +105,11 @@ function initLevel() {
         console.error('Canvas or images not initialized!');
         return;
     }
-    // Define platforms: only the top platform has a 10% slope, others are flat
     platforms = [
         { x: 0, y: canvas.height - 20, width: canvas.width, height: 20, image: images.platform }, // Bottom platform, flat
         { x: 0, y: canvas.height - 200, width: canvas.width, height: 20, image: images.platform }, // Second platform, flat
         { x: 0, y: canvas.height - 400, width: canvas.width, height: 20, image: images.platform }, // Third platform, flat
-        { x: 0, startY: canvas.height - 600, width: canvas.width, height: 20, slope: 0.1, image: images.platform } // Top platform, sloped downward to the right (10% slope)
+        { x: 0, y: canvas.height - 600, width: canvas.width, height: 20, image: images.platform }  // Top platform, flat
     ];
     ladders = [
         { x: canvas.width / 2 - 25, y: canvas.height - 200, width: 50, height: 180, image: images.ladder },
@@ -120,12 +119,7 @@ function initLevel() {
     rivets = [];
     for (let i = 0; i < platforms.length; i++) {
         for (let j = 0; j < 5; j++) {
-            // Adjust rivet y-position for the top sloped platform, use startY for consistency
-            if (i === 3) { // Top platform (index 3) has a slope
-                rivets.push({ x: 50 + j * 100, y: platforms[i].startY - 20, width: 20, height: 20, hit: false, image: images.rivet });
-            } else {
-                rivets.push({ x: 50 + j * 100, y: platforms[i].y - 20, width: 20, height: 20, hit: false, image: images.rivet });
-            }
+            rivets.push({ x: 50 + j * 100, y: platforms[i].y - 20, width: 20, height: 20, hit: false, image: images.rivet });
         }
     }
     mario = { x: 50, y: canvas.height - 52, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: images.mario };
@@ -153,27 +147,13 @@ function draw(ctx, canvas) {
         console.error('Background image failed to load for level', level, '. Check file path or format.');
     }
 
-    // Draw platforms: flat for most, sloped for top
+    // Draw platforms (all flat in this version)
     platforms.forEach(p => {
         if (p.image && p.image.complete) {
-            if (p.hasOwnProperty('slope')) {
-                // Draw sloped platform (top platform, 10% slope) using the platform image
-                const startX = p.x;
-                const endX = p.x + p.width;
-                const startY = p.startY;
-                const endY = startY + (p.width * p.slope); // 10% slope (rise/run = 0.1)
-                ctx.drawImage(p.image, startX, startY, p.width, p.height); // Use the platform image directly, no red lines
-            } else {
-                // Draw flat platforms
-                ctx.drawImage(p.image, p.x, p.y, p.width, p.height);
-            }
+            ctx.drawImage(p.image, p.x, p.y, p.width, p.height);
         } else {
             ctx.fillStyle = 'red';
-            if (p.hasOwnProperty('slope')) {
-                ctx.fillRect(p.x, p.startY, p.width, p.height);
-            } else {
-                ctx.fillRect(p.x, p.y, p.width, p.height);
-            }
+            ctx.fillRect(p.x, p.y, p.width, p.height);
         }
     });
 
@@ -211,7 +191,7 @@ function draw(ctx, canvas) {
 function update(canvas) {
     if (!gameActive || gameOver || !canvas) return;
 
-    // Mario movement on flat and sloped platforms
+    // Mario movement on flat platforms
     mario.x += mario.dx * 3;
     if (mario.onLadder) mario.y += mario.dy * 3;
     if (mario.jumping) {
@@ -232,22 +212,13 @@ function update(canvas) {
     let onLadder = ladders.some(l => checkCollision(mario, l));
     let currentPlatform = null;
     platforms.forEach(p => {
-        let platformY = p.y; // Default to flat platform y
-        if (p.hasOwnProperty('slope')) {
-            platformY = getPlatformY(p, mario.x + mario.width / 2); // Use sloped y for top platform
-        }
-        if (checkCollision(mario, p) && mario.y + mario.height <= platformY + p.height / 2) {
-            mario.y = platformY - mario.height;
+        if (checkCollision(mario, p) && mario.y + mario.height <= p.y + p.height / 2) {
+            mario.y = p.y - mario.height;
             mario.dy = 0;
             mario.jumping = false;
             mario.groundY = mario.y;
             onPlatform = true;
             currentPlatform = p;
-            // Apply slight downward movement on slope (only for top platform)
-            if (p.hasOwnProperty('slope') && mario.dx > 0) {
-                mario.y += p.slope * mario.dx * 3; // Move down slope based on 10% slope and movement speed
-                mario.groundY = mario.y;
-            }
         }
     });
     if (!onPlatform && !onLadder && mario.y >= canvas.height - mario.height) {
@@ -256,7 +227,7 @@ function update(canvas) {
         mario.groundY = mario.y;
     }
     // Allow Mario to stay on ladder and move up/down freely, even on platform
-    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && (!currentPlatform || mario.y + mario.height > (currentPlatform.hasOwnProperty('slope') ? getPlatformY(currentPlatform, mario.x + mario.width / 2) : currentPlatform.y) - 5)));
+    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && (!currentPlatform || mario.y + mario.height > currentPlatform.y - 5)));
 
     // Hammer logic
     if (hammer.active && checkCollision(mario, hammer)) {
@@ -280,13 +251,13 @@ function update(canvas) {
 
     // Spawn rolling barrels on the top platform (conveyor system) at regular intervals
     if (Math.random() < 0.01 * level) { // Less frequent than thrown barrels for balance
-        const topPlatformY = getPlatformY(platforms[3], premekong.x); // Use sloped y-position for top platform (10% slope)
+        const topPlatformY = canvas.height - 664; // Top platform where Preme Kong is (all flat platforms)
         barrels.push({
             x: premekong.x, y: topPlatformY, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform, starting from Preme Kong's left edge
         });
     }
 
-    // Barrel movement (top-down for thrown, conveyor for rolling, with classic Donkey Kong behavior on flat and sloped platforms)
+    // Barrel movement (top-down for thrown, conveyor for rolling, with classic Donkey Kong behavior on flat platforms)
     barrels.forEach((b, i) => {
         if (b.type === 'thrown') {
             // Thrown barrels fall and move right
@@ -296,41 +267,20 @@ function update(canvas) {
         } else if (b.type === 'rolling') {
             // Rolling barrels move right on platforms (conveyor)
             b.x += b.dx;
-            // Calculate y position based on slope (only for top platform)
-            let onTopPlatform = false;
-            platforms.forEach(p => {
-                let platformY = p.y; // Default to flat platform y
-                if (p.hasOwnProperty('slope')) {
-                    platformY = getPlatformY(p, b.x + 16); // Use sloped y for top platform
-                }
-                if (b.x + 32 > p.x && b.x < p.x + p.width && b.y + 32 <= platformY + p.height / 2) {
-                    b.y = platformY - 32;
-                    b.dy = 0;
-                    onTopPlatform = p.hasOwnProperty('slope'); // Track if on top sloped platform
-                }
-            });
-
+            b.y = b.y; // Keep y constant on platform
             b.dx = 2; // Ensure consistent rightward roll
-            if (onTopPlatform) {
-                // Apply slight downward movement on 10% slope when rolling on top platform
-                b.y += platforms[3].slope * b.dx; // Move down slope based on 10% slope and movement speed
-            }
 
-            // Check collision with platforms for rolling or falling
+            // Check collision with platforms for rolling behavior
             let onPlatform = false;
             platforms.forEach(p => {
-                let platformY = p.y; // Default to flat platform y
-                if (p.hasOwnProperty('slope')) {
-                    platformY = getPlatformY(p, b.x + 16); // Use sloped y for top platform
-                }
-                if (b.x + 32 > p.x && b.x < p.x + p.width && b.y + 32 <= platformY + p.height / 2) {
-                    b.y = platformY - 32;
+                if (checkCollision(b, p) && b.y + 32 <= p.y + p.height / 2) {
+                    b.y = p.y - 32;
                     b.dy = 0;
-                    onPlatform = true;
-                    if (p.hasOwnProperty('slope')) {
-                        // Apply slight downward movement on slope
-                        b.y += p.slope * b.dx; // Move down slope based on 10% slope and movement speed
+                    if (b.type === 'thrown') {
+                        b.type = 'rolling'; // Convert thrown barrels to rolling on platform contact
+                        b.dx = 2; // Start rolling right
                     }
+                    onPlatform = true;
                 }
             });
 
@@ -352,19 +302,11 @@ function update(canvas) {
 
             // Resume rolling on next platform after falling
             platforms.forEach(p => {
-                let platformY = p.y; // Default to flat platform y
-                if (p.hasOwnProperty('slope')) {
-                    platformY = getPlatformY(p, b.x + 16); // Use sloped y for top platform
-                }
-                if (checkCollision(b, p) && b.dy > 0 && b.y + 32 <= platformY + p.height / 2) {
-                    b.y = platformY - 32;
+                if (checkCollision(b, p) && b.dy > 0 && b.y + 32 <= p.y + p.height / 2) {
+                    b.y = p.y - 32;
                     b.dy = 0;
                     b.dx = 2; // Resume rightward roll on landing
                     b.type = 'rolling';
-                    if (p.hasOwnProperty('slope')) {
-                        // Apply slight downward movement on slope
-                        b.y += p.slope * b.dx; // Move down slope based on 10% slope and movement speed
-                    }
                 }
             });
         }
@@ -404,7 +346,7 @@ function update(canvas) {
         pauline.x = canvas.width - 82;
         pauline.y = canvas.height - 632; // Adjust for Level 2 starting position
         premekong.x = 50;
-        premekong.y = getPlatformY(platforms[3], 50) - 64; // Adjust for top platform slope
+        premekong.y = canvas.height - 664; // Adjust for Level 2 starting position
         // Reset rivets for the next level
         rivets.forEach(r => r.hit = false);
         // Clear barrels for new level
@@ -416,36 +358,21 @@ function update(canvas) {
     updateScore();
 }
 
-// Helper function to calculate y-position on a sloped platform (10% slope for top platform)
-function getPlatformY(platform, x) {
-    if (platform.hasOwnProperty('slope')) {
-        const slope = platform.slope || 0; // Default to flat if no slope
-        const relativeX = x - platform.x;
-        return platform.startY + (relativeX * slope); // y = startY + (x - startX) * slope (10% = 0.1 for top platform)
-    }
-    return platform.y; // Return flat y for non-sloped platforms
-}
-
 function checkCollision(obj1, obj2) {
     if (!obj1 || !obj2) return false;
-    let platformY = obj2.y; // Default to flat platform y
-    if (obj2.hasOwnProperty('slope')) {
-        platformY = getPlatformY(obj2, obj1.x + obj1.width / 2); // Use sloped y for top platform
-    }
     return obj1.x < obj2.x + obj2.width && obj1.x + obj1.width > obj2.x &&
-           obj1.y < platformY + obj2.height / 2 && obj1.y + obj1.height > platformY - obj2.height / 2;
+           obj1.y < obj2.y + obj2.height && obj1.y + obj1.height > obj2.y;
 }
 
 function levelUp() {
     level++;
     // Keep score and other state intact, just update positions and reset rivets
     const { canvas } = initializeGame();
-    // Define platforms: only the top platform has a 10% slope, others are flat
     platforms = [
         { x: 0, y: canvas.height - 20, width: canvas.width, height: 20, image: images.platform }, // Bottom platform, flat
         { x: 0, y: canvas.height - 200, width: canvas.width, height: 20, image: images.platform }, // Second platform, flat
         { x: 0, y: canvas.height - 400, width: canvas.width, height: 20, image: images.platform }, // Third platform, flat
-        { x: 0, startY: canvas.height - 600, width: canvas.width, height: 20, slope: 0.1, image: images.platform } // Top platform, sloped downward to the right (10% slope)
+        { x: 0, y: canvas.height - 600, width: canvas.width, height: 20, image: images.platform }  // Top platform, flat
     ];
     ladders = [
         { x: canvas.width / 2 - 25, y: canvas.height - 200, width: 50, height: 180, image: images.ladder },
@@ -455,12 +382,7 @@ function levelUp() {
     rivets = [];
     for (let i = 0; i < platforms.length; i++) {
         for (let j = 0; j < 5; j++) {
-            // Adjust rivet y-position for the top sloped platform, use startY for consistency
-            if (i === 3) { // Top platform (index 3) has a slope
-                rivets.push({ x: 50 + j * 100, y: platforms[i].startY - 20, width: 20, height: 20, hit: false, image: images.rivet });
-            } else {
-                rivets.push({ x: 50 + j * 100, y: platforms[i].y - 20, width: 20, height: 20, hit: false, image: images.rivet });
-            }
+            rivets.push({ x: 50 + j * 100, y: platforms[i].y - 20, width: 20, height: 20, hit: false, image: images.rivet });
         }
     }
     score += 100; // Bonus for level up
