@@ -257,8 +257,8 @@ function update(canvas) {
             if (checkCollision(b, p) && b.y + 32 <= p.y + p.height / 2) {
                 b.y = p.y - 32;
                 b.dy = 0;
-                // Simulate conveyor movement on platforms (left to right)
-                b.dx = Math.abs(b.dx) * (Math.random() < 0.5 ? 2 : -2); // Random direction on platform, but typically right
+                // Simulate conveyor movement on platforms (consistent rightward roll)
+                b.dx = 2; // Force barrels to roll right on platforms
             }
         });
         if (b.x < -32 || b.x > canvas.width || b.y > canvas.height) barrels.splice(i, 1);
@@ -267,7 +267,7 @@ function update(canvas) {
             else { gameOver = true; restartGame(); }
         }
         // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and clearly above the barrel
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 30 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 35 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
@@ -288,13 +288,19 @@ function update(canvas) {
         }
     });
     if (checkCollision(mario, pauline)) {
-        // Progress to next level instead of ending game
+        // Progress to next level with characters reset to starting positions
         levelUp();
-        // Move Pauline and Preme Kong to new positions for level 2
-        pauline.y -= 200; // Move Pauline up for level 2
-        premekong.y -= 200; // Move Preme Kong up for level 2
+        // Reset Mario, Pauline, and Preme Kong to starting positions for Level 2
+        mario.x = 50;
+        mario.y = canvas.height - 52;
+        pauline.x = canvas.width - 82;
+        pauline.y = canvas.height - 632; // Adjust for Level 2 starting position
+        premekong.x = 50;
+        premekong.y = canvas.height - 664; // Adjust for Level 2 starting position
         // Reset rivets for the next level
         rivets.forEach(r => r.hit = false);
+        // Clear barrels for new level
+        barrels = [];
         // Keep score intact
         updateScore();
     }
@@ -330,7 +336,6 @@ function levelUp() {
         }
     }
     score += 100; // Bonus for level up
-    barrels = []; // Clear barrels for new level
     updateScore();
 }
 
