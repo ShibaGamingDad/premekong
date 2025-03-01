@@ -31,16 +31,17 @@ function initializeGame() {
         Telegram.WebApp.expand();
         // Use dynamic sizing based on Telegram's actual viewport after expansion
         newWidth = Math.min(window.innerWidth * 0.98, maxWidth); // Use 98% of Telegram width for near-full visibility
-        // Target height of 675 pixels, but cap at maxHeight and adjust for aspect ratio
-        newHeight = Math.min(window.innerHeight * 0.95, 675);
+        // Ensure height is at least 95% of the viewport height, but cap at maxHeight
+        newHeight = Math.min(window.innerHeight * 0.95, maxHeight);
+        // Adjust height to maintain aspect ratio if necessary
         if (newHeight / aspectRatio < newWidth) {
             newHeight = newWidth * aspectRatio;
         } else if (newWidth / aspectRatio < newHeight) {
             newWidth = newHeight / aspectRatio;
         }
-        // Ensure minimum height for better visibility, targeting 675 if possible
-        if (newHeight < 675 && window.innerHeight * 0.95 >= 675) {
-            newHeight = 675;
+        // Ensure minimum height for better visibility, targeting 650
+        if (newHeight < 650) {
+            newHeight = 650;
             newWidth = Math.min(newHeight / aspectRatio, maxWidth);
         }
     } else {
@@ -67,7 +68,7 @@ function loadImages() {
         bg1: new Image(), bg2: new Image(), bg3: new Image()
     };
     images.mario.src = 'mario.png';
-    images.premekong.src = 'premekong.png'; // Corrected from 'premekekong.png'
+    images.premekong.src = 'premekong.png'; // Fixed typo from 'premekekong.png' to 'premekong.png'
     images.pauline.src = 'pauline.png';
     images.hammer.src = 'hammer.png';
     images.barrel.src = 'barrel.png';
