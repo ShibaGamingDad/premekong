@@ -23,22 +23,26 @@ function initializeGame() {
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
-    let newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Reduced to 40% of screen width
-    let newHeight = newWidth / aspectRatio;
-    if (newHeight > window.innerHeight * 0.35) { // Reduced to 35% of screen height
-        newHeight = window.innerHeight * 0.35;
-        newWidth = newHeight * aspectRatio;
-    }
-    canvas.width = newWidth;
-    canvas.height = newHeight;
-    console.log('Canvas size:', canvas.width, 'x', canvas.height);
+    let newWidth, newHeight;
 
-    // Handle Telegram scaling
+    // Check if running in Telegram or mobile browser
     const isTelegram = window.Telegram?.WebApp;
     if (isTelegram) {
         Telegram.WebApp.expand();
-        console.log('Running in Telegram, adjusting viewport...');
+        newWidth = Math.min(window.innerWidth, maxWidth);
+        newHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of Telegram height
+    } else {
+        newWidth = Math.min(window.innerWidth * 0.45, maxWidth); // Reduced to 45% of screen width for general use
+        newHeight = newWidth / aspectRatio;
+        if (newHeight > window.innerHeight * 0.4) { // Reduced to 40% of screen height
+            newHeight = window.innerHeight * 0.4;
+            newWidth = newHeight * aspectRatio;
+        }
     }
+
+    canvas.width = newWidth;
+    canvas.height = newHeight;
+    console.log('Canvas size:', canvas.width, 'x', canvas.height);
 
     return { canvas, ctx };
 }
@@ -67,7 +71,7 @@ function loadImages() {
                 img.onload = () => resolve(img);
                 img.onerror = () => {
                     console.error(`${key} failed to load`);
-                    resolve(img); // Proceed even if failed
+                    resolve({ width: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 50 : key === 'platform' ? 672 : key === 'rivet' ? 20 : 672, height: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 180 : key === 'platform' ? 20 : key === 'rivet' ? 20 : 768 }); // Fallback dimensions
                 };
             })
         )
@@ -83,6 +87,10 @@ let images;
 
 function initLevel() {
     const { canvas } = initializeGame();
+    if (!canvas || !images) {
+        console.error('Canvas or images not initialized!');
+        return;
+    }
     platforms = [
         { x: 0, y: canvas.height - 20, width: canvas.width, height: 20, image: images.platform },
         { x: 0, y: canvas.height - 200, width: canvas.width, height: 20, image: images.platform },
@@ -112,12 +120,13 @@ function initLevel() {
 }
 
 function draw(ctx, canvas) {
-    if (!gameActive || gameOver) return;
+    if (!gameActive || gameOver || !ctx || !canvas) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw background
     const bg = images.backgrounds[(level - 1) % 3];
     if (bg && bg.complete) ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    else ctx.fillStyle = 'black'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Fallback black background
 
     // Draw platforms
     platforms.forEach(p => {
@@ -161,7 +170,7 @@ function draw(ctx, canvas) {
 }
 
 function update(canvas) {
-    if (!gameActive || gameOver) return;
+    if (!gameActive || gameOver || !canvas) return;
 
     // Mario movement
     mario.x += mario.dx * 3;
