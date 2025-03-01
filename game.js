@@ -19,7 +19,7 @@ function initializeGame() {
         return null;
     }
 
-    // Adjust canvas for mobile and laptop screens, prioritizing larger visible fit and Telegram compatibility
+    // Adjust canvas for mobile and laptop screens, prioritizing maximum visible fit and Telegram compatibility
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
@@ -29,13 +29,13 @@ function initializeGame() {
     const isTelegram = window.Telegram?.WebApp;
     if (isTelegram) {
         Telegram.WebApp.expand();
-        newWidth = Math.min(window.innerWidth * 0.95, maxWidth); // Use 95% of Telegram width for near-full visibility
-        newHeight = Math.min(window.innerHeight * 0.9, maxHeight); // Increase to 90% of Telegram height for maximum visibility
+        newWidth = Math.min(window.innerWidth * 0.98, maxWidth); // Use 98% of Telegram width for near-full visibility
+        newHeight = Math.min(window.innerHeight * 0.95, maxHeight); // Increase to 95% of Telegram height for maximum visibility
     } else {
-        newWidth = Math.min(window.innerWidth * 0.35, maxWidth); // Keep 35% of screen width for smaller size on non-Telegram
+        newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Increase to 40% of screen width for better visibility on non-Telegram
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.3) { // Keep 30% of screen height
-            newHeight = window.innerHeight * 0.3;
+        if (newHeight > window.innerHeight * 0.35) { // Increase to 35% of screen height
+            newHeight = window.innerHeight * 0.35;
             newWidth = newHeight * aspectRatio;
         }
     }
