@@ -68,7 +68,7 @@ function loadImages() {
         bg1: new Image(), bg2: new Image(), bg3: new Image()
     };
     images.mario.src = 'mario.png';
-    images.premekong.src = 'premekong.png'; // Fixed typo from 'premekekong.png' to 'premekong.png'
+    images.premekong.src = 'premekong.png'; // Corrected from 'premekekong.png'
     images.pauline.src = 'pauline.png';
     images.hammer.src = 'hammer.png';
     images.barrel.src = 'barrel.png';
@@ -257,7 +257,7 @@ function update(canvas) {
         });
     }
 
-    // Barrel movement (top-down for thrown, conveyor for rolling, with classic Donkey Kong behavior)
+    // Barrel movement (top-down for thrown, conveyor for rolling, with refined Donkey Kong behavior)
     barrels.forEach((b, i) => {
         if (b.type === 'thrown') {
             // Thrown barrels fall and move right
@@ -285,16 +285,36 @@ function update(canvas) {
             }
         });
 
-        // If not on a platform, apply gravity to fall (simulate falling down ladders or gaps)
+        // If not on a platform, check for falling (only fall through gaps or down ladders)
         if (!onPlatform && b.type === 'rolling') {
-            b.dy += 0.3; // Gravity
-            b.y += b.dy;
-            b.dx = 0; // Stop horizontal movement while falling
+            // Check if barrel is above a gap (no platform below)
+            let falling = true;
+            for (let p of platforms) {
+                if (b.x + 32 > p.x && b.x < p.x + p.width && b.y + 32 < p.y) {
+                    falling = false;
+                    break;
+                }
+            }
+            if (falling) {
+                b.dy += 0.3; // Gravity
+                b.y += b.dy;
+                b.dx = 0; // Stop horizontal movement while falling
+            } else {
+                // If above a platform but not on it, adjust to land on the platform below
+                for (let p of platforms) {
+                    if (b.x + 32 > p.x && b.x < p.x + p.width && b.y + 32 < p.y) {
+                        b.y = p.y - 32;
+                        b.dy = 0;
+                        b.dx = 2; // Resume rolling right
+                        break;
+                    }
+                }
+            }
         }
 
-        // Check collision with ladders to fall to lower platforms
+        // Check collision with ladders to fall to lower platforms (only if on platform edge near ladder)
         ladders.forEach(l => {
-            if (checkCollision(b, l) && b.dy >= 0) {
+            if (checkCollision(b, l) && b.dy >= 0 && Math.abs(b.x + 16 - l.x - 25) < 20) { // Check if barrel is near ladder center
                 b.dy = 0.5; // Small downward speed to fall down ladder
                 b.y += b.dy;
                 b.dx = 0; // Stop horizontal movement while falling
