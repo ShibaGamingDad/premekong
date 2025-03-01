@@ -32,10 +32,10 @@ function initializeGame() {
         newWidth = Math.min(window.innerWidth, maxWidth);
         newHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of Telegram height
     } else {
-        newWidth = Math.min(window.innerWidth * 0.45, maxWidth); // Reduced to 45% of screen width for general use
+        newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Increased to 50% of screen width for better visibility
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.4) { // Reduced to 40% of screen height
-            newHeight = window.innerHeight * 0.4;
+        if (newHeight > window.innerHeight * 0.45) { // Increased to 45% of screen height
+            newHeight = window.innerHeight * 0.45;
             newWidth = newHeight * aspectRatio;
         }
     }
@@ -191,6 +191,7 @@ function update(canvas) {
     mario.y = Math.max(0, Math.min(mario.y, canvas.height - mario.height));
     let onPlatform = false;
     let onLadder = ladders.some(l => checkCollision(mario, l));
+    let currentPlatform = null;
     platforms.forEach(p => {
         if (checkCollision(mario, p) && mario.y + mario.height <= p.y + p.height / 2) {
             mario.y = p.y - mario.height;
@@ -198,6 +199,7 @@ function update(canvas) {
             mario.jumping = false;
             mario.groundY = mario.y;
             onPlatform = true;
+            currentPlatform = p;
         }
     });
     if (!onPlatform && !onLadder && mario.y >= canvas.height - mario.height) {
@@ -206,7 +208,7 @@ function update(canvas) {
         mario.groundY = mario.y;
     }
     // Allow Mario to stay on ladder and move up/down freely, even on platform
-    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && mario.y + mario.height > p.y - 5)); // Allow going down if near ladder top
+    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && (!currentPlatform || mario.y + mario.height > currentPlatform.y - 5))); // Allow going down if near ladder top
 
     // Hammer logic
     if (hammer.active && checkCollision(mario, hammer)) {
