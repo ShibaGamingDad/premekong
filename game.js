@@ -253,7 +253,7 @@ function update(canvas) {
     if (Math.random() < 0.01 * level) { // Less frequent than thrown barrels for balance
         const topPlatformY = canvas.height - 664; // Top platform where Preme Kong is (all levels)
         barrels.push({
-            x: premekong.x + premekong.width, y: topPlatformY, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform, starting from Preme Kong's position
+            x: premekong.x, y: topPlatformY, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform, starting from Preme Kong's left edge
         });
     }
 
