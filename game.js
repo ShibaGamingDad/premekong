@@ -29,19 +29,20 @@ function initializeGame() {
     const isTelegram = window.Telegram?.WebApp;
     if (isTelegram) {
         Telegram.WebApp.expand();
-        newWidth = Math.min(window.innerWidth, maxWidth);
-        newHeight = Math.min(window.innerHeight * 0.4, maxHeight); // Reduced to 40% of Telegram height for smaller size
+        newWidth = Math.min(window.innerWidth * 0.9, maxWidth); // Use 90% of Telegram width for better visibility
+        newHeight = Math.min(window.innerHeight * 0.6, maxHeight); // Use 60% of Telegram height for better fit
     } else {
-        newWidth = Math.min(window.innerWidth * 0.3, maxWidth); // Reduced to 30% of screen width for smaller size
+        newWidth = Math.min(window.innerWidth * 0.35, maxWidth); // Reduced to 35% of screen width for smaller size
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.25) { // Reduced to 25% of screen height
-            newHeight = window.innerHeight * 0.25;
+        if (newHeight > window.innerHeight * 0.3) { // Reduced to 30% of screen height
+            newHeight = window.innerHeight * 0.3;
             newWidth = newHeight * aspectRatio;
         }
     }
 
-    canvas.width = newWidth;
-    canvas.height = newHeight;
+    // Ensure canvas size respects the aspect ratio and Telegram expansion
+    canvas.width = Math.floor(newWidth);
+    canvas.height = Math.floor(newHeight);
     console.log('Canvas size:', canvas.width, 'x', canvas.height);
 
     return { canvas, ctx };
@@ -252,7 +253,7 @@ function update(canvas) {
             else { gameOver = true; restartGame(); }
         }
         // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and clearly above the barrel
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 20 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 25 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
