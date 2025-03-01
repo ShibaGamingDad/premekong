@@ -240,25 +240,47 @@ function update(canvas) {
         if (mario.hammerTime <= 0) mario.hammer = false;
     }
 
-    // Preme Kong bouncing and throwing
+    // Preme Kong bouncing, throwing, and spawning rolling barrels on conveyor
     premekong.bounce = Math.sin(Date.now() / 200) * 10; // Bounce effect
     if (Math.random() < 0.02 * level) {
+        // Throw barrels (falling from Preme Kong)
         barrels.push({
-            x: premekong.x + premekong.width, y: premekong.y, dx: 2, dy: 0, image: images.barrel
+            x: premekong.x + premekong.width, y: premekong.y, dx: 2, dy: 0, image: images.barrel, type: 'thrown' // Mark as thrown barrel
         });
+        // Spawn rolling barrels on the top platform (conveyor system)
+        if (level === 1) {
+            barrels.push({
+                x: 50, y: canvas.height - 232, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform
+            });
+        } else if (level === 2) {
+            barrels.push({
+                x: 50, y: canvas.height - 432, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on second platform for Level 2
+            });
+        }
     }
 
-    // Barrel movement (top-down) with conveyor system
+    // Barrel movement (top-down for thrown, conveyor for rolling)
     barrels.forEach((b, i) => {
-        b.x += b.dx;
-        b.y += b.dy;
-        b.dy += 0.3; // Gravity
+        if (b.type === 'thrown') {
+            // Thrown barrels fall and move right
+            b.x += b.dx;
+            b.y += b.dy;
+            b.dy += 0.3; // Gravity
+        } else if (b.type === 'rolling') {
+            // Rolling barrels move right on platforms (conveyor)
+            b.x += b.dx;
+            b.y = b.y; // Keep y constant on platform
+            b.dx = 2; // Ensure consistent rightward roll
+        }
+
         platforms.forEach(p => {
             if (checkCollision(b, p) && b.y + 32 <= p.y + p.height / 2) {
                 b.y = p.y - 32;
                 b.dy = 0;
-                // Simulate conveyor movement on platforms (consistent rightward roll)
-                b.dx = 2; // Force barrels to roll right on platforms
+                if (b.type === 'thrown') {
+                    b.type = 'rolling'; // Convert thrown barrels to rolling on platform contact
+                    b.dx = 2; // Start rolling right
+                }
             }
         });
         if (b.x < -32 || b.x > canvas.width || b.y > canvas.height) barrels.splice(i, 1);
