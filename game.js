@@ -19,19 +19,26 @@ function initializeGame() {
         return null;
     }
 
-    // Adjust canvas for mobile and laptop screens, prioritizing tighter fit
+    // Adjust canvas for mobile and laptop screens, prioritizing tighter fit and Telegram compatibility
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
-    let newWidth = Math.min(window.innerWidth * 0.7, maxWidth); // Reduced to 70% of screen width
+    let newWidth = Math.min(window.innerWidth * 0.6, maxWidth); // Reduced to 60% of screen width
     let newHeight = newWidth / aspectRatio;
-    if (newHeight > window.innerHeight * 0.5) { // Reduced to 50% of screen height
-        newHeight = window.innerHeight * 0.5;
+    if (newHeight > window.innerHeight * 0.45) { // Reduced to 45% of screen height
+        newHeight = window.innerHeight * 0.45;
         newWidth = newHeight * aspectRatio;
     }
     canvas.width = newWidth;
     canvas.height = newHeight;
     console.log('Canvas size:', canvas.width, 'x', canvas.height);
+
+    // Handle Telegram scaling
+    const isTelegram = window.Telegram?.WebApp;
+    if (isTelegram) {
+        Telegram.WebApp.expand();
+        console.log('Running in Telegram, adjusting viewport...');
+    }
 
     return { canvas, ctx };
 }
@@ -225,8 +232,8 @@ function update(canvas) {
             if (mario.hammer) { score += 300; barrels.splice(i, 1); }
             else { gameOver = true; restartGame(); }
         }
-        // Only award points for jumping over barrels when Mario is not on a ladder and not jumping
-        if (!mario.onLadder && !mario.jumping && Math.abs(mario.y + mario.height - b.y) < 5 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and above the barrel
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
@@ -277,6 +284,8 @@ function setupControls() {
     Object.entries(btns).forEach(([key, id]) => {
         const btn = document.querySelector(id);
         btn.addEventListener('touchstart', (e) => {
+            // Prevent default only if not scrolling
+            if (!e.cancelable || e.defaultPrevented) return;
             e.preventDefault();
             if (key === 'left') mario.dx = -1;
             else if (key === 'right') mario.dx = 1;
@@ -289,9 +298,27 @@ function setupControls() {
             else if (key === 'restart' && gameOver) restartGame();
         });
         btn.addEventListener('touchend', (e) => {
+            if (!e.cancelable || e.defaultPrevented) return;
             e.preventDefault();
             if (key === 'left' || key === 'right') mario.dx = 0;
             else if (key === 'up' || key === 'down') mario.dy = 0;
+        });
+        // Add click handlers for non-touch devices (laptops)
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (key === 'left') mario.dx = -1;
+            else if (key === 'right') mario.dx = 1;
+            else if (key === 'jump' && !mario.jumping && !mario.onLadder) {
+                mario.jumping = true;
+                mario.dy = -7;
+                mario.groundY = mario.y;
+            } else if (key === 'up' && mario.onLadder) mario.dy = -1;
+            else if (key === 'down' && mario.onLadder) mario.dy = 1;
+            else if (key === 'restart' && gameOver) restartGame();
+            setTimeout(() => {
+                if (key === 'left' || key === 'right') mario.dx = 0;
+                else if (key === 'up' || key === 'down') mario.dy = 0;
+            }, 100);
         });
     });
 }
