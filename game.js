@@ -68,7 +68,7 @@ function loadImages() {
         bg1: new Image(), bg2: new Image(), bg3: new Image()
     };
     images.mario.src = 'mario.png';
-    images.premekong.src = 'premekong.png';
+    images.premekong.src = 'premekekong.png';
     images.pauline.src = 'pauline.png';
     images.hammer.src = 'hammer.png';
     images.barrel.src = 'barrel.png';
@@ -240,26 +240,24 @@ function update(canvas) {
         if (mario.hammerTime <= 0) mario.hammer = false;
     }
 
-    // Preme Kong bouncing, throwing, and spawning rolling barrels on conveyor
+    // Preme Kong bouncing, throwing, and spawning rolling barrels on conveyor system (classic Donkey Kong style)
     premekong.bounce = Math.sin(Date.now() / 200) * 10; // Bounce effect
     if (Math.random() < 0.02 * level) {
         // Throw barrels (falling from Preme Kong)
         barrels.push({
             x: premekong.x + premekong.width, y: premekong.y, dx: 2, dy: 0, image: images.barrel, type: 'thrown' // Mark as thrown barrel
         });
-        // Spawn rolling barrels on the top platform (conveyor system)
-        if (level === 1) {
-            barrels.push({
-                x: 50, y: canvas.height - 232, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform
-            });
-        } else if (level === 2) {
-            barrels.push({
-                x: 50, y: canvas.height - 432, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on second platform for Level 2
-            });
-        }
     }
 
-    // Barrel movement (top-down for thrown, conveyor for rolling)
+    // Spawn rolling barrels on the top platform (conveyor system) at regular intervals
+    if (Math.random() < 0.01 * level) { // Less frequent than thrown barrels for balance
+        const topPlatformY = canvas.height - 664; // Top platform where Preme Kong is (Level 1 and 2)
+        barrels.push({
+            x: 50, y: topPlatformY, dx: 2, dy: 0, image: images.barrel, type: 'rolling' // Mark as rolling barrel on top platform
+        });
+    }
+
+    // Barrel movement (top-down for thrown, conveyor for rolling, with classic Donkey Kong behavior)
     barrels.forEach((b, i) => {
         if (b.type === 'thrown') {
             // Thrown barrels fall and move right
@@ -273,6 +271,8 @@ function update(canvas) {
             b.dx = 2; // Ensure consistent rightward roll
         }
 
+        // Check collision with platforms for rolling behavior
+        let onPlatform = false;
         platforms.forEach(p => {
             if (checkCollision(b, p) && b.y + 32 <= p.y + p.height / 2) {
                 b.y = p.y - 32;
@@ -281,8 +281,25 @@ function update(canvas) {
                     b.type = 'rolling'; // Convert thrown barrels to rolling on platform contact
                     b.dx = 2; // Start rolling right
                 }
+                onPlatform = true;
             }
         });
+
+        // If not on a platform, apply gravity to fall (simulate falling down ladders or gaps)
+        if (!onPlatform && b.type === 'rolling') {
+            b.dy += 0.3; // Gravity
+            b.y += b.dy;
+        }
+
+        // Check collision with ladders to fall to lower platforms
+        ladders.forEach(l => {
+            if (checkCollision(b, l) && b.dy >= 0) {
+                b.dy = 0.5; // Small downward speed to fall down ladder
+                b.y += b.dy;
+                b.dx = 0; // Stop horizontal movement while falling
+            }
+        });
+
         if (b.x < -32 || b.x > canvas.width || b.y > canvas.height) barrels.splice(i, 1);
         else if (checkCollision(mario, b)) {
             if (mario.hammer) { score += 300; barrels.splice(i, 1); }
