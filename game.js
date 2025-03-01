@@ -30,12 +30,12 @@ function initializeGame() {
     if (isTelegram) {
         Telegram.WebApp.expand();
         newWidth = Math.min(window.innerWidth, maxWidth);
-        newHeight = Math.min(window.innerHeight * 0.5, maxHeight); // Reduced to 50% of Telegram height for tighter fit
+        newHeight = Math.min(window.innerHeight * 0.45, maxHeight); // Reduced to 45% of Telegram height for smaller size
     } else {
-        newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Reduced to 40% of screen width for smaller size
+        newWidth = Math.min(window.innerWidth * 0.35, maxWidth); // Reduced to 35% of screen width for smaller size
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.35) { // Reduced to 35% of screen height
-            newHeight = window.innerHeight * 0.35;
+        if (newHeight > window.innerHeight * 0.3) { // Reduced to 30% of screen height
+            newHeight = window.innerHeight * 0.3;
             newWidth = newHeight * aspectRatio;
         }
     }
@@ -70,7 +70,7 @@ function loadImages() {
             new Promise((resolve) => {
                 img.onload = () => resolve(img);
                 img.onerror = () => {
-                    console.error(`${key} failed to load`);
+                    console.error(`${key} failed to load. Check file path or format.`);
                     resolve({ width: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 50 : key === 'platform' ? 672 : key === 'rivet' ? 20 : 672, height: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 180 : key === 'platform' ? 20 : key === 'rivet' ? 20 : 768 }); // Fallback dimensions
                 };
             })
@@ -125,8 +125,13 @@ function draw(ctx, canvas) {
 
     // Draw background
     const bg = images.backgrounds[(level - 1) % 3];
-    if (bg && bg.complete) ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    else ctx.fillStyle = 'black'; ctx.fillRect(0, 0, canvas.width, canvas.height); // Fallback black background
+    if (bg && bg.complete) {
+        ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
+    } else {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, canvas.width, canvas.height); // Fallback black background
+        console.error('Background image failed to load for level', level, '. Check file path or format.');
+    }
 
     // Draw platforms
     platforms.forEach(p => {
@@ -246,8 +251,8 @@ function update(canvas) {
             if (mario.hammer) { score += 300; barrels.splice(i, 1); }
             else { gameOver = true; restartGame(); }
         }
-        // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and above the barrel
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 10 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and clearly above the barrel
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 15 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
