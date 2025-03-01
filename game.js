@@ -23,10 +23,10 @@ function initializeGame() {
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
-    let newWidth = Math.min(window.innerWidth * 0.6, maxWidth); // Reduced to 60% of screen width
+    let newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Reduced to 50% of screen width
     let newHeight = newWidth / aspectRatio;
-    if (newHeight > window.innerHeight * 0.45) { // Reduced to 45% of screen height
-        newHeight = window.innerHeight * 0.45;
+    if (newHeight > window.innerHeight * 0.4) { // Reduced to 40% of screen height
+        newHeight = window.innerHeight * 0.4;
         newWidth = newHeight * aspectRatio;
     }
     canvas.width = newWidth;
@@ -284,7 +284,7 @@ function setupControls() {
     Object.entries(btns).forEach(([key, id]) => {
         const btn = document.querySelector(id);
         btn.addEventListener('touchstart', (e) => {
-            // Prevent default only if not scrolling
+            // Prevent default only if cancelable and not scrolling
             if (!e.cancelable || e.defaultPrevented) return;
             e.preventDefault();
             if (key === 'left') mario.dx = -1;
