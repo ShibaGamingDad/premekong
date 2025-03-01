@@ -39,10 +39,15 @@ function initializeGame() {
         } else if (newWidth / aspectRatio < newHeight) {
             newWidth = newHeight / aspectRatio;
         }
+        // Ensure minimum height for better visibility
+        if (newHeight < 650) {
+            newHeight = 650;
+            newWidth = Math.min(newHeight / aspectRatio, maxWidth);
+        }
     } else {
-        newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Increase to 50% of screen width for better visibility on non-Telegram
+        newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Maintain 50% of screen width for better visibility on non-Telegram
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.45) { // Increase to 45% of screen height
+        if (newHeight > window.innerHeight * 0.45) { // Maintain 45% of screen height
             newHeight = window.innerHeight * 0.45;
             newWidth = newHeight * aspectRatio;
         }
