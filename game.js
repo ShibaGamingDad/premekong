@@ -30,11 +30,11 @@ function initializeGame() {
     if (isTelegram) {
         Telegram.WebApp.expand();
         newWidth = Math.min(window.innerWidth * 0.98, maxWidth); // Use 98% of Telegram width for near-full visibility
-        newHeight = Math.min(window.innerHeight * 0.95, maxHeight); // Increase to 95% of Telegram height for maximum visibility
+        newHeight = Math.min(window.innerHeight * 0.92, maxHeight); // Increase to 92% of Telegram height for maximum visibility
     } else {
-        newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Increase to 40% of screen width for better visibility on non-Telegram
+        newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Maintain 40% of screen width for better visibility on non-Telegram
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.35) { // Increase to 35% of screen height
+        if (newHeight > window.innerHeight * 0.35) { // Maintain 35% of screen height
             newHeight = window.innerHeight * 0.35;
             newWidth = newHeight * aspectRatio;
         }
