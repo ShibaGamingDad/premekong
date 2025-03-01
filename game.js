@@ -23,10 +23,10 @@ function initializeGame() {
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
-    let newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Reduced to 50% of screen width
+    let newWidth = Math.min(window.innerWidth * 0.4, maxWidth); // Reduced to 40% of screen width
     let newHeight = newWidth / aspectRatio;
-    if (newHeight > window.innerHeight * 0.4) { // Reduced to 40% of screen height
-        newHeight = window.innerHeight * 0.4;
+    if (newHeight > window.innerHeight * 0.35) { // Reduced to 35% of screen height
+        newHeight = window.innerHeight * 0.35;
         newWidth = newHeight * aspectRatio;
     }
     canvas.width = newWidth;
@@ -181,6 +181,7 @@ function update(canvas) {
     mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
     mario.y = Math.max(0, Math.min(mario.y, canvas.height - mario.height));
     let onPlatform = false;
+    let onLadder = ladders.some(l => checkCollision(mario, l));
     platforms.forEach(p => {
         if (checkCollision(mario, p) && mario.y + mario.height <= p.y + p.height / 2) {
             mario.y = p.y - mario.height;
@@ -190,11 +191,13 @@ function update(canvas) {
             onPlatform = true;
         }
     });
-    if (!onPlatform && !mario.onLadder && mario.y >= canvas.height - mario.height) {
+    if (!onPlatform && !onLadder && mario.y >= canvas.height - mario.height) {
         mario.y = canvas.height - mario.height;
         mario.dy = 0;
         mario.groundY = mario.y;
     }
+    // Allow Mario to stay on ladder and move up/down freely, even on platform
+    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && mario.y + mario.height > p.y - 5)); // Allow going down if near ladder top
 
     // Hammer logic
     if (hammer.active && checkCollision(mario, hammer)) {
@@ -233,14 +236,13 @@ function update(canvas) {
             else { gameOver = true; restartGame(); }
         }
         // Only award points for jumping over barrels when Mario is not on a ladder, not jumping, and above the barrel
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 5 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
             score += 100;
             barrels.splice(i, 1); // Remove barrel after scoring
         }
     });
 
     // Ladder, rivet, and win condition
-    mario.onLadder = ladders.some(l => checkCollision(mario, l));
     rivets.forEach(r => {
         if (!r.hit && checkCollision(mario, r)) {
             r.hit = true;
