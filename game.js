@@ -149,21 +149,15 @@ function draw(ctx, canvas) {
         console.error('Background image failed to load for level', level, '. Check file path or format.');
     }
 
-    // Draw platforms with slope
+    // Draw platforms with slope, removing red lines for cleaner visuals
     platforms.forEach(p => {
         if (p.image && p.image.complete) {
-            // Draw sloped platform by calculating points along the 20% slope
-            ctx.beginPath();
+            // Draw sloped platform using the platform image, stretched to fit the slope
             const startX = p.x;
             const endX = p.x + p.width;
             const startY = p.startY;
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(endX, startY + (p.width * p.slope)); // 20% slope (rise/run = 0.2)
-            ctx.lineWidth = p.height;
-            ctx.strokeStyle = 'red'; // For visualization, remove or adjust for final game
-            ctx.stroke();
-            ctx.closePath();
-            ctx.drawImage(p.image, p.x, startY, p.width, p.height);
+            const endY = startY + (p.width * p.slope); // 20% slope (rise/run = 0.2)
+            ctx.drawImage(p.image, startX, startY, p.width, p.height); // Use the platform image directly, no red lines
         } else {
             ctx.fillStyle = 'red';
             ctx.fillRect(p.x, p.startY, p.width, p.height);
