@@ -20,6 +20,7 @@ let score = 0;
 let level = 1;
 let gameActive = true;
 let backgrounds = [];
+let platformImg = new Image(); // Move platformImg to global scope
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -27,7 +28,7 @@ if (Telegram && Telegram.WebApp) {
     Telegram.WebApp.expand();
 }
 
-// Utility functions (move these up to ensure they’re defined before use)
+// Utility functions
 function updateScore() {
     const jackpot = 0; // Bot integration later
     const burn = 0;
@@ -57,7 +58,7 @@ function loadAssets() {
     const hammerImg = new Image(); hammerImg.src = 'hammer.png';
     const ladderImg = new Image(); ladderImg.src = 'ladder.png';
     const rivetImg = new Image(); rivetImg.src = 'rivet.png';
-    const platformImg = new Image(); platformImg.src = 'platform.png';
+    platformImg.src = 'platform.png'; // Assign src to the global platformImg
 
     backgrounds[1] = new Image(); backgrounds[1].src = 'background1.png'; // Girders
     backgrounds[2] = new Image(); backgrounds[2].src = 'background2.png'; // Conveyors
@@ -104,7 +105,7 @@ function initLevel() {
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
     }
-    updateScore(); // Now defined before this call
+    updateScore();
 }
 
 // Draw game
