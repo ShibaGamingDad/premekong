@@ -20,7 +20,8 @@ let score = 0;
 let level = 1;
 let gameActive = true;
 let backgrounds = [];
-let platformImg = new Image(); // Move platformImg to global scope
+let platformImg = new Image(); // Global platform image
+let ladderImg = new Image(); // Move ladderImg to global scope
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -56,7 +57,7 @@ function loadAssets() {
     const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png';
     const springImg = new Image(); springImg.src = 'spring.png';
     const hammerImg = new Image(); hammerImg.src = 'hammer.png';
-    const ladderImg = new Image(); ladderImg.src = 'ladder.png';
+    ladderImg.src = 'ladder.png'; // Assign src to the global ladderImg
     const rivetImg = new Image(); rivetImg.src = 'rivet.png';
     platformImg.src = 'platform.png'; // Assign src to the global platformImg
 
