@@ -19,38 +19,38 @@ function initializeGame() {
         return null;
     }
 
-    // Adjust canvas for mobile and laptop screens, prioritizing full visibility within viewport and Telegram compatibility
-    const maxWidth = 672;
-    const maxHeight = 768;
-    const aspectRatio = maxWidth / maxHeight;
+    // Set default canvas size to 672 x 650 as requested
+    const defaultWidth = 672;
+    const defaultHeight = 650;
+    const aspectRatio = defaultWidth / defaultHeight;
     let newWidth, newHeight;
 
     // Check if running in Telegram or mobile browser
     const isTelegram = window.Telegram?.WebApp;
     if (isTelegram) {
         Telegram.WebApp.expand();
-        // Use 90% of viewport width and 85% of viewport height for Telegram, but cap at max size and maintain aspect ratio
-        newWidth = Math.min(window.innerWidth * 0.9, maxWidth);
-        newHeight = Math.min(window.innerHeight * 0.85, maxHeight);
+        // Use full viewport dimensions for Telegram, but scale down to fit if necessary
+        newWidth = Math.min(window.innerWidth, defaultWidth);
+        newHeight = Math.min(window.innerHeight, defaultHeight);
         // Adjust to maintain aspect ratio, ensuring it fits within the viewport
         if (newHeight / aspectRatio > newWidth) {
             newHeight = newWidth * aspectRatio;
         } else if (newWidth / aspectRatio > newHeight) {
             newWidth = newHeight / aspectRatio;
         }
-        // Set minimum dimensions to ensure readability (e.g., 250x300 for very small screens)
-        if (newWidth < 250) {
-            newWidth = 250;
+        // Set minimum dimensions to ensure readability (e.g., 200x193 for very small screens, maintaining aspect ratio)
+        if (newWidth < 200) {
+            newWidth = 200;
             newHeight = newWidth * aspectRatio;
         }
-        if (newHeight < 300) {
-            newHeight = 300;
+        if (newHeight < 193) {
+            newHeight = 193;
             newWidth = newHeight / aspectRatio;
         }
     } else {
-        // For non-Telegram (mobile or desktop browsers), use 80% of viewport but cap at max size
-        newWidth = Math.min(window.innerWidth * 0.8, maxWidth);
-        newHeight = Math.min(window.innerHeight * 0.8, maxHeight);
+        // For non-Telegram (mobile or desktop browsers), use full viewport but scale down to fit
+        newWidth = Math.min(window.innerWidth, defaultWidth);
+        newHeight = Math.min(window.innerHeight, defaultHeight);
         // Adjust to maintain aspect ratio, ensuring it fits within the viewport
         if (newHeight / aspectRatio > newWidth) {
             newHeight = newWidth * aspectRatio;
@@ -58,12 +58,12 @@ function initializeGame() {
             newWidth = newHeight / aspectRatio;
         }
         // Set minimum dimensions for non-Telegram
-        if (newWidth < 250) {
-            newWidth = 250;
+        if (newWidth < 200) {
+            newWidth = 200;
             newHeight = newWidth * aspectRatio;
         }
-        if (newHeight < 300) {
-            newHeight = 300;
+        if (newHeight < 193) {
+            newHeight = 193;
             newWidth = newHeight / aspectRatio;
         }
     }
@@ -79,8 +79,9 @@ function initializeGame() {
     canvas.style.transform = 'translateX(-50%)';
     canvas.style.maxWidth = '100%';
     canvas.style.maxHeight = '100%';
-    canvas.style.width = '100%'; // Ensure canvas fits within viewport width
-    canvas.style.height = 'auto'; // Allow height to adjust proportionally
+    canvas.style.width = `${defaultWidth}px`; // Set default width for scaling
+    canvas.style.height = `${defaultHeight}px`; // Set default height for scaling
+    canvas.style.objectFit = 'contain'; // Scale down to fit while maintaining aspect ratio
 
     return { canvas, ctx };
 }
@@ -109,7 +110,7 @@ function loadImages() {
                 img.onload = () => resolve(img);
                 img.onerror = () => {
                     console.error(`${key} failed to load. Check file path or format.`);
-                    resolve({ width: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 50 : key === 'platform' ? 672 : key === 'rivet' ? 20 : 672, height: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 180 : key === 'platform' ? 20 : key === 'rivet' ? 20 : 768 }); // Fallback dimensions
+                    resolve({ width: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 50 : key === 'platform' ? 672 : key === 'rivet' ? 20 : 672, height: key === 'mario' ? 32 : key === 'premekong' ? 64 : key === 'pauline' ? 32 : key === 'hammer' ? 32 : key === 'barrel' ? 32 : key === 'ladder' ? 180 : key === 'platform' ? 20 : key === 'rivet' ? 20 : 650 }); // Updated fallback height to 650 to match new aspect ratio
                 };
             })
         )
