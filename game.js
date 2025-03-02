@@ -7,6 +7,22 @@ let score = 0;
 let preme = 0;
 let perfectRunsToday = 0;
 
+// Box2D setup
+const b2Vec2 = Box2D.Common.Math.b2Vec2;
+const b2BodyDef = Box2D.Dynamics.b2BodyDef;
+const b2Body = Box2D.Dynamics.b2Body;
+const b2FixtureDef = Box2D.Dynamics.b2FixtureDef;
+const b2World = Box2D.Dynamics.b2World;
+const b2PolygonShape = Box2D.Collision.Shapes.b2PolygonShape;
+const b2CircleShape = Box2D.Collision.Shapes.b2CircleShape;
+const b2ContactListener = Box2D.Dynamics.b2ContactListener;
+
+// Create physics world with gravity (downward, 9.8 m/s² scaled to pixels)
+const world = new b2World(new b2Vec2(0, 9.8), true);
+
+// Scale factor for Box2D (pixels to meters)
+const SCALE = 30; // 30 pixels = 1 meter
+
 function initializeGame() {
     const canvas = document.getElementById('gameCanvas');
     if (!canvas) {
@@ -96,8 +112,23 @@ function loadImages() {
     }));
 }
 
-let mario, premekong, pauline, hammer, barrels = [], platforms = [], ladders = [], rivets = [];
+let marioBody, premekongBody, paulineBody, hammerBody, barrels = [], platforms = [], ladders = [], rivets = [];
 let images;
+
+function createBody(x, y, type, width, height, isSensor = false) {
+    const bodyDef = new b2BodyDef();
+    bodyDef.type = type;
+    bodyDef.position.Set(x / SCALE, y / SCALE);
+    const body = world.CreateBody(bodyDef);
+
+    const fixtureDef = new b2FixtureDef();
+    fixtureDef.shape = new b2PolygonShape();
+    fixtureDef.shape.SetAsBox((width / 2) / SCALE, (height / 2) / SCALE);
+    fixtureDef.isSensor = isSensor; // For ladders and triggers
+    body.CreateFixture(fixtureDef);
+
+    return body;
+}
 
 function initLevel() {
     const { canvas } = initializeGame();
@@ -109,123 +140,146 @@ function initLevel() {
     const h = canvas.height;
     const w = canvas.width;
 
+    // Clear existing bodies
+    world.ClearForces();
+    if (marioBody) world.DestroyBody(marioBody);
+    if (premekongBody) world.DestroyBody(premekongBody);
+    if (paulineBody) world.DestroyBody(paulineBody);
+    if (hammerBody) world.DestroyBody(hammerBody);
+    barrels.forEach(b => world.DestroyBody(b.body));
+    barrels = [];
+    platforms.forEach(p => world.DestroyBody(p.body));
+    platforms = [];
+    ladders.forEach(l => world.DestroyBody(l.body));
+    ladders = [];
+    rivets.forEach(r => world.DestroyBody(r.body));
+    rivets = [];
+
     if (level === 1) {
         platforms = [
-            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
-            { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
-            { x: 0, y: h - 250, width: w * 0.5, height: 60, image: images.platform },
-            { x: w * 0.5, y: h - 250, width: w * 0.5, height: 60, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform, body: createBody(w * 0.15, h - 50, b2Body.b2_staticBody, w * 0.3, 60) },
+            { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform, body: createBody(w * 0.85, h - 50, b2Body.b2_staticBody, w * 0.3, 60) },
+            { x: 0, y: h - 250, width: w * 0.5, height: 60, image: images.platform, body: createBody(w * 0.25, h - 220, b2Body.b2_staticBody, w * 0.5, 60) },
+            { x: w * 0.5, y: h - 250, width: w * 0.5, height: 60, image: images.platform, body: createBody(w * 0.75, h - 220, b2Body.b2_staticBody, w * 0.5, 60) },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform, body: createBody(w * 0.5, h - 570, b2Body.b2_staticBody, w, 60) }
         ];
         ladders = [
-            { x: w * 0.27 - 15, y: h - 260, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.67 - 15, y: h - 260, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
+            { x: w * 0.27 - 15, y: h - 260, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.27 - 15 + 40, h - 150, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.67 - 15, y: h - 260, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.67 - 15 + 40, h - 150, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.47 - 15 + 40, h - 470, b2Body.b2_staticBody, 80, 220, true) }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.87, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.97, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet }
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, h - 280, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, h - 280, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.87, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.87 + 10, h - 280, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.97, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.97 + 10, h - 280, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, getPlatformY(platforms[4], w * 0.07) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, getPlatformY(platforms[4], w * 0.22) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, getPlatformY(platforms[4], w * 0.77) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, getPlatformY(platforms[4], w * 0.92) - 10, b2Body.b2_staticBody, 20, 20) }
         ];
     } else if (level === 2) {
         platforms = [
-            { x: 0, y: h - 80, width: w * 0.45, height: 60, image: images.platform },
-            { x: w * 0.55, y: h - 80, width: w * 0.45, height: 60, image: images.platform },
-            { x: 0, y: h - 300, width: w * 0.3, height: 60, image: images.platform },
-            { x: w * 0.7, y: h - 300, width: w * 0.3, height: 60, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.45, height: 60, image: images.platform, body: createBody(w * 0.225, h - 50, b2Body.b2_staticBody, w * 0.45, 60) },
+            { x: w * 0.55, y: h - 80, width: w * 0.45, height: 60, image: images.platform, body: createBody(w * 0.775, h - 50, b2Body.b2_staticBody, w * 0.45, 60) },
+            { x: 0, y: h - 300, width: w * 0.3, height: 60, image: images.platform, body: createBody(w * 0.15, h - 270, b2Body.b2_staticBody, w * 0.3, 60) },
+            { x: w * 0.7, y: h - 300, width: w * 0.3, height: 60, image: images.platform, body: createBody(w * 0.85, h - 270, b2Body.b2_staticBody, w * 0.3, 60) },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform, body: createBody(w * 0.5, h - 570, b2Body.b2_staticBody, w, 60) }
         ];
         ladders = [
-            { x: w * 0.39 - 15, y: h - 70, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.94 - 15, y: h - 280, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.07 - 15, y: h - 580, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.92 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
+            { x: w * 0.39 - 15, y: h - 70, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.39 - 15 + 40, h - 60, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.94 - 15, y: h - 280, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.94 - 15 + 40, h - 170, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.07 - 15, y: h - 580, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.07 - 15 + 40, h - 470, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.92 - 15, y: h - 580, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.92 - 15 + 40, h - 470, b2Body.b2_staticBody, 80, 220, true) }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.63, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet }
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.63, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.63 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, h - 310, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, h - 310, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, h - 310, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, h - 310, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, getPlatformY(platforms[4], w * 0.07) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, getPlatformY(platforms[4], w * 0.22) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, getPlatformY(platforms[4], w * 0.77) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, getPlatformY(platforms[4], w * 0.92) - 10, b2Body.b2_staticBody, 20, 20) }
         ];
     } else if (level === 3) {
         platforms = [
-            { x: 0, y: h - 80, width: w * 0.37, height: 60, image: images.platform },
-            { x: w * 0.63, y: h - 80, width: w * 0.37, height: 60, image: images.platform },
-            { x: 0, startY: h - 300, width: w * 0.5, height: 60, slope: 0.1, image: images.platform },
-            { x: w * 0.5, y: h - 300, width: w * 0.5, height: 60, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.37, height: 60, image: images.platform, body: createBody(w * 0.185, h - 50, b2Body.b2_staticBody, w * 0.37, 60) },
+            { x: w * 0.63, y: h - 80, width: w * 0.37, height: 60, image: images.platform, body: createBody(w * 0.815, h - 50, b2Body.b2_staticBody, w * 0.37, 60) },
+            { x: 0, startY: h - 300, width: w * 0.5, height: 60, slope: 0.1, image: images.platform, body: createBody(w * 0.25, h - 270, b2Body.b2_staticBody, w * 0.5, 60) },
+            { x: w * 0.5, y: h - 300, width: w * 0.5, height: 60, image: images.platform, body: createBody(w * 0.75, h - 270, b2Body.b2_staticBody, w * 0.5, 60) },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform, body: createBody(w * 0.5, h - 570, b2Body.b2_staticBody, w, 60) }
         ];
         ladders = [
-            { x: w * 0.33 - 15, y: h - 70, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.9 - 15, y: h - 280, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
+            { x: w * 0.33 - 15, y: h - 70, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.33 - 15 + 40, h - 60, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.9 - 15, y: h - 280, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.9 - 15 + 40, h - 170, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.47 - 15 + 40, h - 470, b2Body.b2_staticBody, 80, 220, true) }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.7, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.85, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: getPlatformY(platforms[2], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: getPlatformY(platforms[2], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.87, y: h - 340, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.97, y: h - 340, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet }
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.7, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.7 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.85, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.85 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: getPlatformY(platforms[2], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, getPlatformY(platforms[2], w * 0.07) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: getPlatformY(platforms[2], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, getPlatformY(platforms[2], w * 0.22) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.87, y: h - 340, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.87 + 10, h - 330, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.97, y: h - 340, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.97 + 10, h - 330, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, getPlatformY(platforms[4], w * 0.07) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, getPlatformY(platforms[4], w * 0.22) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, getPlatformY(platforms[4], w * 0.77) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, getPlatformY(platforms[4], w * 0.92) - 10, b2Body.b2_staticBody, 20, 20) }
         ];
     } else if (level === 4) {
         platforms = [
-            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
-            { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
-            { x: 0, startY: h - 300, width: w * 0.5, height: 60, slope: 0.1, image: images.platform },
-            { x: w * 0.5, startY: h - 300, width: w * 0.5, height: 60, slope: -0.1, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform, body: createBody(w * 0.15, h - 50, b2Body.b2_staticBody, w * 0.3, 60) },
+            { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform, body: createBody(w * 0.85, h - 50, b2Body.b2_staticBody, w * 0.3, 60) },
+            { x: 0, startY: h - 300, width: w * 0.5, height: 60, slope: 0.1, image: images.platform, body: createBody(w * 0.25, h - 270, b2Body.b2_staticBody, w * 0.5, 60) },
+            { x: w * 0.5, startY: h - 300, width: w * 0.5, height: 60, slope: -0.1, image: images.platform, body: createBody(w * 0.75, h - 270, b2Body.b2_staticBody, w * 0.5, 60) },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform, body: createBody(w * 0.5, h - 570, b2Body.b2_staticBody, w, 60) }
         ];
         ladders = [
-            { x: w * 0.27 - 15, y: h - 70, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.97 - 15, y: h - 280, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder },
-            { x: w * 0.07 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
+            { x: w * 0.27 - 15, y: h - 70, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.27 - 15 + 40, h - 60, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.97 - 15, y: h - 280, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.97 - 15 + 40, h - 170, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.47 - 15 + 40, h - 470, b2Body.b2_staticBody, 80, 220, true) },
+            { x: w * 0.07 - 15, y: h - 580, width: 80, height: 220, image: images.ladder, body: createBody(w * 0.07 - 15 + 40, h - 470, b2Body.b2_staticBody, 80, 220, true) }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: getPlatformY(platforms[2], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: getPlatformY(platforms[2], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.87, y: getPlatformY(platforms[3], w * 0.87) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.97, y: getPlatformY(platforms[3], w * 0.97) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet }
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, h - 90, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: getPlatformY(platforms[2], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, getPlatformY(platforms[2], w * 0.07) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: getPlatformY(platforms[2], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, getPlatformY(platforms[2], w * 0.22) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.87, y: getPlatformY(platforms[3], w * 0.87) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.87 + 10, getPlatformY(platforms[3], w * 0.87) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.97, y: getPlatformY(platforms[3], w * 0.97) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.97 + 10, getPlatformY(platforms[3], w * 0.97) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.07 + 10, getPlatformY(platforms[4], w * 0.07) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.22 + 10, getPlatformY(platforms[4], w * 0.22) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.77 + 10, getPlatformY(platforms[4], w * 0.77) - 10, b2Body.b2_staticBody, 20, 20) },
+            { x: w * 0.92, y: getPlatformY(platforms[4], w * 0.92) - 20, width: 20, height: 20, hit: false, image: images.rivet, body: createBody(w * 0.92 + 10, getPlatformY(platforms[4], w * 0.92) - 10, b2Body.b2_staticBody, 20, 20) }
         ];
     }
 
-    mario = { x: w * 0.07, y: platforms[0].y - 32, width: 32, height: 32, dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, image: images.mario };
-    premekong = { x: w * 0.07, y: getPlatformY(platforms[platforms.length - 1], w * 0.07) - 64, width: 64, height: 64, bounce: 0, throwing: false, image: images.premekong };
-    pauline = { x: w * 0.88, y: getPlatformY(platforms[platforms.length - 1], w * 0.88) - 32, width: 32, height: 32, image: images.pauline };
-    hammer = { x: w * 0.5, y: platforms[1].y - 32, width: 32, height: 32, active: true, image: images.hammer };
-    barrels = [];
+    marioBody = createBody(w * 0.07 + 16, platforms[0].y - 16, b2Body.b2_dynamicBody, 32, 32);
+    marioBody.SetFixedRotation(true); // Prevent rotation
+    marioBody.SetUserData({ type: 'mario' });
+
+    premekongBody = createBody(w * 0.07 + 32, getPlatformY(platforms[platforms.length - 1], w * 0.07) - 32, b2Body.b2_staticBody, 64, 64);
+    premekongBody.SetUserData({ type: 'premekong' });
+
+    paulineBody = createBody(w * 0.88 + 16, getPlatformY(platforms[platforms.length - 1], w * 0.88) - 16, b2Body.b2_staticBody, 32, 32);
+    paulineBody.SetUserData({ type: 'pauline' });
+
+    hammerBody = createBody(w * 0.5 + 16, platforms[1].y - 16, b2Body.b2_staticBody, 32, 32);
+    hammerBody.SetUserData({ type: 'hammer' });
+
     score = 0;
     preme = 0;
     gameOver = false;
@@ -246,18 +300,10 @@ function draw(ctx, canvas) {
 
     platforms.forEach(p => {
         if (p.image && p.image.complete) {
-            if (p.hasOwnProperty('slope')) {
-                ctx.drawImage(p.image, p.x, p.startY, p.width, p.height);
-            } else {
-                ctx.drawImage(p.image, p.x, p.y, p.width, p.height);
-            }
+            ctx.drawImage(p.image, p.x, p.hasOwnProperty('slope') ? p.startY : p.y, p.width, p.height);
         } else {
             ctx.fillStyle = 'red';
-            if (p.hasOwnProperty('slope')) {
-                ctx.fillRect(p.x, p.startY, p.width, p.height);
-            } else {
-                ctx.fillRect(p.x, p.y, p.width, p.height);
-            }
+            ctx.fillRect(p.x, p.hasOwnProperty('slope') ? p.startY : p.y, p.width, p.height);
         }
     });
 
@@ -281,186 +327,195 @@ function draw(ctx, canvas) {
         }
     });
 
-    if (mario.image && mario.image.complete) {
-        ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
+    const marioPos = marioBody.GetPosition();
+    if (images.mario && images.mario.complete) {
+        ctx.drawImage(images.mario, marioPos.x * SCALE - 16, marioPos.y * SCALE - 16, 32, 32);
     } else {
         ctx.fillStyle = 'white';
-        ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
+        ctx.fillRect(marioPos.x * SCALE - 16, marioPos.y * SCALE - 16, 32, 32);
     }
 
-    if (premekong.image && premekong.image.complete) {
-        ctx.drawImage(premekong.image, premekong.x, premekong.y + premekong.bounce, premekong.width, premekong.height);
+    const premekongPos = premekongBody.GetPosition();
+    if (images.premekong && images.premekong.complete) {
+        ctx.drawImage(images.premekong, premekongPos.x * SCALE - 32, premekongPos.y * SCALE - 32 + Math.sin(Date.now() / 200) * 10, 64, 64);
     } else {
         ctx.fillStyle = 'blue';
-        ctx.fillRect(premekong.x, premekong.y, premekong.width, premekong.height);
+        ctx.fillRect(premekongPos.x * SCALE - 32, premekongPos.y * SCALE - 32, 64, 64);
     }
 
-    if (pauline.image && pauline.image.complete) {
-        ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
+    const paulinePos = paulineBody.GetPosition();
+    if (images.pauline && images.pauline.complete) {
+        ctx.drawImage(images.pauline, paulinePos.x * SCALE - 16, paulinePos.y * SCALE - 16, 32, 32);
     } else {
         ctx.fillStyle = 'pink';
-        ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height);
+        ctx.fillRect(paulinePos.x * SCALE - 16, paulinePos.y * SCALE - 16, 32, 32);
     }
 
     barrels.forEach(b => {
+        const barrelPos = b.body.GetPosition();
         if (b.image && b.image.complete) {
-            ctx.drawImage(b.image, b.x, b.y, 32, 32);
+            ctx.drawImage(b.image, barrelPos.x * SCALE - 16, barrelPos.y * SCALE - 16, 32, 32);
         } else {
             ctx.fillStyle = 'brown';
-            ctx.fillRect(b.x, b.y, 32, 32);
+            ctx.fillRect(barrelPos.x * SCALE - 16, barrelPos.y * SCALE - 16, 32, 32);
         }
     });
 
-    if (hammer.active && hammer.image && hammer.image.complete) {
-        ctx.drawImage(hammer.image, hammer.x, hammer.y, hammer.width, hammer.height);
-    } else if (hammer.active) {
-        ctx.fillStyle = 'yellow';
-        ctx.fillRect(hammer.x, hammer.y, hammer.width, hammer.height);
+    if (hammerBody) {
+        const hammerPos = hammerBody.GetPosition();
+        if (hammerBody.GetUserData().active && images.hammer && images.hammer.complete) {
+            ctx.drawImage(images.hammer, hammerPos.x * SCALE - 16, hammerPos.y * SCALE - 16, 32, 32);
+        } else if (hammerBody.GetUserData().active) {
+            ctx.fillStyle = 'yellow';
+            ctx.fillRect(hammerPos.x * SCALE - 16, hammerPos.y * SCALE - 16, 32, 32);
+        }
     }
 }
 
 function update(canvas) {
     if (!gameActive || gameOver || !canvas) return;
 
-    mario.x += mario.dx * 3;
-    if (mario.onLadder) mario.y += mario.dy * 3;
-    if (mario.jumping) {
-        mario.y += mario.dy;
-        mario.dy += 0.3;
-        if (mario.dy > 0 && mario.y >= mario.groundY) {
-            mario.y = mario.groundY;
-            mario.jumping = false;
-            mario.dy = 0;
-        }
-    } else if (!mario.onLadder) {
-        mario.dy += 0.3;
-        mario.y += mario.dy;
-    }
-    mario.x = Math.max(0, Math.min(mario.x, canvas.width - mario.width));
-    mario.y = Math.max(0, Math.min(mario.y, canvas.height - mario.height));
+    // Step the physics world
+    world.Step(1 / 60, 10, 10);
+    world.ClearForces();
 
+    // Mario movement
+    const marioPos = marioBody.GetPosition();
+    console.log('Mario position:', marioPos.x * SCALE, marioPos.y * SCALE, 'Velocity:', marioBody.GetLinearVelocity().x, marioBody.GetLinearVelocity().y);
+
+    if (marioBody.GetUserData().dx) {
+        marioBody.ApplyForce(new b2Vec2(marioBody.GetUserData().dx * 50, 0), marioBody.GetWorldCenter());
+    }
+
+    // Jumping
+    if (marioBody.GetUserData().jump && !marioBody.GetUserData().jumping) {
+        marioBody.ApplyImpulse(new b2Vec2(0, -300), marioBody.GetWorldCenter());
+        marioBody.GetUserData().jumping = true;
+        console.log('Mario jumping');
+    }
+
+    // Check if Mario is on a platform (grounded)
     let onPlatform = false;
-    let onLadder = ladders.some(l => {
-        const collides = checkCollision(mario, l);
-        if (collides) console.log('Mario on ladder at', l.x, l.y);
-        return collides;
-    });
-    let currentPlatform = null;
     platforms.forEach(p => {
-        let platformY = p.y;
-        if (p.hasOwnProperty('slope')) {
-            platformY = getPlatformY(p, mario.x + mario.width / 2);
-        }
-        if (checkCollision(mario, p)) { // Simplified collision
-            mario.y = platformY - mario.height;
-            mario.dy = 0;
-            mario.jumping = false;
-            mario.groundY = mario.y;
-            onPlatform = true;
-            currentPlatform = p;
-            if (p.hasOwnProperty('slope') && mario.dx > 0) {
-                mario.y += p.slope * mario.dx * 3;
-                mario.groundY = mario.y;
+        const platformPos = p.body.GetPosition();
+        const marioBox = marioBody.GetFixtureList().GetShape();
+        const platformBox = p.body.GetFixtureList().GetShape();
+        if (Box2D.Collision.b2TestOverlap(marioBox, 0, platformBox, 0, marioBody.GetTransform(), p.body.GetTransform())) {
+            if (marioPos.y * SCALE < p.y + p.height / 2) {
+                marioBody.SetPosition(new b2Vec2(marioPos.x, (p.y - 16) / SCALE));
+                marioBody.SetLinearVelocity(new b2Vec2(marioBody.GetLinearVelocity().x, 0));
+                marioBody.GetUserData().jumping = false;
+                onPlatform = true;
+                console.log('Mario on platform at', p.x, p.y);
             }
         }
     });
-    if (!onPlatform && !onLadder && mario.y >= canvas.height - mario.height) {
-        mario.y = canvas.height - mario.height;
-        mario.dy = 0;
-        mario.groundY = mario.y;
-        onPlatform = true;
-    }
-    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && (!currentPlatform || mario.y + mario.height > (currentPlatform.hasOwnProperty('slope') ? getPlatformY(currentPlatform, mario.x + mario.width / 2) : currentPlatform.y) - 20)));
 
-    if (hammer.active && checkCollision(mario, hammer)) {
-        mario.hammer = true;
-        mario.hammerTime = 5000;
-        hammer.active = false;
-    }
-    if (mario.hammer) {
-        mario.hammerTime -= 16;
-        if (mario.hammerTime <= 0) mario.hammer = false;
+    // Check if Mario is on a ladder
+    let onLadder = false;
+    ladders.forEach(l => {
+        const ladderPos = l.body.GetPosition();
+        const marioBox = marioBody.GetFixtureList().GetShape();
+        const ladderBox = l.body.GetFixtureList().GetShape();
+        if (Box2D.Collision.b2TestOverlap(marioBox, 0, ladderBox, 0, marioBody.GetTransform(), l.body.GetTransform())) {
+            onLadder = true;
+            marioBody.GetUserData().onLadder = true;
+            console.log('Mario on ladder at', l.x, l.y);
+            if (marioBody.GetUserData().dy) {
+                marioBody.SetLinearVelocity(new b2Vec2(0, marioBody.GetUserData().dy * 3));
+            }
+        }
+    });
+    if (!onLadder) marioBody.GetUserData().onLadder = false;
+
+    // Reset velocities if not moving
+    if (!marioBody.GetUserData().dx && !marioBody.GetUserData().dy) {
+        marioBody.SetLinearVelocity(new b2Vec2(0, marioBody.GetLinearVelocity().y));
     }
 
-    premekong.bounce = Math.sin(Date.now() / 200) * 10;
+    // Hammer logic
+    if (hammerBody && checkCollision(marioBody, hammerBody)) {
+        marioBody.GetUserData().hammer = true;
+        marioBody.GetUserData().hammerTime = 5000;
+        hammerBody.GetUserData().active = false;
+        console.log('Mario picked up hammer');
+    }
+    if (marioBody.GetUserData().hammer) {
+        marioBody.GetUserData().hammerTime -= 16;
+        if (marioBody.GetUserData().hammerTime <= 0) marioBody.GetUserData().hammer = false;
+    }
+
+    // Preme Kong bouncing
+    const premekongPos = premekongBody.GetPosition();
+    premekongBody.SetPosition(new b2Vec2(premekongPos.x, (getPlatformY(platforms[platforms.length - 1], premekongPos.x * SCALE) - 32) / SCALE + Math.sin(Date.now() / 200) * 0.3));
+
+    // Spawn barrels
     if (Math.random() < 0.02 * level) {
+        const premekongPos = premekongBody.GetPosition();
         barrels.push({
-            x: premekong.x + premekong.width, y: premekong.y, dx: 2, dy: 0, image: images.barrel, type: 'thrown'
+            body: createBody(premekongPos.x * SCALE + 64, premekongPos.y * SCALE, b2Body.b2_dynamicBody, 32, 32),
+            image: images.barrel,
+            type: 'thrown'
         });
+        barrels[barrels.length - 1].body.SetLinearVelocity(new b2Vec2(2, 0));
     }
     if (Math.random() < 0.01 * level) {
         const topPlatform = platforms[platforms.length - 1];
-        const topY = topPlatform.hasOwnProperty('slope') ? getPlatformY(topPlatform, premekong.x) : topPlatform.startY;
+        const topY = topPlatform.hasOwnProperty('slope') ? getPlatformY(topPlatform, premekongBody.GetPosition().x * SCALE) : topPlatform.startY;
         barrels.push({
-            x: premekong.x, y: topY - 32, dx: 2, dy: 0, image: images.barrel, type: 'rolling'
+            body: createBody(premekongBody.GetPosition().x * SCALE, (topY - 32) / SCALE, b2Body.b2_dynamicBody, 32, 32),
+            image: images.barrel,
+            type: 'rolling'
         });
+        barrels[barrels.length - 1].body.SetLinearVelocity(new b2Vec2(2, 0));
     }
 
+    // Update barrels
     barrels.forEach((b, i) => {
+        const barrelPos = b.body.GetPosition();
         if (b.type === 'thrown') {
-            b.x += b.dx;
-            b.y += b.dy;
-            b.dy += 0.3;
+            b.body.ApplyForce(new b2Vec2(0, 30), b.body.GetWorldCenter());
         } else if (b.type === 'rolling') {
-            b.x += b.dx;
             let onPlatform = false;
             platforms.forEach(p => {
-                let platformY = p.y;
-                if (p.hasOwnProperty('slope')) {
-                    platformY = getPlatformY(p, b.x + 16);
-                }
-                if (b.x + 32 > p.x && b.x < p.x + p.width && b.y + 32 <= platformY + p.height) {
-                    b.y = platformY - 32;
-                    b.dy = 0;
-                    onPlatform = true;
-                    if (p.hasOwnProperty('slope')) {
-                        b.y += p.slope * b.dx;
+                const platformPos = p.body.GetPosition();
+                const barrelBox = b.body.GetFixtureList().GetShape();
+                const platformBox = p.body.GetFixtureList().GetShape();
+                if (Box2D.Collision.b2TestOverlap(barrelBox, 0, platformBox, 0, b.body.GetTransform(), p.body.GetTransform())) {
+                    if (barrelPos.y * SCALE < p.y + p.height / 2) {
+                        b.body.SetPosition(new b2Vec2(barrelPos.x, (p.y - 16) / SCALE));
+                        b.body.SetLinearVelocity(new b2Vec2(2, 0));
+                        onPlatform = true;
                     }
                 }
             });
-            b.dx = 2;
             if (!onPlatform) {
-                b.dy += 0.3;
-                b.y += b.dy;
-                b.dx = 0;
+                b.body.ApplyForce(new b2Vec2(0, 30), b.body.GetWorldCenter());
             }
-            ladders.forEach(l => {
-                if (checkCollision(b, l) && b.dy >= 0) {
-                    b.dy = 0.5;
-                    b.y += b.dy;
-                    b.dx = 0;
-                }
-            });
-            platforms.forEach(p => {
-                let platformY = p.y;
-                if (p.hasOwnProperty('slope')) {
-                    platformY = getPlatformY(p, b.x + 16);
-                }
-                if (checkCollision(b, p) && b.dy > 0 && b.y + 32 <= platformY + p.height) {
-                    b.y = platformY - 32;
-                    b.dy = 0;
-                    b.dx = 2;
-                    b.type = 'rolling';
-                    if (p.hasOwnProperty('slope')) {
-                        b.y += p.slope * b.dx;
-                    }
-                }
-            });
         }
 
-        if (b.x < -32 || b.x > canvas.width || b.y > canvas.height) barrels.splice(i, 1);
-        else if (checkCollision(mario, b)) {
-            if (mario.hammer) { score += 300; barrels.splice(i, 1); }
-            else { gameOver = true; restartGame(); }
-        }
-        if (!mario.onLadder && !mario.jumping && mario.y + mario.height < b.y - 35 && Math.abs(mario.x + mario.width / 2 - b.x - 16) < 16) {
+        if (barrelPos.x * SCALE < -32 || barrelPos.x * SCALE > canvas.width || barrelPos.y * SCALE > canvas.height) {
+            world.DestroyBody(b.body);
+            barrels.splice(i, 1);
+        } else if (checkCollision(marioBody, b.body)) {
+            if (marioBody.GetUserData().hammer) {
+                score += 300;
+                world.DestroyBody(b.body);
+                barrels.splice(i, 1);
+            } else {
+                gameOver = true;
+                restartGame();
+            }
+        } else if (!marioBody.GetUserData().onLadder && !marioBody.GetUserData().jumping && marioPos.y * SCALE + 32 < barrelPos.y * SCALE - 35 && Math.abs((marioPos.x * SCALE + 16) - (barrelPos.x * SCALE + 16)) < 16) {
             score += 100;
+            world.DestroyBody(b.body);
             barrels.splice(i, 1);
         }
     });
 
+    // Rivet and win condition
     rivets.forEach(r => {
-        if (!r.hit && checkCollision(mario, r)) {
+        if (!r.hit && checkCollision(marioBody, r.body)) {
             r.hit = true;
             score += 50;
             if (rivets.every(r => r.hit)) {
@@ -472,15 +527,13 @@ function update(canvas) {
             }
         }
     });
-    if (checkCollision(mario, pauline)) {
+    if (checkCollision(marioBody, paulineBody)) {
         levelUp();
-        mario.x = canvas.width * 0.07;
-        mario.y = platforms[0].y - 32;
-        premekong.x = canvas.width * 0.07;
-        premekong.y = getPlatformY(platforms[platforms.length - 1], canvas.width * 0.07) - 64;
-        pauline.x = canvas.width * 0.88;
-        pauline.y = getPlatformY(platforms[platforms.length - 1], canvas.width * 0.88) - 32;
+        marioBody.SetPosition(new b2Vec2((canvas.width * 0.07 + 16) / SCALE, (platforms[0].y - 16) / SCALE));
+        premekongBody.SetPosition(new b2Vec2((canvas.width * 0.07 + 32) / SCALE, (getPlatformY(platforms[platforms.length - 1], canvas.width * 0.07) - 32) / SCALE));
+        paulineBody.SetPosition(new b2Vec2((canvas.width * 0.88 + 16) / SCALE, (getPlatformY(platforms[platforms.length - 1], canvas.width * 0.88) - 16) / SCALE));
         rivets.forEach(r => r.hit = false);
+        barrels.forEach(b => world.DestroyBody(b.body));
         barrels = [];
         updateScore();
     }
@@ -488,26 +541,11 @@ function update(canvas) {
     updateScore();
 }
 
-function getPlatformY(platform, x) {
-    if (platform.hasOwnProperty('slope')) {
-        const slope = platform.slope || 0;
-        const relativeX = x - platform.x;
-        return platform.startY + (relativeX * slope);
-    }
-    return platform.y;
-}
-
-function checkCollision(obj1, obj2) {
-    if (!obj1 || !obj2) return false;
-    let platformY = obj2.y;
-    if (obj2.hasOwnProperty('slope')) {
-        platformY = getPlatformY(obj2, obj1.x + obj1.width / 2);
-    }
-    const ladderBuffer = obj2.width === 80 ? 30 : 0;
-    return obj1.x < obj2.x + obj2.width + ladderBuffer &&
-           obj1.x + obj1.width > obj2.x - ladderBuffer &&
-           obj1.y < platformY + obj2.height / 2 &&
-           obj1.y + obj1.height > platformY - obj2.height / 2;
+function checkCollision(body1, body2) {
+    const fixture1 = body1.GetFixtureList();
+    const fixture2 = body2.GetFixtureList();
+    if (!fixture1 || !fixture2) return false;
+    return Box2D.Collision.b2TestOverlap(fixture1.GetShape(), 0, fixture2.GetShape(), 0, body1.GetTransform(), body2.GetTransform());
 }
 
 function levelUp() {
@@ -530,36 +568,34 @@ function setupControls() {
         btn.addEventListener('touchstart', (e) => {
             if (!e.cancelable || e.defaultPrevented) return;
             e.preventDefault();
-            if (key === 'left') mario.dx = -1;
-            else if (key === 'right') mario.dx = 1;
-            else if (key === 'jump' && !mario.jumping && (onPlatform || mario.onLadder)) {
-                mario.jumping = true;
-                mario.dy = -7;
-                mario.groundY = mario.y;
-            } else if (key === 'up' && mario.onLadder) mario.dy = -1;
-            else if (key === 'down' && mario.onLadder) mario.dy = 1;
+            if (key === 'left') marioBody.GetUserData().dx = -1;
+            else if (key === 'right') marioBody.GetUserData().dx = 1;
+            else if (key === 'jump' && !marioBody.GetUserData().jumping) {
+                marioBody.GetUserData().jump = true;
+            } else if (key === 'up' && marioBody.GetUserData().onLadder) marioBody.GetUserData().dy = -1;
+            else if (key === 'down' && marioBody.GetUserData().onLadder) marioBody.GetUserData().dy = 1;
             else if (key === 'restart' && gameOver) restartGame();
         });
         btn.addEventListener('touchend', (e) => {
             if (!e.cancelable || e.defaultPrevented) return;
             e.preventDefault();
-            if (key === 'left' || key === 'right') mario.dx = 0;
-            else if (key === 'up' || key === 'down') mario.dy = 0;
+            if (key === 'left' || key === 'right') marioBody.GetUserData().dx = 0;
+            else if (key === 'jump') marioBody.GetUserData().jump = false;
+            else if (key === 'up' || key === 'down') marioBody.GetUserData().dy = 0;
         });
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            if (key === 'left') mario.dx = -1;
-            else if (key === 'right') mario.dx = 1;
-            else if (key === 'jump' && !mario.jumping && (onPlatform || mario.onLadder)) {
-                mario.jumping = true;
-                mario.dy = -7;
-                mario.groundY = mario.y;
-            } else if (key === 'up' && mario.onLadder) mario.dy = -1;
-            else if (key === 'down' && mario.onLadder) mario.dy = 1;
+            if (key === 'left') marioBody.GetUserData().dx = -1;
+            else if (key === 'right') marioBody.GetUserData().dx = 1;
+            else if (key === 'jump' && !marioBody.GetUserData().jumping) {
+                marioBody.GetUserData().jump = true;
+            } else if (key === 'up' && marioBody.GetUserData().onLadder) marioBody.GetUserData().dy = -1;
+            else if (key === 'down' && marioBody.GetUserData().onLadder) marioBody.GetUserData().dy = 1;
             else if (key === 'restart' && gameOver) restartGame();
             setTimeout(() => {
-                if (key === 'left' || key === 'right') mario.dx = 0;
-                else if (key === 'up' || key === 'down') mario.dy = 0;
+                if (key === 'left' || key === 'right') marioBody.GetUserData().dx = 0;
+                else if (key === 'jump') marioBody.GetUserData().jump = false;
+                else if (key === 'up' || key === 'down') marioBody.GetUserData().dy = 0;
             }, 100);
         });
     });
@@ -577,6 +613,46 @@ function gameLoop() {
     draw(ctx, canvas);
     requestAnimationFrame(gameLoop);
 }
+
+// Contact listener for collisions
+const listener = new b2ContactListener();
+listener.BeginContact = function(contact) {
+    const fixtureA = contact.GetFixtureA();
+    const fixtureB = contact.GetFixtureB();
+    const bodyA = fixtureA.GetBody();
+    const bodyB = fixtureB.GetBody();
+    const userDataA = bodyA.GetUserData();
+    const userDataB = bodyB.GetUserData();
+
+    if ((userDataA.type === 'mario' && userDataB.type === 'platform') || (userDataB.type === 'mario' && userDataA.type === 'platform')) {
+        if (userDataA.type === 'mario') userDataA.jumping = false;
+        else if (userDataB.type === 'mario') userDataB.jumping = false;
+        console.log('Mario landed on platform');
+    }
+    if ((userDataA.type === 'mario' && userDataB.type === 'ladder') || (userDataB.type === 'mario' && userDataA.type === 'ladder')) {
+        if (userDataA.type === 'mario') userDataA.onLadder = true;
+        else if (userDataB.type === 'mario') userDataB.onLadder = true;
+        console.log('Mario on ladder');
+    }
+    if ((userDataA.type === 'mario' && userDataB.type === 'barrel') || (userDataB.type === 'mario' && userDataA.type === 'barrel')) {
+        const marioData = userDataA.type === 'mario' ? userDataA : userDataB;
+        if (marioData.hammer) {
+            if (userDataA.type === 'barrel') world.DestroyBody(bodyA);
+            else world.DestroyBody(bodyB);
+            score += 300;
+        } else {
+            gameOver = true;
+            restartGame();
+        }
+    }
+};
+world.SetContactListener(listener);
+
+// Initialize user data for bodies
+marioBody.GetUserData = () => ({ type: 'mario', dx: 0, dy: 0, jumping: false, onLadder: false, hammer: false, hammerTime: 0, jump: false });
+premekongBody.GetUserData = () => ({ type: 'premekong' });
+paulineBody.GetUserData = () => ({ type: 'pauline' });
+hammerBody.GetUserData = () => ({ type: 'hammer', active: true });
 
 loadImages().then(loadedImages => {
     images = loadedImages;
