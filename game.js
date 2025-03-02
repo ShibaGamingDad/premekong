@@ -111,26 +111,26 @@ function initLevel() {
 
     if (level === 1) {
         platforms = [
-            { x: 0, y: h - 60, width: w * 0.3, height: 40, image: images.platform }, // Increased height for jumping
-            { x: w * 0.7, y: h - 60, width: w * 0.3, height: 40, image: images.platform }, // Increased height
-            { x: 0, y: h - 250, width: w * 0.5, height: 40, image: images.platform },
-            { x: w * 0.5, y: h - 250, width: w * 0.5, height: 40, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 40, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform }, // Wider, taller platforms
+            { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
+            { x: 0, y: h - 250, width: w * 0.5, height: 60, image: images.platform },
+            { x: w * 0.5, y: h - 250, width: w * 0.5, height: 60, image: images.platform },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
         ];
         ladders = [
-            { x: w * 0.27, y: h - 250, width: 60, height: 200, image: images.ladder }, // Wider, taller ladder
-            { x: w * 0.67, y: h - 250, width: 60, height: 200, image: images.ladder }, // Wider, taller
-            { x: w * 0.47, y: h - 580, width: 60, height: 200, image: images.ladder }
+            { x: w * 0.27 - 15, y: h - 260, width: 80, height: 220, image: images.ladder }, // Wider, taller, shifted left
+            { x: w * 0.67 - 15, y: h - 260, width: 80, height: 220, image: images.ladder }, // Wider, taller, shifted left
+            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.07, y: h - 270, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 270, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.87, y: h - 270, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.97, y: h - 270, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.92, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.07, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.22, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.87, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.97, y: h - 290, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet },
@@ -138,23 +138,23 @@ function initLevel() {
         ];
     } else if (level === 2) {
         platforms = [
-            { x: 0, y: h - 60, width: w * 0.45, height: 40, image: images.platform },
-            { x: w * 0.55, y: h - 60, width: w * 0.45, height: 40, image: images.platform },
-            { x: 0, y: h - 300, width: w * 0.3, height: 40, image: images.platform },
-            { x: w * 0.7, y: h - 300, width: w * 0.3, height: 40, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 40, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.45, height: 60, image: images.platform },
+            { x: w * 0.55, y: h - 80, width: w * 0.45, height: 60, image: images.platform },
+            { x: 0, y: h - 300, width: w * 0.3, height: 60, image: images.platform },
+            { x: w * 0.7, y: h - 300, width: w * 0.3, height: 60, image: images.platform },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
         ];
         ladders = [
-            { x: w * 0.39, y: h - 50, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.94, y: h - 280, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.07, y: h - 580, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.92, y: h - 580, width: 60, height: 200, image: images.ladder }
+            { x: w * 0.39 - 15, y: h - 70, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.94 - 15, y: h - 280, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.07 - 15, y: h - 580, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.92 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.63, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.63, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.07, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.22, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.77, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
@@ -166,26 +166,26 @@ function initLevel() {
         ];
     } else if (level === 3) {
         platforms = [
-            { x: 0, y: h - 60, width: w * 0.37, height: 40, image: images.platform },
-            { x: w * 0.63, y: h - 60, width: w * 0.37, height: 40, image: images.platform },
-            { x: 0, startY: h - 300, width: w * 0.5, height: 40, slope: 0.1, image: images.platform },
-            { x: w * 0.5, y: h - 300, width: w * 0.5, height: 40, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 40, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.37, height: 60, image: images.platform },
+            { x: w * 0.63, y: h - 80, width: w * 0.37, height: 60, image: images.platform },
+            { x: 0, startY: h - 300, width: w * 0.5, height: 60, slope: 0.1, image: images.platform },
+            { x: w * 0.5, y: h - 300, width: w * 0.5, height: 60, image: images.platform },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
         ];
         ladders = [
-            { x: w * 0.33, y: h - 50, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.9, y: h - 280, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.47, y: h - 580, width: 60, height: 200, image: images.ladder }
+            { x: w * 0.33 - 15, y: h - 70, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.9 - 15, y: h - 280, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.7, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.85, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.7, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.85, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.07, y: getPlatformY(platforms[2], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.22, y: getPlatformY(platforms[2], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.87, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.97, y: h - 320, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.87, y: h - 340, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.97, y: h - 340, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.07, y: getPlatformY(platforms[4], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.22, y: getPlatformY(platforms[4], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.77, y: getPlatformY(platforms[4], w * 0.77) - 20, width: 20, height: 20, hit: false, image: images.rivet },
@@ -193,23 +193,23 @@ function initLevel() {
         ];
     } else if (level === 4) {
         platforms = [
-            { x: 0, y: h - 60, width: w * 0.3, height: 40, image: images.platform },
-            { x: w * 0.7, y: h - 60, width: w * 0.3, height: 40, image: images.platform },
-            { x: 0, startY: h - 300, width: w * 0.5, height: 40, slope: 0.1, image: images.platform },
-            { x: w * 0.5, startY: h - 300, width: w * 0.5, height: 40, slope: -0.1, image: images.platform },
-            { x: 0, startY: h - 600, width: w, height: 40, slope: 0.1, image: images.platform }
+            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
+            { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
+            { x: 0, startY: h - 300, width: w * 0.5, height: 60, slope: 0.1, image: images.platform },
+            { x: w * 0.5, startY: h - 300, width: w * 0.5, height: 60, slope: -0.1, image: images.platform },
+            { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
         ];
         ladders = [
-            { x: w * 0.27, y: h - 50, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.97, y: h - 280, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.47, y: h - 580, width: 60, height: 200, image: images.ladder },
-            { x: w * 0.07, y: h - 580, width: 60, height: 200, image: images.ladder }
+            { x: w * 0.27 - 15, y: h - 70, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.97 - 15, y: h - 280, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.07 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
         ];
         rivets = [
-            { x: w * 0.07, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.22, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.77, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
-            { x: w * 0.92, y: h - 80, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.07, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.22, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.77, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
+            { x: w * 0.92, y: h - 100, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.07, y: getPlatformY(platforms[2], w * 0.07) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.22, y: getPlatformY(platforms[2], w * 0.22) - 20, width: 20, height: 20, hit: false, image: images.rivet },
             { x: w * 0.87, y: getPlatformY(platforms[3], w * 0.87) - 20, width: 20, height: 20, hit: false, image: images.rivet },
@@ -351,7 +351,7 @@ function update(canvas) {
         if (p.hasOwnProperty('slope')) {
             platformY = getPlatformY(p, mario.x + mario.width / 2);
         }
-        if (checkCollision(mario, p) && mario.y + mario.height <= platformY + p.height) {
+        if (checkCollision(mario, p)) { // Simplified collision check
             mario.y = platformY - mario.height;
             mario.dy = 0;
             mario.jumping = false;
@@ -370,7 +370,7 @@ function update(canvas) {
         mario.groundY = mario.y;
         onPlatform = true;
     }
-    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && (!currentPlatform || mario.y + mario.height > (currentPlatform.hasOwnProperty('slope') ? getPlatformY(currentPlatform, mario.x + mario.width / 2) : currentPlatform.y) - 10)));
+    mario.onLadder = onLadder && (mario.dy !== 0 || (onPlatform && (!currentPlatform || mario.y + mario.height > (currentPlatform.hasOwnProperty('slope') ? getPlatformY(currentPlatform, mario.x + mario.width / 2) : currentPlatform.y) - 20)));
 
     if (hammer.active && checkCollision(mario, hammer)) {
         mario.hammer = true;
@@ -502,7 +502,7 @@ function checkCollision(obj1, obj2) {
     if (obj2.hasOwnProperty('slope')) {
         platformY = getPlatformY(obj2, obj1.x + obj1.width / 2);
     }
-    const ladderBuffer = obj2.width === 60 ? 20 : 0; // Increased buffer for wider ladders
+    const ladderBuffer = obj2.width === 80 ? 30 : 0; // Increased buffer for wider ladders
     return obj1.x < obj2.x + obj2.width + ladderBuffer &&
            obj1.x + obj1.width > obj2.x - ladderBuffer &&
            obj1.y < platformY + obj2.height / 2 &&
@@ -531,7 +531,7 @@ function setupControls() {
             e.preventDefault();
             if (key === 'left') mario.dx = -1;
             else if (key === 'right') mario.dx = 1;
-            else if (key === 'jump' && !mario.jumping && (mario.onLadder || onPlatform)) { // Allow jump on ladders or platforms
+            else if (key === 'jump' && !mario.jumping && (onPlatform || mario.onLadder)) { // Allow jump from platforms or ladders
                 mario.jumping = true;
                 mario.dy = -7;
                 mario.groundY = mario.y;
@@ -549,7 +549,7 @@ function setupControls() {
             e.preventDefault();
             if (key === 'left') mario.dx = -1;
             else if (key === 'right') mario.dx = 1;
-            else if (key === 'jump' && !mario.jumping && (mario.onLadder || onPlatform)) {
+            else if (key === 'jump' && !mario.jumping && (onPlatform || mario.onLadder)) {
                 mario.jumping = true;
                 mario.dy = -7;
                 mario.groundY = mario.y;
