@@ -31,32 +31,46 @@ function initializeGame() {
         Telegram.WebApp.expand();
         // Use dynamic sizing based on Telegram's actual viewport after expansion
         newWidth = Math.min(window.innerWidth * 0.98, maxWidth); // Use 98% of Telegram width for near-full visibility
-        // Ensure height is at least 95% of the viewport height, but cap at maxHeight
-        newHeight = Math.min(window.innerHeight * 0.95, maxHeight);
-        // Adjust height to maintain aspect ratio if necessary
+        // Ensure height is at least 90% of the viewport height, but cap at maxHeight
+        newHeight = Math.min(window.innerHeight * 0.90, maxHeight);
+        // Adjust to maintain aspect ratio
         if (newHeight / aspectRatio < newWidth) {
             newHeight = newWidth * aspectRatio;
         } else if (newWidth / aspectRatio < newHeight) {
             newWidth = newHeight / aspectRatio;
         }
-        // Ensure minimum height for better visibility
-        if (newHeight < 650) {
-            newHeight = 650;
-            newWidth = Math.min(newHeight / aspectRatio, maxWidth);
+        // Set minimum dimensions to ensure readability (e.g., 400x480 or larger)
+        if (newWidth < 400) {
+            newWidth = 400;
+            newHeight = newWidth * aspectRatio;
+        }
+        if (newHeight < 480) {
+            newHeight = 480;
+            newWidth = newHeight / aspectRatio;
         }
     } else {
-        newWidth = Math.min(window.innerWidth * 0.5, maxWidth); // Maintain 50% of screen width for better visibility on non-Telegram
+        // For non-Telegram (mobile or desktop browsers), use 80% of the viewport for a balanced view
+        newWidth = Math.min(window.innerWidth * 0.8, maxWidth);
         newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.45) { // Maintain 45% of screen height
-            newHeight = window.innerHeight * 0.45;
+        if (newHeight > window.innerHeight * 0.8) { // Maintain 80% of screen height
+            newHeight = window.innerHeight * 0.8;
             newWidth = newHeight * aspectRatio;
+        }
+        // Set minimum dimensions for non-Telegram
+        if (newWidth < 400) {
+            newWidth = 400;
+            newHeight = newWidth * aspectRatio;
+        }
+        if (newHeight < 480) {
+            newHeight = 480;
+            newWidth = newHeight / aspectRatio;
         }
     }
 
-    // Ensure canvas size respects the aspect ratio and Telegram expansion, with floor for integer values
+    // Ensure canvas size respects the aspect ratio, with floor for integer values
     canvas.width = Math.floor(newWidth);
     canvas.height = Math.floor(newHeight);
-    console.log('Canvas size:', canvas.width, 'x', canvas.height);
+    console.log('Canvas size:', canvas.width, 'x', canvas.height); // Log size for debugging, but ensure it’s not too small
 
     return { canvas, ctx };
 }
