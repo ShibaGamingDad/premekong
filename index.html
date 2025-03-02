@@ -45,13 +45,21 @@
             text-align: center; 
         }
 
-        /* Ensure controls are visible on desktop */
+        /* Ensure controls are visible on desktop and fit canvas width */
         @media (min-width: 768px) {
             #controls {
                 max-width: 672px; /* Match canvas width */
             }
             canvas {
                 max-width: 672px; /* Fixed width on desktop */
+                width: 672px; /* Ensure exact width on desktop */
+            }
+        }
+
+        /* Mobile-specific adjustments (optional, already looks good) */
+        @media (max-width: 767px) {
+            canvas {
+                width: 100%; /* Full width on mobile */
             }
         }
     </style>
