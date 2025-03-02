@@ -24,7 +24,7 @@ let backgrounds = [];
 let platformImg = new Image(); // Global platform image
 let ladderImg = new Image(); // Global ladder image
 let hammerImg = new Image(); // Global hammer image
-let barrelImg = new Image(); // Move barrelImg to global scope
+let barrelImg = new Image(); // Global barrel image
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -52,14 +52,19 @@ function levelUp() {
     score += 100;
 }
 
-// Load assets (sprites and backgrounds) with debugging
+// Load assets (sprites and backgrounds) with detailed debugging for Mario
 function loadAssets() {
     console.log('Loading assets...');
 
-    mario.image = new Image(); mario.image.src = 'mario.png'; console.log('Mario:', mario.image.src);
+    mario.image = new Image();
+    mario.image.onload = () => console.log('Mario image loaded successfully:', mario.image.src);
+    mario.image.onerror = () => console.error('Failed to load Mario image:', mario.image.src);
+    mario.image.src = 'mario.png';
+    console.log('Mario:', mario.image.src);
+
     premekong.image = new Image(); premekong.image.src = 'premekong.png'; console.log('Preme Kong:', premekong.image.src);
     pauline.image = new Image(); pauline.image.src = 'pauline.png'; console.log('Pauline:', pauline.image.src);
-    barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src); // Assign src to the global barrelImg
+    barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src);
     const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
     const springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
     hammerImg.src = 'hammer.png'; console.log('Hammer:', hammerImg.src);
@@ -82,7 +87,7 @@ function initLevel() {
     hammers = [];
     rivets = [];
     ladders = [];
-    mario.x = 50; mario.y = canvas.height - 50;
+    mario.x = 50; mario.y = canvas.height - 50; // Bottom-left starting position
     mario.hasHammer = false; mario.hammerTime = 0;
     premekong.x = 50; premekong.y = 50; // Top platform, left side
     pauline.x = canvas.width - 100; pauline.y = 50; // Top platform, right side
@@ -106,8 +111,8 @@ function initLevel() {
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
     } else if (level === 4) { // 100m - Rivets
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false }); // Rivets 20x20
-            rivets.push({ x: 150 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false }); // Rivets 20x20
+            rivets.push({ x: 100 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 150 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false });
         }
         ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
@@ -159,9 +164,14 @@ function draw() {
         if (!rivet.hit && rivetImg.complete) ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width, rivet.height);
     });
 
-    // Draw Mario
-    if (mario.image.complete) ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
-    else ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
+    // Draw Mario (with fallback if image fails to load)
+    if (mario.image.complete) {
+        ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
+    } else {
+        ctx.fillStyle = 'blue'; // Fallback color for debugging
+        ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
+        console.log('Mario image not loaded, using fallback:', mario.image.src);
+    }
 
     // Draw Preme Kong (bouncing left/right on top platform)
     if (premekong.image.complete) {
@@ -178,7 +188,7 @@ function draw() {
     barrels.forEach(barrel => {
         if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
         else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
-        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32); // Use global barrelImg
+        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32);
         else ctx.fillRect(barrel.x, barrel.y, 32, 32);
     });
 
