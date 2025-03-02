@@ -25,7 +25,7 @@ if (Telegram && Telegram.WebApp) {
 // Load assets (sprites and backgrounds)
 function loadAssets() {
     mario.image = new Image(); mario.image.src = 'mario.png';
-    mario.hammerImage = new Image(); mario.hammerImage.src = 'mario_hammer.png';
+    mario.hammerImage = new Image(); mario.hammerImage.src = 'hammer.png';
     premekong.image = new Image(); premekong.image.src = 'premekong.png';
     const barrelImg = new Image(); barrelImg.src = 'barrel.png';
     const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png';
