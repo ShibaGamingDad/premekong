@@ -27,6 +27,26 @@ if (Telegram && Telegram.WebApp) {
     Telegram.WebApp.expand();
 }
 
+// Utility functions (move these up to ensure they’re defined before use)
+function updateScore() {
+    const jackpot = 0; // Bot integration later
+    const burn = 0;
+    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
+}
+
+function checkCollision(obj1, obj2) {
+    return obj1.x < obj2.x + obj2.width &&
+           obj1.x + obj1.width > obj2.x &&
+           obj1.y < obj2.y + obj2.height &&
+           obj1.y + obj1.height > obj2.y;
+}
+
+function levelUp() {
+    level = level % 4 + 1;
+    initLevel();
+    score += 100;
+}
+
 // Load assets (sprites and backgrounds)
 function loadAssets() {
     mario.image = new Image(); mario.image.src = 'mario.png';
@@ -84,7 +104,7 @@ function initLevel() {
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
     }
-    updateScore();
+    updateScore(); // Now defined before this call
 }
 
 // Draw game
@@ -149,7 +169,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (unchanged for brevity, but ensure platform collision uses platformImg height)
+// Update game logic
 function update() {
     if (!gameActive) return;
 
@@ -181,15 +201,27 @@ function update() {
     updateScore();
 }
 
-// Collision detection (unchanged)
-function checkCollision(obj1, obj2) {
-    return obj1.x < obj2.x + obj2.width &&
-           obj1.x + obj1.width > obj2.x &&
-           obj1.y < obj2.y + obj2.height &&
-           obj1.y + obj1.height > obj2.y;
-}
+// Controls
+function moveLeft() { if (gameActive && !mario.hasHammer) mario.dx = -1; }
+function moveRight() { if (gameActive && !mario.hasHammer) mario.dx = 1; }
+function jump() { if (gameActive && !mario.jumping && !mario.onLadder && !mario.hasHammer) mario.jumping = true; }
+function climbUp() { if (gameActive && mario.onLadder) mario.dy = -1; }
+function climbDown() { if (gameActive && mario.onLadder) mario.dy = 1; }
+function stopMove() { mario.dx = 0; }
+function stopClimb() { mario.dy = 0; }
 
-// Level progression, updateScore, controls, and Telegram handler remain unchanged...
+// Telegram data handler
+function handleTelegramData() {
+    if (Telegram && Telegram.WebApp) {
+        Telegram.WebApp.onEvent('web_app_data', (data) => {
+            if (data.data) {
+                const gameData = JSON.parse(data.data);
+                score = gameData.score || score;
+                updateScore();
+            }
+        });
+    }
+}
 
 // Start game
 loadAssets();
