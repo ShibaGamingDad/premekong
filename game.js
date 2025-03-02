@@ -19,7 +19,7 @@ function initializeGame() {
         return null;
     }
 
-    // Adjust canvas for mobile and laptop screens, prioritizing maximum visible fit and Telegram compatibility
+    // Adjust canvas for mobile and laptop screens, prioritizing full visibility within viewport and Telegram compatibility
     const maxWidth = 672;
     const maxHeight = 768;
     const aspectRatio = maxWidth / maxHeight;
@@ -29,40 +29,41 @@ function initializeGame() {
     const isTelegram = window.Telegram?.WebApp;
     if (isTelegram) {
         Telegram.WebApp.expand();
-        // Use dynamic sizing based on Telegram's actual viewport after expansion
-        newWidth = Math.min(window.innerWidth * 0.98, maxWidth); // Use 98% of Telegram width for near-full visibility
-        // Ensure height is at least 90% of the viewport height, but cap at maxHeight
-        newHeight = Math.min(window.innerHeight * 0.90, maxHeight);
-        // Adjust to maintain aspect ratio
-        if (newHeight / aspectRatio < newWidth) {
+        // Use full viewport dimensions for Telegram, but cap at max size and maintain aspect ratio
+        newWidth = Math.min(window.innerWidth, maxWidth);
+        newHeight = Math.min(window.innerHeight, maxHeight);
+        // Adjust to maintain aspect ratio, ensuring it fits within the viewport
+        if (newHeight / aspectRatio > newWidth) {
             newHeight = newWidth * aspectRatio;
-        } else if (newWidth / aspectRatio < newHeight) {
+        } else if (newWidth / aspectRatio > newHeight) {
             newWidth = newHeight / aspectRatio;
         }
-        // Set minimum dimensions to ensure readability (e.g., 400x480 or larger)
-        if (newWidth < 400) {
-            newWidth = 400;
+        // Set minimum dimensions to ensure readability (e.g., 300x360 for very small screens)
+        if (newWidth < 300) {
+            newWidth = 300;
             newHeight = newWidth * aspectRatio;
         }
-        if (newHeight < 480) {
-            newHeight = 480;
+        if (newHeight < 360) {
+            newHeight = 360;
             newWidth = newHeight / aspectRatio;
         }
     } else {
-        // For non-Telegram (mobile or desktop browsers), use 80% of the viewport for a balanced view
-        newWidth = Math.min(window.innerWidth * 0.8, maxWidth);
-        newHeight = newWidth / aspectRatio;
-        if (newHeight > window.innerHeight * 0.8) { // Maintain 80% of screen height
-            newHeight = window.innerHeight * 0.8;
-            newWidth = newHeight * aspectRatio;
+        // For non-Telegram (mobile or desktop browsers), use full viewport but cap at max size
+        newWidth = Math.min(window.innerWidth, maxWidth);
+        newHeight = Math.min(window.innerHeight, maxHeight);
+        // Adjust to maintain aspect ratio, ensuring it fits within the viewport
+        if (newHeight / aspectRatio > newWidth) {
+            newHeight = newWidth * aspectRatio;
+        } else if (newWidth / aspectRatio > newHeight) {
+            newWidth = newHeight / aspectRatio;
         }
         // Set minimum dimensions for non-Telegram
-        if (newWidth < 400) {
-            newWidth = 400;
+        if (newWidth < 300) {
+            newWidth = 300;
             newHeight = newWidth * aspectRatio;
         }
-        if (newHeight < 480) {
-            newHeight = 480;
+        if (newHeight < 360) {
+            newHeight = 360;
             newWidth = newHeight / aspectRatio;
         }
     }
@@ -70,7 +71,14 @@ function initializeGame() {
     // Ensure canvas size respects the aspect ratio, with floor for integer values
     canvas.width = Math.floor(newWidth);
     canvas.height = Math.floor(newHeight);
-    console.log('Canvas size:', canvas.width, 'x', canvas.height); // Log size for debugging, but ensure it’s not too small
+    console.log('Canvas size:', canvas.width, 'x', canvas.height); // Log size for debugging
+
+    // Optionally center the canvas in the viewport if it's smaller than the screen
+    canvas.style.position = 'relative';
+    canvas.style.left = '50%';
+    canvas.style.transform = 'translateX(-50%)';
+    canvas.style.maxWidth = '100%';
+    canvas.style.maxHeight = '100%';
 
     return { canvas, ctx };
 }
