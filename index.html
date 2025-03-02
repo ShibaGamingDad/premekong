@@ -73,8 +73,14 @@
             }
         }
     </style>
-    <!-- Box2D.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/box2dweb@2.1.0/Box2dWeb-2.1.a.3.min.js"></script>
+    <!-- Load Box2D locally by default -->
+    <script src="Box2dWeb-2.1.0.min.js" onload="console.log('Box2D loaded from local file')" onerror="handleBox2DError()"></script>
+    <script>
+        function handleBox2DError() {
+            console.error('Box2D failed to load locally. Please ensure Box2dWeb-2.1.0.min.js is in your project folder.');
+            alert('Error: Physics engine (Box2D) could not load. Check your files.');
+        }
+    </script>
     <!-- Telegram and Game scripts -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="game.js"></script>
