@@ -24,6 +24,7 @@ let backgrounds = [];
 let platformImg = new Image(); // Global platform image
 let ladderImg = new Image(); // Global ladder image
 let hammerImg = new Image(); // Global hammer image
+let barrelImg = new Image(); // Move barrelImg to global scope
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -58,7 +59,7 @@ function loadAssets() {
     mario.image = new Image(); mario.image.src = 'mario.png'; console.log('Mario:', mario.image.src);
     premekong.image = new Image(); premekong.image.src = 'premekong.png'; console.log('Preme Kong:', premekong.image.src);
     pauline.image = new Image(); pauline.image.src = 'pauline.png'; console.log('Pauline:', pauline.image.src);
-    const barrelImg = new Image(); barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src);
+    barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src); // Assign src to the global barrelImg
     const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
     const springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
     hammerImg.src = 'hammer.png'; console.log('Hammer:', hammerImg.src);
@@ -105,8 +106,8 @@ function initLevel() {
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
     } else if (level === 4) { // 100m - Rivets
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false }); // Rivets now 20x20
-            rivets.push({ x: 150 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false }); // Rivets now 20x20
+            rivets.push({ x: 100 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false }); // Rivets 20x20
+            rivets.push({ x: 150 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false }); // Rivets 20x20
         }
         ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
@@ -177,7 +178,7 @@ function draw() {
     barrels.forEach(barrel => {
         if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
         else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
-        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32);
+        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32); // Use global barrelImg
         else ctx.fillRect(barrel.x, barrel.y, 32, 32);
     });
 
