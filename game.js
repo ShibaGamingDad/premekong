@@ -22,6 +22,7 @@ let gameActive = true;
 let backgrounds = [];
 let platformImg = new Image(); // Global platform image
 let ladderImg = new Image(); // Global ladder image
+let hammerImg = new Image(); // Move hammerImg to global scope
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -59,7 +60,7 @@ function loadAssets() {
     const barrelImg = new Image(); barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src);
     const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
     const springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
-    const hammerImg = new Image(); hammerImg.src = 'hammer.png'; console.log('Hammer:', hammerImg.src);
+    hammerImg.src = 'hammer.png'; console.log('Hammer:', hammerImg.src); // Assign src to the global hammerImg
     ladderImg.src = 'ladder.png'; console.log('Ladder:', ladderImg.src);
     const rivetImg = new Image(); rivetImg.src = 'rivet.png'; console.log('Rivet:', rivetImg.src);
     platformImg.src = 'platform.png'; console.log('Platform:', platformImg.src);
@@ -145,7 +146,7 @@ function draw() {
         else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
     });
 
-    // Draw hammers (fix typo: "hammering" to "hammerImg")
+    // Draw hammers
     hammers.forEach(hammer => {
         if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height);
     });
