@@ -21,7 +21,7 @@ let level = 1;
 let gameActive = true;
 let backgrounds = [];
 let platformImg = new Image(); // Global platform image
-let ladderImg = new Image(); // Move ladderImg to global scope
+let ladderImg = new Image(); // Global ladder image
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -49,22 +49,25 @@ function levelUp() {
     score += 100;
 }
 
-// Load assets (sprites and backgrounds)
+// Load assets (sprites and backgrounds) with debugging
 function loadAssets() {
-    mario.image = new Image(); mario.image.src = 'mario.png';
-    premekong.image = new Image(); premekong.image.src = 'premekong.png';
-    const barrelImg = new Image(); barrelImg.src = 'barrel.png';
-    const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png';
-    const springImg = new Image(); springImg.src = 'spring.png';
-    const hammerImg = new Image(); hammerImg.src = 'hammer.png';
-    ladderImg.src = 'ladder.png'; // Assign src to the global ladderImg
-    const rivetImg = new Image(); rivetImg.src = 'rivet.png';
-    platformImg.src = 'platform.png'; // Assign src to the global platformImg
+    // Debugging logs for image loading
+    console.log('Loading assets...');
 
-    backgrounds[1] = new Image(); backgrounds[1].src = 'background1.png'; // Girders
-    backgrounds[2] = new Image(); backgrounds[2].src = 'background2.png'; // Conveyors
-    backgrounds[3] = new Image(); backgrounds[3].src = 'background3.png'; // Elevators
-    backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; // Rivets
+    mario.image = new Image(); mario.image.src = 'mario.png'; console.log('Mario:', mario.image.src);
+    premekong.image = new Image(); premekong.image.src = 'premekong.png'; console.log('Preme Kong:', premekong.image.src);
+    const barrelImg = new Image(); barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src);
+    const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
+    const springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
+    const hammerImg = new Image(); hammerImg.src = 'hammer.png'; console.log('Hammer:', hammerImg.src);
+    ladderImg.src = 'ladder.png'; console.log('Ladder:', ladderImg.src);
+    const rivetImg = new Image(); rivetImg.src = 'rivet.png'; console.log('Rivet:', rivetImg.src);
+    platformImg.src = 'platform.png'; console.log('Platform:', platformImg.src);
+
+    backgrounds[1] = new Image(); backgrounds[1].src = 'background1.png'; console.log('Background 1:', backgrounds[1].src);
+    backgrounds[2] = new Image(); backgrounds[2].src = 'background2.png'; console.log('Background 2:', backgrounds[2].src);
+    backgrounds[3] = new Image(); backgrounds[3].src = 'background3.png'; console.log('Background 3:', backgrounds[3].src);
+    backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
 // Initialize level
@@ -142,7 +145,7 @@ function draw() {
         else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
     });
 
-    // Draw hammers
+    // Draw hammers (fix typo: "hammering" to "hammerImg")
     hammers.forEach(hammer => {
         if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height);
     });
