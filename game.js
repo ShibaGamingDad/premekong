@@ -111,15 +111,15 @@ function initLevel() {
 
     if (level === 1) {
         platforms = [
-            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform }, // Wider, taller platforms
+            { x: 0, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
             { x: w * 0.7, y: h - 80, width: w * 0.3, height: 60, image: images.platform },
             { x: 0, y: h - 250, width: w * 0.5, height: 60, image: images.platform },
             { x: w * 0.5, y: h - 250, width: w * 0.5, height: 60, image: images.platform },
             { x: 0, startY: h - 600, width: w, height: 60, slope: 0.1, image: images.platform }
         ];
         ladders = [
-            { x: w * 0.27 - 15, y: h - 260, width: 80, height: 220, image: images.ladder }, // Wider, taller, shifted left
-            { x: w * 0.67 - 15, y: h - 260, width: 80, height: 220, image: images.ladder }, // Wider, taller, shifted left
+            { x: w * 0.27 - 15, y: h - 260, width: 80, height: 220, image: images.ladder },
+            { x: w * 0.67 - 15, y: h - 260, width: 80, height: 220, image: images.ladder },
             { x: w * 0.47 - 15, y: h - 580, width: 80, height: 220, image: images.ladder }
         ];
         rivets = [
@@ -351,7 +351,7 @@ function update(canvas) {
         if (p.hasOwnProperty('slope')) {
             platformY = getPlatformY(p, mario.x + mario.width / 2);
         }
-        if (checkCollision(mario, p)) { // Simplified collision check
+        if (checkCollision(mario, p)) { // Simplified collision
             mario.y = platformY - mario.height;
             mario.dy = 0;
             mario.jumping = false;
@@ -390,8 +390,9 @@ function update(canvas) {
     }
     if (Math.random() < 0.01 * level) {
         const topPlatform = platforms[platforms.length - 1];
+        const topY = topPlatform.hasOwnProperty('slope') ? getPlatformY(topPlatform, premekong.x) : topPlatform.startY;
         barrels.push({
-            x: premekong.x, y: topPlatform.startY - 32, dx: 2, dy: 0, image: images.barrel, type: 'rolling'
+            x: premekong.x, y: topY - 32, dx: 2, dy: 0, image: images.barrel, type: 'rolling'
         });
     }
 
@@ -502,7 +503,7 @@ function checkCollision(obj1, obj2) {
     if (obj2.hasOwnProperty('slope')) {
         platformY = getPlatformY(obj2, obj1.x + obj1.width / 2);
     }
-    const ladderBuffer = obj2.width === 80 ? 30 : 0; // Increased buffer for wider ladders
+    const ladderBuffer = obj2.width === 80 ? 30 : 0;
     return obj1.x < obj2.x + obj2.width + ladderBuffer &&
            obj1.x + obj1.width > obj2.x - ladderBuffer &&
            obj1.y < platformY + obj2.height / 2 &&
@@ -531,7 +532,7 @@ function setupControls() {
             e.preventDefault();
             if (key === 'left') mario.dx = -1;
             else if (key === 'right') mario.dx = 1;
-            else if (key === 'jump' && !mario.jumping && (onPlatform || mario.onLadder)) { // Allow jump from platforms or ladders
+            else if (key === 'jump' && !mario.jumping && (onPlatform || mario.onLadder)) {
                 mario.jumping = true;
                 mario.dy = -7;
                 mario.groundY = mario.y;
