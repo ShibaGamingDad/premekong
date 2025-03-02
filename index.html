@@ -73,15 +73,8 @@
             }
         }
     </style>
-    <!-- Load Box2D locally within the premekong folder on GitHub Pages -->
-    <script src="Box2dWeb-2.1.0.min.js" onload="console.log('Box2D loaded from local file')" onerror="handleBox2DError()"></script>
-    <script>
-        function handleBox2DError() {
-            console.error('Box2D failed to load locally. Please ensure Box2dWeb-2.1.0.min.js is in your GitHub Pages folder and free of invalid characters.');
-            alert('Error: Physics engine (Box2D) could not load. Check your Box2dWeb-2.1.0.min.js file on GitHub Pages for issues or missing content.');
-        }
-    </script>
-    <!-- Updated Telegram WebApp script -->
+    <!-- Removed Box2D script, keeping only Telegram and game.js -->
+    <!-- Updated Telegram WebApp script (retained from previous fix) -->
     <script src="https://telegram.org/js/telegram-webapp.js"></script>
     <script src="game.js"></script>
 </head>
