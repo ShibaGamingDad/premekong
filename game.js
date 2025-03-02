@@ -29,28 +29,28 @@ function initializeGame() {
     const isTelegram = window.Telegram?.WebApp;
     if (isTelegram) {
         Telegram.WebApp.expand();
-        // Use full viewport dimensions for Telegram, but cap at max size and maintain aspect ratio
-        newWidth = Math.min(window.innerWidth, maxWidth);
-        newHeight = Math.min(window.innerHeight, maxHeight);
+        // Use 90% of viewport width and 85% of viewport height for Telegram, but cap at max size and maintain aspect ratio
+        newWidth = Math.min(window.innerWidth * 0.9, maxWidth);
+        newHeight = Math.min(window.innerHeight * 0.85, maxHeight);
         // Adjust to maintain aspect ratio, ensuring it fits within the viewport
         if (newHeight / aspectRatio > newWidth) {
             newHeight = newWidth * aspectRatio;
         } else if (newWidth / aspectRatio > newHeight) {
             newWidth = newHeight / aspectRatio;
         }
-        // Set minimum dimensions to ensure readability (e.g., 300x360 for very small screens)
-        if (newWidth < 300) {
-            newWidth = 300;
+        // Set minimum dimensions to ensure readability (e.g., 250x300 for very small screens)
+        if (newWidth < 250) {
+            newWidth = 250;
             newHeight = newWidth * aspectRatio;
         }
-        if (newHeight < 360) {
-            newHeight = 360;
+        if (newHeight < 300) {
+            newHeight = 300;
             newWidth = newHeight / aspectRatio;
         }
     } else {
-        // For non-Telegram (mobile or desktop browsers), use full viewport but cap at max size
-        newWidth = Math.min(window.innerWidth, maxWidth);
-        newHeight = Math.min(window.innerHeight, maxHeight);
+        // For non-Telegram (mobile or desktop browsers), use 80% of viewport but cap at max size
+        newWidth = Math.min(window.innerWidth * 0.8, maxWidth);
+        newHeight = Math.min(window.innerHeight * 0.8, maxHeight);
         // Adjust to maintain aspect ratio, ensuring it fits within the viewport
         if (newHeight / aspectRatio > newWidth) {
             newHeight = newWidth * aspectRatio;
@@ -58,12 +58,12 @@ function initializeGame() {
             newWidth = newHeight / aspectRatio;
         }
         // Set minimum dimensions for non-Telegram
-        if (newWidth < 300) {
-            newWidth = 300;
+        if (newWidth < 250) {
+            newWidth = 250;
             newHeight = newWidth * aspectRatio;
         }
-        if (newHeight < 360) {
-            newHeight = 360;
+        if (newHeight < 300) {
+            newHeight = 300;
             newWidth = newHeight / aspectRatio;
         }
     }
@@ -73,12 +73,14 @@ function initializeGame() {
     canvas.height = Math.floor(newHeight);
     console.log('Canvas size:', canvas.width, 'x', canvas.height); // Log size for debugging
 
-    // Optionally center the canvas in the viewport if it's smaller than the screen
+    // Center the canvas in the viewport to prevent overflow and ensure full visibility
     canvas.style.position = 'relative';
     canvas.style.left = '50%';
     canvas.style.transform = 'translateX(-50%)';
     canvas.style.maxWidth = '100%';
     canvas.style.maxHeight = '100%';
+    canvas.style.width = '100%'; // Ensure canvas fits within viewport width
+    canvas.style.height = 'auto'; // Allow height to adjust proportionally
 
     return { canvas, ctx };
 }
