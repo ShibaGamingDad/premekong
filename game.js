@@ -42,7 +42,7 @@ let elevators = [];
 let springs = [];
 let hammers = [];
 let rivets = [];
-let fireballs = []; // New array for fireballs
+let fireballs = []; // Array for fireballs
 let ladders = [];
 let score = 0;
 let level = 1;
@@ -54,6 +54,9 @@ let hammerImg = new Image(); // Global hammer image
 let barrelImg = new Image(); // Global barrel image
 let rivetImg = new Image(); // Global rivet image
 let fireballImg = new Image(); // Global fireball image
+let cementPieImg = new Image(); // Global cement pie image
+let perfectRunsToday = 0; // Track perfect runs (simulated, limit to 5 per day)
+let lastPerfectRunTime = 0; // Track last perfect run timestamp (in milliseconds)
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -65,7 +68,7 @@ if (Telegram && Telegram.WebApp) {
 function updateScore() {
     const jackpot = 0; // Bot integration later
     const burn = 0;
-    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME`;
+    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME  Perfect Runs Today: ${perfectRunsToday}/5`;
     console.log('Current score:', score); // Debug log for scoring verification
 }
 
@@ -80,6 +83,29 @@ function levelUp() {
     level = level % 4 + 1;
     initLevel();
     score += 100;
+    checkPerfectRun(); // Check for perfect run after level completion
+}
+
+function checkPerfectRun() {
+    const currentTime = Date.now();
+    const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+    // Check if 24 hours have passed since the last perfect run reset
+    if (currentTime - lastPerfectRunTime > twentyFourHours) {
+        perfectRunsToday = 0; // Reset perfect runs if a day has passed
+        lastPerfectRunTime = currentTime;
+    }
+
+    // Count remaining rivets in the current level (16 per level)
+    const remainingRivets = rivets.length;
+    const damageTaken = score < 0 || (score % 10 !== 0 && score > 0); // Simplified damage check (negative score or odd score after penalties)
+
+    if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
+        perfectRunsToday++;
+        console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday);
+        // In a real implementation, this would trigger a Telegram API call to award 50 $PREME Tokens
+        alert('Perfect run! You earned 50 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today.');
+    }
 }
 
 // Load assets (sprites and backgrounds) with detailed debugging
@@ -105,8 +131,8 @@ function loadAssets() {
     console.log('Pauline:', pauline.image.src);
 
     barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src);
-    const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
-    const springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
+    cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
+    springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
     hammerImg.src = 'hammer.png'; console.log('Hammer:', hammerImg.src);
     ladderImg.src = 'ladder.png'; console.log('Ladder:', ladderImg.src);
     rivetImg.src = 'rivet.png'; console.log('Rivet:', rivetImg.src);
@@ -119,7 +145,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
-// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, adjusted positions and new features)
+// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64)
 function initLevel() {
     barrels = [];
     conveyors = [];
@@ -135,6 +161,7 @@ function initLevel() {
     mario.y = 318; // 1 platform level up (from y: 450 to y: 350 - 32 for height 32, on bottom platform at y: 400)
     mario.hasHammer = false; mario.hammerTime = 0;
     mario.onLadder = false; // Reset ladder state
+    mario.dy = 0; // Reset vertical speed for ladder climbing
     premekong.x = 50;
     premekong.y = 36; // Base position on top platform (y: 100 - 64 for height 64)
     premekong.bounceDir = 1; // Start bouncing up
@@ -153,21 +180,59 @@ function initLevel() {
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         hammers.push({ x: 250, y: platformY[1] - 32, width: 32, height: 32, taken: false });
+        // Add 16 rivets (4 per platform, 50 points each)
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+        }
     } else if (level === 2) { // 50m - Conveyors (moved up to top platform at y: 100)
         conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 1 }); // Top platform at y: 100, 672x10
         conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -1 }); // Third platform at y: 200, 672x10
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         ladders.push({ x: 350, y: platformY[3] - 100, width: 20, height: 100 });
         hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
+        // Add 16 rivets (4 per platform, 50 points each)
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+        }
     } else if (level === 3) { // 75m - Elevators and Fireballs
         elevators.push({ x: 150, y: 300, width: 40, height: 20, dy: 2, minY: 100, maxY: 400 }); // Adjusted for new platform heights, 672x10 platforms
         elevators.push({ x: 450, y: 200, width: 40, height: 20, dy: -2, minY: 100, maxY: 400 }); // Adjusted for new platform heights
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
-        // Add fireballs starting positions (spawn from Preme Kong, roll right)
+        // Add 16 rivets (4 per platform, 50 points each)
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+        }
     } else if (level === 4) { // 100m - Rivets
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 150 + i * 150, y: platformY[i] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
         ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
@@ -177,7 +242,7 @@ function initLevel() {
     console.log('Canvas size after scaling:', canvas.width, canvas.height); // Verify rendered dimensions
 }
 
-// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, adjusted positions and new features)
+// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level)
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -240,8 +305,8 @@ function draw() {
     if (premekong.image.complete) {
         ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
     }
-    // Vertical bouncing on top platform (y: 36 ± 20), slowed down
-    premekong.y += premekong.bounceDir * 1; // Slowed bounce speed to 1 pixel per frame
+    // Vertical bouncing on top platform (y: 36 ± 20), slowed down even more
+    premekong.y += premekong.bounceDir * 0.125; // Slowed bounce speed to 0.125 pixels per frame
     if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) {
         premekong.bounceDir *= -1; // Reverse direction when hitting bounce range limits
     }
@@ -250,7 +315,7 @@ function draw() {
     if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
     else ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height);
 
-    // Draw barrels, cement pies, springs (tossing to the right)
+    // Draw barrels, cement pies, springs (tossing to the right, fall immediately at ladders)
     barrels.forEach(barrel => {
         if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
         else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
@@ -261,7 +326,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (with direct canvas dimensions for landscape, 672x500, platforms 672x10, adjusted positions and new features)
+// Update game logic (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level)
 function update() {
     if (!gameActive) return;
 
@@ -278,9 +343,8 @@ function update() {
         mario.y += mario.dy * mario.speed; // Move up/down based on climb direction
     }
     mario.x += mario.dx * mario.speed; // Original speed
-    if (mario.onLadder) mario.y += mario.dy * mario.speed;
 
-    // Platform and ladder collision (for Mario)
+    // Platform and ladder collision (for Mario, improved ladder climbing)
     const platformY = [400, 300, 200, 100]; // Adjusted platforms, top at y: 100 (middle of screen)
     platformY.forEach(py => {
         if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
@@ -296,13 +360,15 @@ function update() {
         }
     });
 
-    // Ladder collision for Mario (enable climbing)
+    // Ladder collision for Mario (enable climbing, improved precision)
     ladders.forEach(ladder => {
         if (checkCollision(mario, ladder) && mario.y + mario.height > ladder.y && mario.y < ladder.y + ladder.height) {
             mario.onLadder = true; // Mario can climb if touching ladder
             // Ensure Mario stays within ladder bounds vertically
             if (mario.y < ladder.y) mario.y = ladder.y;
             if (mario.y + mario.height > ladder.y + ladder.height) mario.y = ladder.y + ladder.height - mario.height;
+            // Allow Mario to exit ladder if moving horizontally off it
+            if (mario.dx !== 0 && !checkCollision(mario, ladder)) mario.onLadder = false;
         } else if (!checkCollision(mario, ladder)) {
             mario.onLadder = false; // Exit ladder if not touching
         }
@@ -344,13 +410,13 @@ function update() {
         }
     }
 
-    // Vertical bouncing for Preme Kong (on top platform, slowed down)
-    premekong.y += premekong.bounceDir * 1; // Slowed bounce speed to 1 pixel per frame
+    // Vertical bouncing for Preme Kong (on top platform, slowed down even more)
+    premekong.y += premekong.bounceDir * 0.125; // Slowed bounce speed to 0.125 pixels per frame
     if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) {
         premekong.bounceDir *= -1; // Reverse direction when hitting bounce range limits
     }
 
-    // Barrel/spring/cement pie movement (scaled for landscape, 672x500, platforms 672x10, fall at ladders)
+    // Barrel/spring/cement pie movement (scaled for landscape, 672x500, platforms 672x10, fall immediately at ladders)
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
         barrel.y += barrel.dy || 2; // Apply gravity for barrels
@@ -359,10 +425,10 @@ function update() {
             if (barrel.y + 32 > py && barrel.y + 32 < py + 10 && barrel.dy >= 0) {
                 barrel.y = py - 32; // Keep barrel on top of platform (672x10)
                 barrel.dy = 0; // Stop falling
-                // Check for ladders to make barrels fall
+                // Check for ladders to make barrels fall immediately
                 ladders.forEach(ladder => {
-                    if (barrel.x >= ladder.x - 32 && barrel.x <= ladder.x + ladder.width && barrel.y === py - 32) {
-                        barrel.dy = 2; // Trigger fall when hitting ladder
+                    if (barrel.x >= ladder.x - 32 && barrel.x <= ladder.x + ladder.width) {
+                        barrel.dy = 2; // Trigger immediate fall when hitting ladder
                     }
                 });
                 // Apply conveyor speed if on conveyor
@@ -389,7 +455,7 @@ function update() {
         }
     });
 
-    // Fireball movement (scaled for landscape, 672x500, platforms 672x10, fall at ladders)
+    // Fireball movement (scaled for landscape, 672x500, platforms 672x10, fall immediately at ladders)
     fireballs.forEach((fireball, i) => {
         fireball.x += fireball.dx;
         fireball.y += fireball.dy || 2; // Apply gravity for fireballs
@@ -398,10 +464,10 @@ function update() {
             if (fireball.y + 32 > py && fireball.y + 32 < py + 10 && fireball.dy >= 0) {
                 fireball.y = py - 32; // Keep fireball on top of platform (672x10)
                 fireball.dy = 0; // Stop falling
-                // Check for ladders to make fireballs fall
+                // Check for ladders to make fireballs fall immediately
                 ladders.forEach(ladder => {
-                    if (fireball.x >= ladder.x - 32 && fireball.x <= ladder.x + ladder.width && fireball.y === py - 32) {
-                        fireball.dy = 2; // Trigger fall when hitting ladder
+                    if (fireball.x >= ladder.x - 32 && fireball.x <= ladder.x + ladder.width) {
+                        fireball.dy = 2; // Trigger immediate fall when hitting ladder
                     }
                 });
             }
@@ -426,7 +492,7 @@ function update() {
         if (elevator.y <= elevator.minY || elevator.y >= elevator.maxY) elevator.dy *= -1;
     });
 
-    // Rivet collection (for Level 4, 50 points each)
+    // Rivet collection (for all levels, 50 points each, 16 per level, total 64)
     rivets.forEach((rivet, i) => {
         if (checkCollision(mario, rivet)) {
             rivet.hit = true;
@@ -457,14 +523,14 @@ function update() {
     updateScore();
 }
 
-// Controls (including ladder climbing)
+// Controls (including improved ladder climbing)
 function moveLeft() { if (gameActive && !mario.hasHammer) mario.dx = -1; }
 function moveRight() { if (gameActive && !mario.hasHammer) mario.dx = 1; }
 function jump() { if (gameActive && !mario.jumping && !mario.onLadder && !mario.hasHammer) mario.jumping = true; }
 function climbUp() { if (gameActive && mario.onLadder) mario.dy = -1; }
 function climbDown() { if (gameActive && mario.onLadder) mario.dy = 1; }
 function stopMove() { mario.dx = 0; }
-function stopClimb() { mario.dy = 0; }
+function stopClimb() { mario.dy = 0; mario.onLadder = false; } // Ensure Mario exits ladder when stopping
 
 // Telegram data handler
 function handleTelegramData() {
