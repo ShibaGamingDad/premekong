@@ -24,17 +24,17 @@ let mario = {
 }; // Moved up 1 platform level to bottom platform
 let premekong = {
     x: 50, 
-    y: 18, // 2 platform levels up (from y: 218 to y: 50 - 32 for height 64, above top platform at y: 100)
+    y: 36, // Moved down to sit on top platform (y: 100 - 64 for height 64)
     width: 64, 
     height: 64, 
-    bounceDir: 1
-}; // Top platform, left side, moved up 2 levels
+    bounceDir: 0 // Remove bouncing, stay in place
+}; // Top platform, left side, stationary on top platform
 let pauline = {
-    x: canvas.width - 100, 
-    y: 93, // 1.25 platform levels up (from y: 218 to y: 125 - 32 for height 32, between second and third platforms)
+    x: 124, // Next to Preme Kong (x: 50 + 64 + 10 for 10px gap)
+    y: 68, // On top platform (y: 100 - 32 for height 32, aligned with Kong)
     width: 32, 
     height: 32
-}; // Top platform, right side, moved up 1.25 levels
+}; // Top platform, right side, next to Preme Kong
 let barrels = [];
 let conveyors = [];
 let elevators = [];
@@ -128,9 +128,9 @@ function initLevel() {
     mario.y = 318; // 1 platform level up (from y: 450 to y: 350 - 32 for height 32, on bottom platform at y: 400)
     mario.hasHammer = false; mario.hammerTime = 0;
     premekong.x = 50;
-    premekong.y = 18; // 2 platform levels up (from y: 218 to y: 50 - 32 for height 64, above top platform at y: 100)
-    pauline.x = canvas.width - 100;
-    pauline.y = 93; // 1.25 platform levels up (from y: 218 to y: 125 - 32 for height 32, between second and third platforms)
+    premekong.y = 36; // Moved down to sit on top platform (y: 100 - 64 for height 64)
+    pauline.x = 124; // Next to Preme Kong (x: 50 + 64 + 10 for 10px gap)
+    pauline.y = 68; // On top platform (y: 100 - 32 for height 32, aligned with Kong)
 
     const platformY = [
         400, // Bottom platform (near base, adjusted for clarity, 672x10)
@@ -219,18 +219,17 @@ function draw() {
         console.log('Mario image not loaded, using fallback:', mario.image.src);
     }
 
-    // Draw Preme Kong (bouncing left/right on top platform and throwing barrels)
+    // Draw Preme Kong (stationary on top platform, tossing barrels to the right)
     if (premekong.image.complete) {
         ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
     }
-    premekong.x += premekong.bounceDir * 2; // Adjust bounce speed for new width
-    if (premekong.x <= 0 || premekong.x >= canvas.width - premekong.width) premekong.bounceDir *= -1;
+    // Removed bouncing logic, Preme Kong stays at x: 50, y: 36
 
     // Draw Pauline
     if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
     else ctx.fillRect(pauline.x, pauline.y, pauline.width, pauline.height);
 
-    // Draw barrels, cement pies, springs
+    // Draw barrels, cement pies, springs (tossing to the right)
     barrels.forEach(barrel => {
         if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
         else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
@@ -273,26 +272,26 @@ function update() {
         }
     });
 
-    // Preme Kong barrel throwing (bouncing and throwing barrels, scaled for landscape, 672x500, platforms 672x10)
+    // Preme Kong barrel throwing (stationary, tossing barrels to the right, scaled for landscape, 672x500, platforms 672x10)
     if (Math.random() < 0.03) { // Slightly increased chance for visibility
         if (level === 1) barrels.push({
-            x: premekong.x + premekong.width / 2, 
+            x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: -2, 
+            dx: 2, // Toss barrels to the right
             dy: 0, 
             type: 'barrel'
         });
         else if (level === 2) barrels.push({
-            x: premekong.x + premekong.width / 2, 
+            x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: -2, 
+            dx: 2, // Toss barrels to the right
             dy: 0, 
             type: 'cement_pie'
         });
         else if (level === 3) barrels.push({
-            x: premekong.x + premekong.width / 2, 
+            x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: -4, 
+            dx: 4, // Toss barrels to the right, faster for springs
             dy: 0, 
             type: 'spring'
         });
@@ -315,7 +314,7 @@ function update() {
             }
         });
         if (barrel.type === 'spring' && barrel.x < canvas.width - 100 && Math.random() < 0.1) barrel.dy = -10; // Spring bounce
-        if (barrel.x < -32 || barrel.y > canvas.height) barrels.splice(i, 1);
+        if (barrel.x > canvas.width + 32 || barrel.y > canvas.height) barrels.splice(i, 1); // Remove barrels off-screen to the right
         if (checkCollision(mario, barrel)) {
             if (mario.hasHammer) {
                 barrels.splice(i, 1);
