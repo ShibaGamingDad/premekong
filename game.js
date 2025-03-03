@@ -10,7 +10,7 @@ ctx.scale(1, 1); // Ensure no unintended scaling
 // Game state (restored original positions, with direct canvas dimensions for landscape, reduced width by 20%)
 let mario = {
     x: 50, 
-    y: canvas.height - 50, 
+    y: canvas.height - 150, // Start on the bottom platform (y: canvas.height - 100, adjusted for height)
     width: 32, 
     height: 32, 
     dx: 0, 
@@ -21,7 +21,7 @@ let mario = {
     onLadder: false, 
     hasHammer: false, 
     hammerTime: 0
-}; // Bottom-left starting position
+}; // Start on bottom platform
 let premekong = {
     x: 50, 
     y: 50, 
@@ -123,9 +123,9 @@ function initLevel() {
     rivets = [];
     ladders = [];
     
-    // Use canvas dimensions directly, no additional scaling
+    // Use canvas dimensions directly, no additional scaling, start Mario on bottom platform
     mario.x = 50;
-    mario.y = canvas.height - 50; // Bottom-left starting position
+    mario.y = canvas.height - 150; // Start on bottom platform (y: canvas.height - 100, adjusted for height)
     mario.hasHammer = false; mario.hammerTime = 0;
     premekong.x = 50;
     premekong.y = 50; // Top platform, left side
@@ -145,8 +145,8 @@ function initLevel() {
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         hammers.push({ x: 250, y: platformY[1] - 32, width: 32, height: 32, taken: false });
     } else if (level === 2) { // 50m - Conveyors
-        conveyors.push({ x: 0, y: platformY[1], width: canvas.width, height: 10, speed: 2 });
-        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -2 });
+        conveyors.push({ x: 0, y: platformY[1], width: canvas.width, height: 10, speed: 1 }); // Reduced speed for stability
+        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -1 }); // Reduced speed for stability
         ladders.push({ x: 300, y: platformY[1] - 100, width: 20, height: 100 });
         ladders.push({ x: 350, y: platformY[2] - 100, width: 20, height: 100 });
         hammers.push({ x: 200, y: platformY[2] - 32, width: 32, height: 32, taken: false });
@@ -306,9 +306,18 @@ function update() {
     // Barrel/spring/cement pie movement (scaled for landscape, reduced width by 20%, compacted content at 65%)
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
-        barrel.y += barrel.dy || 2 * (canvas.height * 0.65 / 500);
+        barrel.y += barrel.dy || 2 * (canvas.height * 0.65 / 500); // Apply gravity for barrels
         platformY.forEach(py => {
-            if (barrel.y + 32 * (canvas.height * 0.65 / 500) > py && barrel.y + 32 * (canvas.height * 0.65 / 500) < py + 10 * (canvas.height * 0.65 / 500)) barrel.y = py - 32 * (canvas.height * 0.65 / 500);
+            if (barrel.y + 32 * (canvas.height * 0.65 / 500) > py && barrel.y + 32 * (canvas.height * 0.65 / 500) < py + 10 * (canvas.height * 0.65 / 500) && barrel.dy >= 0) {
+                barrel.y = py - 32 * (canvas.height * 0.65 / 500); // Keep barrel on top of platform
+                barrel.dy = 0; // Stop falling
+                // Apply conveyor speed if on conveyor
+                conveyors.forEach(conveyor => {
+                    if (barrel.y === conveyor.y && barrel.x >= conveyor.x && barrel.x + 32 * (canvas.width * 0.65 / 737) <= conveyor.x + conveyor.width) {
+                        barrel.x += conveyor.speed * (canvas.width * 0.65 / 737); // Move with conveyor
+                    }
+                });
+            }
         });
         if (barrel.type === 'spring' && barrel.x < canvas.width - 100 * (canvas.width * 0.65 / 737) && Math.random() < 0.1) barrel.dy = -10 * (canvas.height * 0.65 / 500); // Spring bounce, scaled
         if (barrel.x < -32 * (canvas.width * 0.65 / 737) || barrel.y > canvas.height) barrels.splice(i, 1);
@@ -324,7 +333,18 @@ function update() {
         }
     });
 
-    // Conveyor, elevator, hammer, ladder, rivet logic remains the same, but with scaling adjustments as needed...
+    // Conveyor movement (updated for stability)
+    conveyors.forEach(conveyor => {
+        // No need to move conveyors themselves, just their effect on barrels
+    });
+
+    // Elevator movement (simplified for clarity, can be expanded if needed)
+    elevators.forEach(elevator => {
+        elevator.y += elevator.dy;
+        if (elevator.y <= elevator.minY || elevator.y >= elevator.maxY) elevator.dy *= -1;
+    });
+
+    // Hammer, ladder, rivet logic remains unchanged, but ensure scaling adjustments...
 
     // Level completion (reach Pauline except Level 4), considering landscape, reduced width by 20%, compacted content at 65%
     if (level !== 4 && mario.y < 50 * (canvas.height * 0.65 / 500) + 50 * (canvas.height * 0.65 / 500) && Math.abs(mario.x - pauline.x) < 100 * (canvas.width * 0.65 / 737)) levelUp(); // Adjusted for top platform at y: 50, scaled
