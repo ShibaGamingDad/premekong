@@ -24,11 +24,12 @@ let mario = {
 }; // Moved up 1 platform level to bottom platform
 let premekong = {
     x: 50, 
-    y: 36, // Moved down to sit on top platform (y: 100 - 64 for height 64)
+    y: 36, // Base position on top platform (y: 100 - 64 for height 64)
     width: 64, 
     height: 64, 
-    bounceDir: 0 // Remove bouncing, stay in place
-}; // Top platform, left side, stationary on top platform
+    bounceDir: 1, // Vertical bounce direction (1 for up, -1 for down)
+    bounceRange: 20 // Bounce range (up and down by 20px)
+}; // Top platform, left side, bouncing vertically
 let pauline = {
     x: 124, // Next to Preme Kong (x: 50 + 64 + 10 for 10px gap)
     y: 68, // On top platform (y: 100 - 32 for height 32, aligned with Kong)
@@ -128,7 +129,8 @@ function initLevel() {
     mario.y = 318; // 1 platform level up (from y: 450 to y: 350 - 32 for height 32, on bottom platform at y: 400)
     mario.hasHammer = false; mario.hammerTime = 0;
     premekong.x = 50;
-    premekong.y = 36; // Moved down to sit on top platform (y: 100 - 64 for height 64)
+    premekong.y = 36; // Base position on top platform (y: 100 - 64 for height 64)
+    premekong.bounceDir = 1; // Start bouncing up
     pauline.x = 124; // Next to Preme Kong (x: 50 + 64 + 10 for 10px gap)
     pauline.y = 68; // On top platform (y: 100 - 32 for height 32, aligned with Kong)
 
@@ -219,11 +221,15 @@ function draw() {
         console.log('Mario image not loaded, using fallback:', mario.image.src);
     }
 
-    // Draw Preme Kong (stationary on top platform, tossing barrels to the right)
+    // Draw Preme Kong (bouncing vertically on top platform, tossing barrels to the right)
     if (premekong.image.complete) {
         ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
     }
-    // Removed bouncing logic, Preme Kong stays at x: 50, y: 36
+    // Vertical bouncing on top platform (y: 36 ± 20)
+    premekong.y += premekong.bounceDir * 2; // Bounce speed of 2 pixels per frame
+    if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) {
+        premekong.bounceDir *= -1; // Reverse direction when hitting bounce range limits
+    }
 
     // Draw Pauline
     if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width, pauline.height);
@@ -272,29 +278,35 @@ function update() {
         }
     });
 
-    // Preme Kong barrel throwing (stationary, tossing barrels to the right, scaled for landscape, 672x500, platforms 672x10)
+    // Preme Kong barrel throwing (bouncing vertically, tossing barrels to the right, scaled for landscape, 672x500, platforms 672x10)
     if (Math.random() < 0.03) { // Slightly increased chance for visibility
         if (level === 1) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: 2, // Toss barrels to the right
+            dx: 2, // Toss barrels to the right toward Mario
             dy: 0, 
             type: 'barrel'
         });
         else if (level === 2) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: 2, // Toss barrels to the right
+            dx: 2, // Toss barrels to the right toward Mario
             dy: 0, 
             type: 'cement_pie'
         });
         else if (level === 3) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: 4, // Toss barrels to the right, faster for springs
+            dx: 4, // Toss barrels to the right toward Mario, faster for springs
             dy: 0, 
             type: 'spring'
         });
+    }
+
+    // Vertical bouncing for Preme Kong (on top platform)
+    premekong.y += premekong.bounceDir * 2; // Bounce speed of 2 pixels per frame
+    if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) {
+        premekong.bounceDir *= -1; // Reverse direction when hitting bounce range limits
     }
 
     // Barrel/spring/cement pie movement (scaled for landscape, 672x500, platforms 672x10)
