@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Preme Kong</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta property="og:title" content="Preme Kong" />
     <meta property="og:description" content="Play Preme Kong and earn $PREME on Base!" />
     <meta property="og:url" content="https://shibagamingdad.github.io/premekong/" />
@@ -16,12 +16,14 @@
             align-items: center; 
             background: black; 
             min-height: 100vh; 
+            overflow-x: hidden; 
         }
         canvas {
             border: 1px solid white;
             max-width: 100%;
             height: auto;
             object-fit: contain;
+            width: 100%; /* Ensure full width on all devices */
         }
         #controls { 
             margin-top: 10px; 
@@ -29,6 +31,7 @@
             display: flex; 
             justify-content: center; 
             flex-wrap: wrap; 
+            max-width: 672px; /* Match canvas width for consistency */
         }
         button { 
             padding: 15px 30px; 
@@ -43,24 +46,36 @@
             font-size: 20px; 
             margin-top: 10px; 
             text-align: center; 
+            max-width: 672px; /* Match canvas width for consistency */
         }
 
-        /* Ensure controls are visible on desktop and fit canvas width */
+        /* Desktop-specific adjustments (laptops and larger screens) */
         @media (min-width: 768px) {
-            #controls {
-                max-width: 672px; /* Match canvas width */
-            }
             canvas {
                 max-width: 672px; /* Fixed width on desktop */
                 width: 672px; /* Ensure exact width on desktop */
                 height: auto; /* Maintain aspect ratio */
             }
+            #controls {
+                max-width: 672px; /* Match canvas width */
+            }
+            #score {
+                max-width: 672px; /* Match canvas width */
+            }
         }
 
-        /* Mobile-specific adjustments (already looks good) */
+        /* Mobile-specific adjustments */
         @media (max-width: 767px) {
             canvas {
                 width: 100%; /* Full width on mobile */
+                height: auto; /* Maintain aspect ratio */
+            }
+            #controls {
+                padding: 0 10px; /* Add padding for mobile touch targets */
+            }
+            button {
+                font-size: 16px; /* Slightly smaller buttons on mobile */
+                padding: 12px 24px; /* Adjust padding for mobile */
             }
         }
     </style>
