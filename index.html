@@ -22,7 +22,7 @@
             color: white; 
             font-size: 20px; 
             text-align: center; 
-            max-width: 672px; /* Match new canvas max width for consistency (672x500, landscape) */
+            max-width: 672px; /* Match new canvas max width for consistency (672x600, landscape) */
         }
         canvas {
             border: 1px solid white;
@@ -30,7 +30,7 @@
             width: 100%; /* Ensure full width on all devices */
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
-            object-fit: contain; /* Preserve aspect ratio (672x500) */
+            object-fit: contain; /* Preserve aspect ratio (672x600) */
             transform: scale(1); /* Default scale for reference */
         }
         #controls { 
@@ -38,7 +38,7 @@
             display: flex; 
             justify-content: center; 
             flex-wrap: wrap; 
-            max-width: 672px; /* Match new canvas max width for consistency (672x500, landscape) */
+            max-width: 672px; /* Match new canvas max width for consistency (672x600, landscape) */
         }
         button { 
             padding: 15px 30px; 
@@ -49,22 +49,22 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, 672x500, landscape, centered layout) */
+        /* Desktop-specific adjustments (laptops and larger screens, 672x600, landscape, centered layout) */
         @media (min-width: 768px) {
             #score {
-                max-width: 672px; /* Match new canvas width (672x500, landscape) */
+                max-width: 672px; /* Match new canvas width (672x600, landscape) */
                 margin-top: 20px; /* Add space at the top to center the layout vertically */
             }
             canvas {
-                max-width: 672px; /* New width on desktop (672x500, landscape) */
+                max-width: 672px; /* New width on desktop (672x600, landscape) */
                 width: 672px; /* Ensure exact width on desktop */
-                max-height: 500px; /* Unchanged height on desktop */
+                max-height: 600px; /* New height on desktop (increased from 500 to 600) */
                 height: auto; /* Maintain aspect ratio */
                 transform: scale(1); /* No scaling to use natural canvas size */
                 transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
-                max-width: 672px; /* Match new canvas width (672x500, landscape) */
+                max-width: 672px; /* Match new canvas width (672x600, landscape) */
                 margin-top: 0; /* Remove the margin to eliminate space below the canvas */
             }
             body {
@@ -93,7 +93,7 @@
 </head>
 <body>
     <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
-    <canvas id="gameCanvas" width="672" height="500"></canvas> <!-- New canvas size (672x500, landscape) -->
+    <canvas id="gameCanvas" width="672" height="600"></canvas> <!-- New canvas size (672x600, landscape) -->
     <div id="controls">
         <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
         <button ontouchstart="moveRight()" ontouchend="stopMove()">Right</button>
