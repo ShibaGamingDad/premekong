@@ -8,8 +8,8 @@ ctx.scale(1, 1); // Ensure no unintended scaling
 
 // Game state
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0 };
-let premekong = { x: 50, y: 50, width: 64, height: 64, bounceDir: 1 }; // Top platform, left side, with bouncing
-let pauline = { x: canvas.width - 100, y: 50, width: 32, height: 32 }; // Top platform, right side
+let premekong = { x: 50, y: canvas.height - 400, width: 64, height: 64, bounceDir: 1 }; // Top platform (y: canvas.height - 400)
+let pauline = { x: canvas.width - 100, y: canvas.height - 400, width: 32, height: 32 }; // Top platform (y: canvas.height - 400)
 let barrels = [];
 let conveyors = [];
 let elevators = [];
@@ -62,8 +62,18 @@ function loadAssets() {
     mario.image.src = 'mario.png';
     console.log('Mario:', mario.image.src);
 
-    premekong.image = new Image(); premekong.image.src = 'premekong.png'; console.log('Preme Kong:', premekong.image.src);
-    pauline.image = new Image(); pauline.image.src = 'pauline.png'; console.log('Pauline:', pauline.image.src);
+    premekong.image = new Image();
+    premekong.image.onload = () => console.log('Preme Kong image loaded successfully:', premekong.image.src);
+    premekong.image.onerror = () => console.error('Failed to load Preme Kong image:', premekong.image.src);
+    premekong.image.src = 'premekong.png';
+    console.log('Preme Kong:', premekong.image.src);
+
+    pauline.image = new Image();
+    pauline.image.onload = () => console.log('Pauline image loaded successfully:', pauline.image.src);
+    pauline.image.onerror = () => console.error('Failed to load Pauline image:', pauline.image.src);
+    pauline.image.src = 'pauline.png';
+    console.log('Pauline:', pauline.image.src);
+
     barrelImg.src = 'barrel.png'; console.log('Barrel:', barrelImg.src);
     const cementPieImg = new Image(); cementPieImg.src = 'cement_pie.png'; console.log('Cement Pie:', cementPieImg.src);
     const springImg = new Image(); springImg.src = 'spring.png'; console.log('Spring:', springImg.src);
@@ -89,8 +99,8 @@ function initLevel() {
     ladders = [];
     mario.x = 50; mario.y = canvas.height - 50; // Bottom-left starting position
     mario.hasHammer = false; mario.hammerTime = 0;
-    premekong.x = 50; premekong.y = 50; // Top platform, left side
-    pauline.x = canvas.width - 100; pauline.y = 50; // Top platform, right side
+    premekong.x = 50; premekong.y = canvas.height - 400; // Top platform, left side
+    pauline.x = canvas.width - 100; pauline.y = canvas.height - 400; // Top platform, right side
 
     const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
 
@@ -173,7 +183,7 @@ function draw() {
         console.log('Mario image not loaded, using fallback:', mario.image.src);
     }
 
-    // Draw Preme Kong (bouncing left/right on top platform)
+    // Draw Preme Kong (bouncing left/right on top platform and throwing barrels)
     if (premekong.image.complete) {
         ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
     }
@@ -222,11 +232,11 @@ function update() {
         }
     });
 
-    // Preme Kong barrel throwing
-    if (Math.random() < 0.02) { // Increased chance slightly for visibility
-        if (level === 1) barrels.push({ x: premekong.x, y: premekong.y + premekong.height, dx: -2, dy: 0, type: 'barrel' });
-        else if (level === 2) barrels.push({ x: premekong.x, y: premekong.y + premekong.height, dx: -2, dy: 0, type: 'cement_pie' });
-        else if (level === 3) barrels.push({ x: premekong.x, y: premekong.y + premekong.height, dx: -4, dy: 0, type: 'spring' });
+    // Preme Kong barrel throwing (bouncing and throwing barrels)
+    if (Math.random() < 0.03) { // Slightly increased chance for visibility
+        if (level === 1) barrels.push({ x: premekong.x + premekong.width / 2, y: premekong.y + premekong.height, dx: -2, dy: 0, type: 'barrel' });
+        else if (level === 2) barrels.push({ x: premekong.x + premekong.width / 2, y: premekong.y + premekong.height, dx: -2, dy: 0, type: 'cement_pie' });
+        else if (level === 3) barrels.push({ x: premekong.x + premekong.width / 2, y: premekong.y + premekong.height, dx: -4, dy: 0, type: 'spring' });
     }
 
     // Barrel/spring/cement pie movement
@@ -253,7 +263,7 @@ function update() {
     // Conveyor, elevator, hammer, ladder, rivet logic remains the same as previous version...
 
     // Level completion (reach Pauline except Level 4)
-    if (level !== 4 && mario.y < 100 && Math.abs(mario.x - pauline.x) < 100) levelUp();
+    if (level !== 4 && mario.y < canvas.height - 400 && Math.abs(mario.x - pauline.x) < 100) levelUp();
 
     // Hammer logic
     if (mario.hasHammer) {
