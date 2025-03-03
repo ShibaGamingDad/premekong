@@ -25,6 +25,7 @@
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
             object-fit: contain; /* Preserve aspect ratio (672x768) */
+            transform: scale(1); /* Default scale for reference */
         }
         #controls { 
             margin-top: 10px; 
@@ -50,13 +51,15 @@
             max-width: 672px; /* Match canvas max width for consistency */
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, compact height by 30%) */
+        /* Desktop-specific adjustments (laptops and larger screens, restore height to 768px, then compact content by 30%) */
         @media (min-width: 768px) {
             canvas {
                 max-width: 672px; /* Fixed width on desktop */
                 width: 672px; /* Ensure exact width on desktop */
-                max-height: 538px; /* Reduce height to 70% of 768px (30% reduction) */
+                max-height: 768px; /* Restore original height (100% of 768px) */
                 height: auto; /* Maintain aspect ratio */
+                transform: scale(0.7); /* Compact content (including border) by 30% vertically, maintaining width */
+                transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
                 max-width: 672px; /* Match canvas width */
