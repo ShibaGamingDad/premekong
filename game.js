@@ -6,7 +6,7 @@ canvas.width = 672;
 canvas.height = 768;
 ctx.scale(1, 1); // Ensure no unintended scaling
 
-// Game state (restored original positions, with dynamic scaling)
+// Game state (restored original positions, with dynamic scaling for compacted height)
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0 }; // Bottom-left starting position
 let premekong = { x: 50, y: 50, width: 64, height: 64, bounceDir: 1 }; // Top platform, left side
 let pauline = { x: canvas.width - 100, y: 50, width: 32, height: 32 }; // Top platform, right side
@@ -88,7 +88,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
-// Initialize level (with dynamic scaling for character positions)
+// Initialize level (with dynamic scaling for compacted height)
 function initLevel() {
     barrels = [];
     conveyors = [];
@@ -98,9 +98,9 @@ function initLevel() {
     rivets = [];
     ladders = [];
     
-    // Dynamically adjust positions based on rendered canvas size
+    // Dynamically adjust positions based on rendered canvas size, accounting for compacted height
     const scaleFactorWidth = canvas.width / 672; // Scale factor based on width
-    const scaleFactorHeight = canvas.height / 768; // Scale factor based on height
+    const scaleFactorHeight = canvas.height / 576; // Scale factor based on new max height (75% of 768px)
     mario.x = 50 * scaleFactorWidth;
     mario.y = (canvas.height - 50) * scaleFactorHeight; // Bottom-left starting position
     mario.hasHammer = false; mario.hammerTime = 0;
@@ -143,7 +143,7 @@ function initLevel() {
     updateScore();
 }
 
-// Draw game
+// Draw game (with scaling for compacted height)
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -153,122 +153,122 @@ function draw() {
         ctx.drawImage(backgrounds[level], 0, 0, canvas.width, canvas.height);
     }
 
-    // Draw platforms
-    const platformY = [canvas.height - 100 * (canvas.height / 768), canvas.height - 200 * (canvas.height / 768), canvas.height - 300 * (canvas.height / 768), canvas.height - 400 * (canvas.height / 768)];
+    // Draw platforms (scaled for compacted height)
+    const platformY = [canvas.height - 100 * (canvas.height / 576), canvas.height - 200 * (canvas.height / 576), canvas.height - 300 * (canvas.height / 576), canvas.height - 400 * (canvas.height / 576)];
     if (platformImg.complete) {
-        platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10 * (canvas.height / 768)));
+        platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10 * (canvas.height / 576)));
     } else {
         ctx.fillStyle = 'red';
-        platformY.forEach(py => ctx.fillRect(0, py, canvas.width, 10 * (canvas.height / 768)));
+        platformY.forEach(py => ctx.fillRect(0, py, canvas.width, 10 * (canvas.height / 576)));
     }
 
     // Draw conveyors
     ctx.fillStyle = 'yellow';
-    conveyors.forEach(conveyor => ctx.fillRect(conveyor.x, conveyor.y, conveyor.width, conveyor.height * (canvas.height / 768)));
+    conveyors.forEach(conveyor => ctx.fillRect(conveyor.x, conveyor.y, conveyor.width, conveyor.height * (canvas.height / 576)));
 
     // Draw elevators
     ctx.fillStyle = 'orange';
-    elevators.forEach(elevator => ctx.fillRect(elevator.x, elevator.y, elevator.width, elevator.height * (canvas.height / 768)));
+    elevators.forEach(elevator => ctx.fillRect(elevator.x, elevator.y, elevator.width, elevator.height * (canvas.height / 576)));
 
     // Draw ladders
     ladders.forEach(ladder => {
-        if (ladderImg.complete) ctx.drawImage(ladderImg, ladder.x, ladder.y, ladder.width, ladder.height * (canvas.height / 768));
-        else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height * (canvas.height / 768));
+        if (ladderImg.complete) ctx.drawImage(ladderImg, ladder.x, ladder.y, ladder.width, ladder.height * (canvas.height / 576));
+        else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height * (canvas.height / 576));
     });
 
     // Draw hammers
     hammers.forEach(hammer => {
-        if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width * (canvas.width / 672), hammer.height * (canvas.height / 768));
+        if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width * (canvas.width / 672), hammer.height * (canvas.height / 576));
     });
 
     // Draw rivets
     rivets.forEach(rivet => {
-        if (!rivet.hit && rivetImg.complete) ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width * (canvas.width / 672), rivet.height * (canvas.height / 768));
+        if (!rivet.hit && rivetImg.complete) ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width * (canvas.width / 672), rivet.height * (canvas.height / 576));
     });
 
     // Draw Mario (with fallback if image fails to load)
     if (mario.image.complete) {
-        ctx.drawImage(mario.image, mario.x, mario.y, mario.width * (canvas.width / 672), mario.height * (canvas.height / 768));
+        ctx.drawImage(mario.image, mario.x, mario.y, mario.width * (canvas.width / 672), mario.height * (canvas.height / 576));
     } else {
         ctx.fillStyle = 'blue'; // Fallback color for debugging
-        ctx.fillRect(mario.x, mario.y, mario.width * (canvas.width / 672), mario.height * (canvas.height / 768));
+        ctx.fillRect(mario.x, mario.y, mario.width * (canvas.width / 672), mario.height * (canvas.height / 576));
         console.log('Mario image not loaded, using fallback:', mario.image.src);
     }
 
     // Draw Preme Kong (bouncing left/right on top platform and throwing barrels)
     if (premekong.image.complete) {
-        ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width * (canvas.width / 672), premekong.height * (canvas.height / 768));
+        ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width * (canvas.width / 672), premekong.height * (canvas.height / 576));
     }
     premekong.x += premekong.bounceDir * 2 * (canvas.width / 672); // Adjust bounce speed for scaling
     if (premekong.x <= 0 || premekong.x >= canvas.width - premekong.width * (canvas.width / 672)) premekong.bounceDir *= -1;
 
     // Draw Pauline
-    if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width * (canvas.width / 672), pauline.height * (canvas.height / 768));
-    else ctx.fillRect(pauline.x, pauline.y, pauline.width * (canvas.width / 672), pauline.height * (canvas.height / 768));
+    if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, pauline.width * (canvas.width / 672), pauline.height * (canvas.height / 576));
+    else ctx.fillRect(pauline.x, pauline.y, pauline.width * (canvas.width / 672), pauline.height * (canvas.height / 576));
 
     // Draw barrels, cement pies, springs
     barrels.forEach(barrel => {
-        if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 768));
-        else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 768));
-        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 768));
-        else ctx.fillRect(barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 768));
+        if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 576));
+        else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 576));
+        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 576));
+        else ctx.fillRect(barrel.x, barrel.y, 32 * (canvas.width / 672), 32 * (canvas.height / 576));
     });
 
     requestAnimationFrame(draw);
 }
 
-// Update game logic (with scaling adjustments)
+// Update game logic (with scaling for compacted height)
 function update() {
     if (!gameActive) return;
 
     // Mario physics
     if (!mario.onLadder) {
-        mario.dy += mario.gravity * (canvas.height / 768); // Adjust gravity for scaling
+        mario.dy += mario.gravity * (canvas.height / 576); // Adjust gravity for compacted height
         mario.y += mario.dy;
         if (mario.jumping) {
-            mario.dy = -10 * (canvas.height / 768); // Adjust jump for scaling
+            mario.dy = -10 * (canvas.height / 576); // Adjust jump for compacted height
             mario.jumping = false;
         }
     } else {
         mario.dy = 0;
     }
     mario.x += mario.dx * mario.speed * (canvas.width / 672); // Adjust speed for scaling
-    if (mario.onLadder) mario.y += mario.dy * mario.speed * (canvas.height / 768); // Adjust climb for scaling
+    if (mario.onLadder) mario.y += mario.dy * mario.speed * (canvas.height / 576); // Adjust climb for compacted height
 
-    // Platform collision (adjusted for platform.png height of 10, considering scaling)
+    // Platform collision (adjusted for platform.png height of 10, considering compacted height)
     const platformY = [
-        canvas.height - 100 * (canvas.height / 768),
-        canvas.height - 200 * (canvas.height / 768),
-        canvas.height - 300 * (canvas.height / 768),
-        canvas.height - 400 * (canvas.height / 768)
+        canvas.height - 100 * (canvas.height / 576),
+        canvas.height - 200 * (canvas.height / 576),
+        canvas.height - 300 * (canvas.height / 576),
+        canvas.height - 400 * (canvas.height / 576)
     ];
     platformY.forEach(py => {
-        if (mario.y + mario.height * (canvas.height / 768) > py && mario.y + mario.height * (canvas.height / 768) < py + 10 * (canvas.height / 768) && mario.dy > 0 && !mario.onLadder) {
-            mario.y = py - mario.height * (canvas.height / 768); // Ensure Mario stays on the platform, scaled
+        if (mario.y + mario.height * (canvas.height / 576) > py && mario.y + mario.height * (canvas.height / 576) < py + 10 * (canvas.height / 576) && mario.dy > 0 && !mario.onLadder) {
+            mario.y = py - mario.height * (canvas.height / 576); // Ensure Mario stays on the platform, scaled
             mario.dy = 0;
         }
         // Prevent Mario from falling below the bottom platform, accounting for scaling
-        if (mario.y > canvas.height - mario.height * (canvas.height / 768)) {
-            mario.y = canvas.height - mario.height * (canvas.height / 768); // Keep Mario at the bottom, scaled
+        if (mario.y > canvas.height - mario.height * (canvas.height / 576)) {
+            mario.y = canvas.height - mario.height * (canvas.height / 576); // Keep Mario at the bottom, scaled
             mario.dy = 0;
         }
     });
 
-    // Preme Kong barrel throwing (bouncing and throwing barrels, scaled)
+    // Preme Kong barrel throwing (bouncing and throwing barrels, scaled for compacted height)
     if (Math.random() < 0.03) { // Slightly increased chance for visibility
-        if (level === 1) barrels.push({ x: premekong.x + premekong.width * (canvas.width / 672) / 2, y: premekong.y + premekong.height * (canvas.height / 768), dx: -2 * (canvas.width / 672), dy: 0, type: 'barrel' });
-        else if (level === 2) barrels.push({ x: premekong.x + premekong.width * (canvas.width / 672) / 2, y: premekong.y + premekong.height * (canvas.height / 768), dx: -2 * (canvas.width / 672), dy: 0, type: 'cement_pie' });
-        else if (level === 3) barrels.push({ x: premekong.x + premekong.width * (canvas.width / 672) / 2, y: premekong.y + premekong.height * (canvas.height / 768), dx: -4 * (canvas.width / 672), dy: 0, type: 'spring' });
+        if (level === 1) barrels.push({ x: premekong.x + premekong.width * (canvas.width / 672) / 2, y: premekong.y + premekong.height * (canvas.height / 576), dx: -2 * (canvas.width / 672), dy: 0, type: 'barrel' });
+        else if (level === 2) barrels.push({ x: premekong.x + premekong.width * (canvas.width / 672) / 2, y: premekong.y + premekong.height * (canvas.height / 576), dx: -2 * (canvas.width / 672), dy: 0, type: 'cement_pie' });
+        else if (level === 3) barrels.push({ x: premekong.x + premekong.width * (canvas.width / 672) / 2, y: premekong.y + premekong.height * (canvas.height / 576), dx: -4 * (canvas.width / 672), dy: 0, type: 'spring' });
     }
 
-    // Barrel/spring/cement pie movement (scaled)
+    // Barrel/spring/cement pie movement (scaled for compacted height)
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
-        barrel.y += barrel.dy || 2 * (canvas.height / 768);
+        barrel.y += barrel.dy || 2 * (canvas.height / 576);
         platformY.forEach(py => {
-            if (barrel.y + 32 * (canvas.height / 768) > py && barrel.y + 32 * (canvas.height / 768) < py + 10 * (canvas.height / 768)) barrel.y = py - 32 * (canvas.height / 768);
+            if (barrel.y + 32 * (canvas.height / 576) > py && barrel.y + 32 * (canvas.height / 576) < py + 10 * (canvas.height / 576)) barrel.y = py - 32 * (canvas.height / 576);
         });
-        if (barrel.type === 'spring' && barrel.x < canvas.width - 100 * (canvas.width / 672) && Math.random() < 0.1) barrel.dy = -10 * (canvas.height / 768); // Spring bounce, scaled
+        if (barrel.type === 'spring' && barrel.x < canvas.width - 100 * (canvas.width / 672) && Math.random() < 0.1) barrel.dy = -10 * (canvas.height / 576); // Spring bounce, scaled
         if (barrel.x < -32 * (canvas.width / 672) || barrel.y > canvas.height) barrels.splice(i, 1);
         if (checkCollision(mario, barrel)) {
             if (mario.hasHammer) {
@@ -284,8 +284,8 @@ function update() {
 
     // Conveyor, elevator, hammer, ladder, rivet logic remains the same, but with scaling adjustments as needed...
 
-    // Level completion (reach Pauline except Level 4), considering scaling
-    if (level !== 4 && mario.y < 50 * (canvas.height / 768) + 50 * (canvas.height / 768) && Math.abs(mario.x - pauline.x) < 100 * (canvas.width / 672)) levelUp(); // Adjusted for top platform at y: 50, scaled
+    // Level completion (reach Pauline except Level 4), considering compacted height
+    if (level !== 4 && mario.y < 50 * (canvas.height / 576) + 50 * (canvas.height / 576) && Math.abs(mario.x - pauline.x) < 100 * (canvas.width / 672)) levelUp(); // Adjusted for top platform at y: 50, scaled
 
     // Hammer logic (scaled)
     if (mario.hasHammer) {
