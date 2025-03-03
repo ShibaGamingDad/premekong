@@ -49,11 +49,11 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, increase width and height by 50%, compact content by 35%, landscape, no gap below canvas) */
+        /* Desktop-specific adjustments (laptops and larger screens, increase width and height by 50%, compact content by 35%, landscape, centered layout) */
         @media (min-width: 768px) {
             #score {
                 max-width: 921px; /* Match new canvas width (increased by 50%, landscape) */
-                margin-top: 20px; /* Maintain space at the top for centering */
+                margin-top: 20px; /* Add space at the top to center the layout vertically */
             }
             canvas {
                 max-width: 921px; /* New width on desktop (increased by 50% to 921px, landscape) */
@@ -65,18 +65,15 @@
             }
             #controls {
                 max-width: 921px; /* Match new canvas width (increased landscape) */
-                margin-top: 0; /* Remove margin to eliminate space below the canvas, moving controls up to touch the canvas */
+                margin-top: 0; /* Remove the margin to eliminate space below the canvas */
             }
             body {
                 justify-content: center; /* Center the flex column vertically on desktop */
             }
         }
 
-        /* Mobile-specific adjustments (maintain responsive width, adjust height, add header space, landscape) */
+        /* Mobile-specific adjustments (maintain responsive width, adjust height as is, landscape) */
         @media (max-width: 767px) {
-            body {
-                padding-top: 96px; /* Add ~1 inch (96px) of header space at the top to center the layout */
-            }
             #score {
                 padding: 0 10px; /* Add padding for mobile readability */
             }
@@ -86,7 +83,6 @@
             }
             #controls {
                 padding: 0 10px; /* Add padding for mobile touch targets */
-                margin-top: 0; /* Ensure no space between canvas and controls */
             }
             button {
                 font-size: 16px; /* Slightly smaller buttons on mobile */
