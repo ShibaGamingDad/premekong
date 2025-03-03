@@ -96,7 +96,7 @@ function checkPerfectRun() {
         lastPerfectRunTime = currentTime;
     }
 
-    // Count remaining rivets in the current level (16 per level)
+    // Count remaining rivets in the current level (16 per level, total 64)
     const remainingRivets = rivets.length;
     const damageTaken = score < 0 || (score % 10 !== 0 && score > 0); // Simplified damage check (negative score or odd score after penalties)
 
@@ -145,7 +145,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
-// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64)
+// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64, spread out)
 function initLevel() {
     barrels = [];
     conveyors = [];
@@ -180,16 +180,16 @@ function initLevel() {
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         hammers.push({ x: 250, y: platformY[1] - 32, width: 32, height: 32, taken: false });
-        // Add 16 rivets (4 per platform, 50 points each)
+        // Add 16 rivets (4 per platform, spread out more, 50 points each)
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
-            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
-            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
-            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
-            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
     } else if (level === 2) { // 50m - Conveyors (moved up to top platform at y: 100)
         conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 1 }); // Top platform at y: 100, 672x10
@@ -197,42 +197,42 @@ function initLevel() {
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         ladders.push({ x: 350, y: platformY[3] - 100, width: 20, height: 100 });
         hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
-        // Add 16 rivets (4 per platform, 50 points each)
+        // Add 16 rivets (4 per platform, spread out more, 50 points each)
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
-            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
-            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
-            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
-            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
     } else if (level === 3) { // 75m - Elevators and Fireballs
         elevators.push({ x: 150, y: 300, width: 40, height: 20, dy: 2, minY: 100, maxY: 400 }); // Adjusted for new platform heights, 672x10 platforms
         elevators.push({ x: 450, y: 200, width: 40, height: 20, dy: -2, minY: 100, maxY: 400 }); // Adjusted for new platform heights
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
-        // Add 16 rivets (4 per platform, 50 points each)
+        // Add 16 rivets (4 per platform, spread out more, 50 points each)
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
-            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
-            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
-            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
-            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
     } else if (level === 4) { // 100m - Rivets
         for (let i = 0; i < 4; i++) {
-            rivets.push({ x: 100 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
-            rivets.push({ x: 150 + i * 50, y: platformY[0] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
-            rivets.push({ x: 150 + i * 50, y: platformY[1] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
-            rivets.push({ x: 150 + i * 50, y: platformY[2] - 10, width: 20, height: 20, hit: false });
-            rivets.push({ x: 100 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
-            rivets.push({ x: 150 + i * 50, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false }); // Second platform
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false }); // Third platform
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
+            rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
         ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
@@ -242,7 +242,7 @@ function initLevel() {
     console.log('Canvas size after scaling:', canvas.width, canvas.height); // Verify rendered dimensions
 }
 
-// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level)
+// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, spread out)
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -326,7 +326,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level)
+// Update game logic (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, spread out, fixes)
 function update() {
     if (!gameActive) return;
 
@@ -344,7 +344,7 @@ function update() {
     }
     mario.x += mario.dx * mario.speed; // Original speed
 
-    // Platform and ladder collision (for Mario, improved ladder climbing)
+    // Platform and ladder collision (for Mario, improved ladder climbing and level transition)
     const platformY = [400, 300, 200, 100]; // Adjusted platforms, top at y: 100 (middle of screen)
     platformY.forEach(py => {
         if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
@@ -360,7 +360,7 @@ function update() {
         }
     });
 
-    // Ladder collision for Mario (enable climbing, improved precision)
+    // Ladder collision for Mario (enable climbing, improved precision, prevent false level transitions)
     ladders.forEach(ladder => {
         if (checkCollision(mario, ladder) && mario.y + mario.height > ladder.y && mario.y < ladder.y + ladder.height) {
             mario.onLadder = true; // Mario can climb if touching ladder
@@ -492,7 +492,7 @@ function update() {
         if (elevator.y <= elevator.minY || elevator.y >= elevator.maxY) elevator.dy *= -1;
     });
 
-    // Rivet collection (for all levels, 50 points each, 16 per level, total 64)
+    // Rivet collection (for all levels, 50 points each, 16 per level, total 64, spread out)
     rivets.forEach((rivet, i) => {
         if (checkCollision(mario, rivet)) {
             rivet.hit = true;
@@ -504,8 +504,10 @@ function update() {
 
     // Hammer, ladder, rivet logic remains the same, but ensure adjustments for new features...
 
-    // Level completion (reach Pauline except Level 4), considering landscape, 672x500, platforms 672x10, adjusted positions
-    if (level !== 4 && mario.y < 250 + 50 && Math.abs(mario.x - pauline.x) < 100) levelUp(); // Adjusted for top platform at y: 250
+    // Level completion (reach Pauline only after collecting all rivets, except Level 4), considering landscape, 672x500, platforms 672x10, adjusted positions
+    if (level !== 4 && mario.y < 68 + 50 && Math.abs(mario.x - pauline.x) < 100 && rivets.length === 0) {
+        levelUp(); // Only transition to next level when reaching Pauline and all rivets are collected
+    }
 
     // Hammer logic
     if (mario.hasHammer) {
