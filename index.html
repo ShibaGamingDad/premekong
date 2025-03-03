@@ -23,7 +23,7 @@
             font-size: 20px; 
             margin-top: 10px; 
             text-align: center; 
-            max-width: 768px; /* Match new canvas max width for consistency (landscape) */
+            max-width: 614px; /* Match new canvas max width for consistency (reduced landscape) */
         }
         canvas {
             border: 1px solid white;
@@ -31,7 +31,7 @@
             width: 100%; /* Ensure full width on all devices */
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
-            object-fit: contain; /* Preserve aspect ratio (768x538) */
+            object-fit: contain; /* Preserve aspect ratio (614x672) */
             transform: scale(1); /* Default scale for reference */
         }
         #controls { 
@@ -40,7 +40,7 @@
             display: flex; 
             justify-content: center; 
             flex-wrap: wrap; 
-            max-width: 768px; /* Match new canvas max width for consistency (landscape) */
+            max-width: 614px; /* Match new canvas max width for consistency (reduced landscape) */
         }
         button { 
             padding: 15px 30px; 
@@ -51,24 +51,24 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, reduce height by 20%, compact content by 35%, landscape) */
+        /* Desktop-specific adjustments (laptops and larger screens, restore height, reduce width by 20%, compact content by 35%, landscape) */
         @media (min-width: 768px) {
             #score {
-                max-width: 768px; /* Match new canvas width (landscape) */
+                max-width: 614px; /* Match new canvas width (reduced landscape) */
             }
             canvas {
-                max-width: 768px; /* New width on desktop (landscape) */
-                width: 768px; /* Ensure exact width on desktop (landscape) */
-                max-height: 538px; /* Reduce height to 80% of 672px (20% reduction) */
+                max-width: 614px; /* New width on desktop (reduced by 20% from 768px, landscape) */
+                width: 614px; /* Ensure exact width on desktop (reduced landscape) */
+                max-height: 672px; /* Restore height to original landscape height */
                 height: auto; /* Maintain aspect ratio */
                 transform: scale(0.65); /* Compact content (including border) by 35% vertically, maintaining width */
                 transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
-                max-width: 768px; /* Match new canvas width (landscape) */
+                max-width: 614px; /* Match new canvas width (reduced landscape) */
             }
             #score {
-                max-width: 768px; /* Match new canvas width (landscape) */
+                max-width: 614px; /* Match new canvas width (reduced landscape) */
             }
         }
 
@@ -93,7 +93,7 @@
 </head>
 <body>
     <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
-    <canvas id="gameCanvas" width="768" height="538"></canvas> <!-- Updated height to 538px -->
+    <canvas id="gameCanvas" width="614" height="672"></canvas> <!-- Updated width to 614px, restored height to 672px -->
     <div id="controls">
         <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
         <button ontouchstart="moveRight()" ontouchend="stopMove()">Right</button>
