@@ -21,9 +21,9 @@
         canvas {
             border: 1px solid white;
             max-width: 100%;
-            height: auto;
-            object-fit: contain;
             width: 100%; /* Ensure full width on all devices */
+            height: auto; /* Maintain aspect ratio */
+            object-fit: contain;
         }
         #controls { 
             margin-top: 10px; 
@@ -64,11 +64,12 @@
             }
         }
 
-        /* Mobile-specific adjustments */
+        /* Mobile-specific adjustments (squeeze height, keep width perfect) */
         @media (max-width: 767px) {
             canvas {
-                width: 100%; /* Full width on mobile */
-                height: auto; /* Maintain aspect ratio */
+                width: 100%; /* Full width on mobile (perfect as you noted) */
+                max-height: 80vh; /* Limit height to 80% of viewport height to squeeze from top */
+                height: auto; /* Maintain aspect ratio within max-height */
             }
             #controls {
                 padding: 0 10px; /* Add padding for mobile touch targets */
