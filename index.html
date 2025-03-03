@@ -49,7 +49,7 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, reduce width by 20%, compact content by 35%, landscape, centered layout) */
+        /* Desktop-specific adjustments (laptops and larger screens, reduce width by 20%, landscape, centered layout) */
         @media (min-width: 768px) {
             #score {
                 max-width: 737px; /* Match new canvas width (reduced by 20%, landscape) */
@@ -60,7 +60,7 @@
                 width: 737px; /* Ensure exact width on desktop (reduced landscape) */
                 max-height: 500px; /* Unchanged height on desktop */
                 height: auto; /* Maintain aspect ratio */
-                transform: scale(0.65); /* Compact content (including border) by 35% vertically and horizontally, maintaining aspect ratio */
+                transform: scale(1); /* Remove compaction (no scaling) to use natural canvas size */
                 transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
