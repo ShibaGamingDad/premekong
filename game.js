@@ -8,8 +8,8 @@ ctx.scale(1, 1); // Ensure no unintended scaling
 
 // Game state
 let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0 };
-let premekong = { x: 50, y: canvas.height - 400, width: 64, height: 64, bounceDir: 1 }; // Top platform (y: canvas.height - 400)
-let pauline = { x: canvas.width - 100, y: canvas.height - 400, width: 32, height: 32 }; // Top platform (y: canvas.height - 400)
+let premekong = { x: 50, y: canvas.height - 450, width: 64, height: 64, bounceDir: 1 }; // Above top platform (y: canvas.height - 400)
+let pauline = { x: canvas.width - 100, y: canvas.height - 450, width: 32, height: 32 }; // Above top platform (y: canvas.height - 400)
 let barrels = [];
 let conveyors = [];
 let elevators = [];
@@ -52,7 +52,7 @@ function levelUp() {
     score += 100;
 }
 
-// Load assets (sprites and backgrounds) with detailed debugging for Mario
+// Load assets (sprites and backgrounds) with detailed debugging
 function loadAssets() {
     console.log('Loading assets...');
 
@@ -97,10 +97,10 @@ function initLevel() {
     hammers = [];
     rivets = [];
     ladders = [];
-    mario.x = 50; mario.y = canvas.height - 50; // Bottom-left starting position
+    mario.x = 50; mario.y = canvas.height - 50; // On bottom platform (above y: canvas.height - 100)
     mario.hasHammer = false; mario.hammerTime = 0;
-    premekong.x = 50; premekong.y = canvas.height - 400; // Top platform, left side
-    pauline.x = canvas.width - 100; pauline.y = canvas.height - 400; // Top platform, right side
+    premekong.x = 50; premekong.y = canvas.height - 450; // Above top platform (y: canvas.height - 400)
+    pauline.x = canvas.width - 100; pauline.y = canvas.height - 450; // Above top platform (y: canvas.height - 400)
 
     const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
 
@@ -227,7 +227,7 @@ function update() {
     const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
     platformY.forEach(py => {
         if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
-            mario.y = py - mario.height;
+            mario.y = py - mario.height; // Ensure Mario stays on the platform
             mario.dy = 0;
         }
     });
