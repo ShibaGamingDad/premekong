@@ -53,10 +53,11 @@
             canvas {
                 max-width: 672px; /* Fixed width on desktop */
                 width: 672px; /* Ensure exact width on desktop */
+                height: auto; /* Maintain aspect ratio */
             }
         }
 
-        /* Mobile-specific adjustments (optional, already looks good) */
+        /* Mobile-specific adjustments (already looks good) */
         @media (max-width: 767px) {
             canvas {
                 width: 100%; /* Full width on mobile */
