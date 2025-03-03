@@ -21,7 +21,6 @@
         #score { 
             color: white; 
             font-size: 20px; 
-            margin-top: 10px; 
             text-align: center; 
             max-width: 921px; /* Match new canvas max width for consistency (increased landscape) */
         }
@@ -35,7 +34,6 @@
             transform: scale(1); /* Default scale for reference */
         }
         #controls { 
-            margin-top: 10px; 
             width: 100%; 
             display: flex; 
             justify-content: center; 
@@ -51,10 +49,11 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, increase width and height by 50%, compact content by 35%, landscape) */
+        /* Desktop-specific adjustments (laptops and larger screens, increase width and height by 50%, compact content by 35%, landscape, centered layout) */
         @media (min-width: 768px) {
             #score {
                 max-width: 921px; /* Match new canvas width (increased by 50%, landscape) */
+                margin-top: 20px; /* Add space at the top to center the layout vertically */
             }
             canvas {
                 max-width: 921px; /* New width on desktop (increased by 50% to 921px, landscape) */
@@ -66,9 +65,10 @@
             }
             #controls {
                 max-width: 921px; /* Match new canvas width (increased landscape) */
+                margin-top: 0; /* Remove the margin to eliminate space below the canvas */
             }
-            #score {
-                max-width: 921px; /* Match new canvas width (increased landscape) */
+            body {
+                justify-content: center; /* Center the flex column vertically on desktop */
             }
         }
 
@@ -93,7 +93,7 @@
 </head>
 <body>
     <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
-    <canvas id="gameCanvas" width="921" height="500"></canvas> <!-- Updated width to 921px and height to 500px -->
+    <canvas id="gameCanvas" width="921" height="500"></canvas> <!-- Maintain width at 921px and height at 500px -->
     <div id="controls">
         <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
         <button ontouchstart="moveRight()" ontouchend="stopMove()">Right</button>
