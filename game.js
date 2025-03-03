@@ -2,15 +2,15 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Adjust canvas for mobile and Telegram Web App (landscape setup, 672x600)
-canvas.width = 672; // Width (landscape, matching platforms)
-canvas.height = 600; // New height (increased from 500 to 600)
+// Adjust canvas for mobile and Telegram Web App (landscape setup, 672x500)
+canvas.width = 672; // New width (landscape, matching platforms)
+canvas.height = 500; // Unchanged height
 ctx.scale(1, 1); // Ensure no unintended scaling
 
-// Game state (restored original positions, with direct canvas dimensions for landscape, 672x600)
+// Game state (restored original positions, with direct canvas dimensions for landscape, 672x500)
 let mario = {
     x: 50, 
-    y: canvas.height - 50, // Restore to bottom-left starting position (y: 550)
+    y: canvas.height - 50, // Restore to bottom-left starting position
     width: 32, 
     height: 32, 
     dx: 0, 
@@ -24,17 +24,17 @@ let mario = {
 }; // Original bottom-left starting position
 let premekong = {
     x: 50, 
-    y: 318, // Top platform at middle (y: 350 - 32 for Preme Kong's height, adjusted for new height)
+    y: 218, // Top platform at middle (y: 250 - 32 for Preme Kong's height)
     width: 64, 
     height: 64, 
     bounceDir: 1
-}; // Top platform, left side, moved to middle (adjusted for 600px height)
+}; // Top platform, left side, moved to middle
 let pauline = {
     x: canvas.width - 100, 
-    y: 318, // Top platform at middle (y: 350 - 32 for Pauline's height, adjusted for new height)
+    y: 218, // Top platform at middle (y: 250 - 32 for Pauline's height)
     width: 32, 
     height: 32
-}; // Top platform, right side, moved to middle (adjusted for 600px height)
+}; // Top platform, right side, moved to middle
 let barrels = [];
 let conveyors = [];
 let elevators = [];
@@ -113,7 +113,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
-// Initialize level (with direct canvas dimensions for landscape, 672x600, platforms 672x10, Mario restored)
+// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, Mario restored)
 function initLevel() {
     barrels = [];
     conveyors = [];
@@ -125,18 +125,18 @@ function initLevel() {
     
     // Use canvas dimensions directly, no additional scaling, restore Mario to bottom
     mario.x = 50;
-    mario.y = canvas.height - 50; // Restore to original bottom-left starting position (y: 550)
+    mario.y = canvas.height - 50; // Restore to original bottom-left starting position
     mario.hasHammer = false; mario.hammerTime = 0;
     premekong.x = 50;
-    premekong.y = 318; // Top platform at middle (y: 350 - 32 for Preme Kong's height, adjusted for 600px height)
+    premekong.y = 218; // Top platform at middle (y: 250 - 32 for Preme Kong's height)
     pauline.x = canvas.width - 100;
-    pauline.y = 318; // Top platform at middle (y: 350 - 32 for Pauline's height, adjusted for 600px height)
+    pauline.y = 218; // Top platform at middle (y: 250 - 32 for Pauline's height)
 
     const platformY = [
-        500, // Bottom platform (near base, adjusted for 600px height, 672x10)
-        400, // Second platform
-        300, // Third platform
-        200  // Top platform (now middle at y: 350, adjusted for 600px height, 672x10)
+        400, // Bottom platform (near base, adjusted for clarity, 672x10)
+        300, // Second platform
+        200, // Third platform
+        100  // Top platform (now middle at y: 250, adjusted for height, 672x10)
     ];
 
     if (level === 1) { // 25m - Girders
@@ -144,15 +144,15 @@ function initLevel() {
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         hammers.push({ x: 250, y: platformY[1] - 32, width: 32, height: 32, taken: false });
-    } else if (level === 2) { // 50m - Conveyors (moved up to top platform at y: 200)
-        conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 1 }); // Top platform at y: 200, 672x10
-        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -1 }); // Third platform at y: 300, 672x10
+    } else if (level === 2) { // 50m - Conveyors (moved up to top platform at y: 100)
+        conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 1 }); // Top platform at y: 100, 672x10
+        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -1 }); // Third platform at y: 200, 672x10
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
         ladders.push({ x: 350, y: platformY[3] - 100, width: 20, height: 100 });
         hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
     } else if (level === 3) { // 75m - Elevators
-        elevators.push({ x: 150, y: 400, width: 40, height: 20, dy: 2, minY: 200, maxY: 500 }); // Adjusted for new platform heights, 672x10 platforms
-        elevators.push({ x: 450, y: 300, width: 40, height: 20, dy: -2, minY: 200, maxY: 500 }); // Adjusted for new platform heights
+        elevators.push({ x: 150, y: 300, width: 40, height: 20, dy: 2, minY: 100, maxY: 400 }); // Adjusted for new platform heights, 672x10 platforms
+        elevators.push({ x: 450, y: 200, width: 40, height: 20, dy: -2, minY: 100, maxY: 400 }); // Adjusted for new platform heights
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
     } else if (level === 4) { // 100m - Rivets
         for (let i = 0; i < 4; i++) {
@@ -167,7 +167,7 @@ function initLevel() {
     console.log('Canvas size after scaling:', canvas.width, canvas.height); // Verify rendered dimensions
 }
 
-// Draw game (with direct canvas dimensions for landscape, 672x600, platforms 672x10)
+// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10)
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -177,8 +177,8 @@ function draw() {
         ctx.drawImage(backgrounds[level], 0, 0, canvas.width, canvas.height);
     }
 
-    // Draw platforms (672x10, moved up, top at y: 200)
-    const platformY = [500, 400, 300, 200]; // Adjusted for 600px height, top at middle (y: 350, adjusted to y: 200 for visibility, 672x10 each)
+    // Draw platforms (672x10, moved up, top at y: 100)
+    const platformY = [400, 300, 200, 100]; // Adjusted to move platforms up, top at middle (y: 250 not possible, using y: 100 as top, 672x10 each)
     if (platformImg.complete) {
         platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10));
     } else {
@@ -241,7 +241,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (with direct canvas dimensions for landscape, 672x600, platforms 672x10, Mario restored)
+// Update game logic (with direct canvas dimensions for landscape, 672x500, platforms 672x10, Mario restored)
 function update() {
     if (!gameActive) return;
 
@@ -259,8 +259,8 @@ function update() {
     mario.x += mario.dx * mario.speed; // Original speed
     if (mario.onLadder) mario.y += mario.dy * mario.speed;
 
-    // Platform collision (adjusted for platform.png height of 10, considering landscape, 672x600, platforms 672x10)
-    const platformY = [500, 400, 300, 200]; // Adjusted for 600px height, top at middle (y: 350, adjusted to y: 200 for visibility, 672x10)
+    // Platform collision (adjusted for platform.png height of 10, considering landscape, 672x500, platforms 672x10)
+    const platformY = [400, 300, 200, 100]; // Adjusted platforms, top at y: 100 (middle of screen)
     platformY.forEach(py => {
         if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
             mario.y = py - mario.height; // Ensure Mario stays on the platform
@@ -268,12 +268,12 @@ function update() {
         }
         // Prevent Mario from falling below the bottom platform
         if (mario.y > canvas.height - mario.height) {
-            mario.y = canvas.height - mario.height; // Keep Mario at the bottom (y: 568)
+            mario.y = canvas.height - mario.height; // Keep Mario at the bottom
             mario.dy = 0;
         }
     });
 
-    // Preme Kong barrel throwing (bouncing and throwing barrels, scaled for landscape, 672x600, platforms 672x10)
+    // Preme Kong barrel throwing (bouncing and throwing barrels, scaled for landscape, 672x500, platforms 672x10)
     if (Math.random() < 0.03) { // Slightly increased chance for visibility
         if (level === 1) barrels.push({
             x: premekong.x + premekong.width / 2, 
@@ -298,7 +298,7 @@ function update() {
         });
     }
 
-    // Barrel/spring/cement pie movement (scaled for landscape, 672x600, platforms 672x10)
+    // Barrel/spring/cement pie movement (scaled for landscape, 672x500, platforms 672x10)
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
         barrel.y += barrel.dy || 2; // Apply gravity for barrels
@@ -341,8 +341,8 @@ function update() {
 
     // Hammer, ladder, rivet logic remains the same, but ensure adjustments for new canvas...
 
-    // Level completion (reach Pauline except Level 4), considering landscape, 672x600, platforms 672x10
-    if (level !== 4 && mario.y < 350 + 50 && Math.abs(mario.x - pauline.x) < 100) levelUp(); // Adjusted for top platform at y: 350 (middle of 600px)
+    // Level completion (reach Pauline except Level 4), considering landscape, 672x500, platforms 672x10
+    if (level !== 4 && mario.y < 250 + 50 && Math.abs(mario.x - pauline.x) < 100) levelUp(); // Adjusted for top platform at y: 250
 
     // Hammer logic
     if (mario.hasHammer) {
