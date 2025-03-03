@@ -20,10 +20,11 @@
         }
         canvas {
             border: 1px solid white;
-            max-width: 100%;
-            width: 100%; /* Ensure full width on all devices */
+            max-height: 100%; /* Prioritize height on mobile */
             height: auto; /* Maintain aspect ratio */
-            object-fit: contain;
+            width: auto; /* Allow width to adjust */
+            object-fit: contain; /* Preserve aspect ratio (672x768) */
+            max-width: 768px; /* Cap width to match original height for aspect ratio */
         }
         #controls { 
             margin-top: 10px; 
@@ -31,7 +32,7 @@
             display: flex; 
             justify-content: center; 
             flex-wrap: wrap; 
-            max-width: 672px; /* Match canvas width for consistency */
+            max-width: 768px; /* Match max canvas width for consistency */
         }
         button { 
             padding: 15px 30px; 
@@ -46,14 +47,15 @@
             font-size: 20px; 
             margin-top: 10px; 
             text-align: center; 
-            max-width: 672px; /* Match canvas width for consistency */
+            max-width: 768px; /* Match max canvas width for consistency */
         }
 
         /* Desktop-specific adjustments (laptops and larger screens) */
         @media (min-width: 768px) {
             canvas {
-                max-width: 672px; /* Fixed width on desktop */
+                max-width: 672px; /* Original width on desktop */
                 width: 672px; /* Ensure exact width on desktop */
+                max-height: 768px; /* Original height on desktop */
                 height: auto; /* Maintain aspect ratio */
             }
             #controls {
@@ -64,12 +66,13 @@
             }
         }
 
-        /* Mobile-specific adjustments (squeeze height, keep width perfect) */
+        /* Mobile-specific adjustments (prioritize height as 672px, adjust width) */
         @media (max-width: 767px) {
             canvas {
-                width: 100%; /* Full width on mobile (perfect as you noted) */
-                max-height: 80vh; /* Limit height to 80% of viewport height to squeeze from top */
+                max-height: 672px; /* Treat height as the primary dimension (your "width") */
                 height: auto; /* Maintain aspect ratio within max-height */
+                width: 100%; /* Allow width to adjust up to aspect ratio (768px max) */
+                max-width: 768px; /* Cap width to match original height for aspect ratio */
             }
             #controls {
                 padding: 0 10px; /* Add padding for mobile touch targets */
