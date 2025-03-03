@@ -7,9 +7,9 @@ canvas.height = 768;
 ctx.scale(1, 1); // Ensure no unintended scaling
 
 // Game state
-let mario = { x: 50, y: canvas.height - 50, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0 };
-let premekong = { x: 50, y: canvas.height - 450, width: 64, height: 64, bounceDir: 1 }; // Above top platform (y: canvas.height - 400)
-let pauline = { x: canvas.width - 100, y: canvas.height - 450, width: 32, height: 32 }; // Above top platform (y: canvas.height - 400)
+let mario = { x: 50, y: canvas.height - 70, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0 }; // Adjusted to stay on bottom platform
+let premekong = { x: 50, y: canvas.height - 460, width: 64, height: 64, bounceDir: 1 }; // Moved up slightly (above top platform)
+let pauline = { x: canvas.width - 100, y: canvas.height - 420, width: 32, height: 32 }; // Brought down slightly (on top platform)
 let barrels = [];
 let conveyors = [];
 let elevators = [];
@@ -97,10 +97,10 @@ function initLevel() {
     hammers = [];
     rivets = [];
     ladders = [];
-    mario.x = 50; mario.y = canvas.height - 50; // On bottom platform (above y: canvas.height - 100)
+    mario.x = 50; mario.y = canvas.height - 70; // On bottom platform (above y: canvas.height - 100)
     mario.hasHammer = false; mario.hammerTime = 0;
-    premekong.x = 50; premekong.y = canvas.height - 450; // Above top platform (y: canvas.height - 400)
-    pauline.x = canvas.width - 100; pauline.y = canvas.height - 450; // Above top platform (y: canvas.height - 400)
+    premekong.x = 50; premekong.y = canvas.height - 460; // Above top platform (y: canvas.height - 400)
+    pauline.x = canvas.width - 100; pauline.y = canvas.height - 420; // On top platform (y: canvas.height - 400)
 
     const platformY = [canvas.height - 100, canvas.height - 200, canvas.height - 300, canvas.height - 400];
 
@@ -228,6 +228,11 @@ function update() {
     platformY.forEach(py => {
         if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
             mario.y = py - mario.height; // Ensure Mario stays on the platform
+            mario.dy = 0;
+        }
+        // Prevent Mario from falling below the bottom platform
+        if (mario.y > canvas.height - mario.height) {
+            mario.y = canvas.height - mario.height; // Keep Mario at the bottom
             mario.dy = 0;
         }
     });
