@@ -18,6 +18,13 @@
             min-height: 100vh; 
             overflow-x: hidden; 
         }
+        #score { 
+            color: white; 
+            font-size: 20px; 
+            margin-top: 10px; 
+            text-align: center; 
+            max-width: 672px; /* Match canvas max width for consistency */
+        }
         canvas {
             border: 1px solid white;
             max-width: 100%;
@@ -25,7 +32,8 @@
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
             object-fit: contain; /* Preserve aspect ratio (672x768) */
-            transform: scale(1); /* Default scale for reference */
+            transform: scale(0.7); /* Compact content (including border) by 30% vertically, maintaining width */
+            transform-origin: top center; /* Scale from the top to keep content aligned */
         }
         #controls { 
             margin-top: 10px; 
@@ -43,34 +51,28 @@
             border: none; 
             border-radius: 5px; 
         }
-        #score { 
-            color: white; 
-            font-size: 20px; 
-            margin-top: 10px; 
-            text-align: center; 
-            max-width: 672px; /* Match canvas max width for consistency */
-        }
 
-        /* Desktop-specific adjustments (laptops and larger screens, restore height to 768px, then compact content by 30%) */
+        /* Desktop-specific adjustments (laptops and larger screens, maintain compacted height) */
         @media (min-width: 768px) {
+            #score {
+                max-width: 672px; /* Match canvas width */
+            }
             canvas {
                 max-width: 672px; /* Fixed width on desktop */
                 width: 672px; /* Ensure exact width on desktop */
-                max-height: 768px; /* Restore original height (100% of 768px) */
+                max-height: 768px; /* Original height (restored) */
                 height: auto; /* Maintain aspect ratio */
-                transform: scale(0.7); /* Compact content (including border) by 30% vertically, maintaining width */
-                transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
-                max-width: 672px; /* Match canvas width */
-            }
-            #score {
                 max-width: 672px; /* Match canvas width */
             }
         }
 
         /* Mobile-specific adjustments (maintain width, adjust height as is) */
         @media (max-width: 767px) {
+            #score {
+                padding: 0 10px; /* Add padding for mobile readability */
+            }
             canvas {
                 width: 100%; /* Full width on mobile (as you’re happy with) */
                 max-height: 80vh; /* Limit height to 80% of viewport height to fit all elements */
@@ -86,6 +88,7 @@
     </style>
 </head>
 <body>
+    <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
     <canvas id="gameCanvas" width="672" height="768"></canvas>
     <div id="controls">
         <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
@@ -94,7 +97,6 @@
         <button ontouchstart="climbUp()" ontouchend="stopClimb()">Up</button>
         <button ontouchstart="climbDown()" ontouchend="stopClimb()">Down</button>
     </div>
-    <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         Telegram.WebApp.ready();
