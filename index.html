@@ -23,7 +23,7 @@
             font-size: 20px; 
             margin-top: 10px; 
             text-align: center; 
-            max-width: 614px; /* Match new canvas max width for consistency (landscape) */
+            max-width: 921px; /* Match new canvas max width for consistency (increased landscape) */
         }
         canvas {
             border: 1px solid white;
@@ -31,7 +31,7 @@
             width: 100%; /* Ensure full width on all devices */
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
-            object-fit: contain; /* Preserve aspect ratio (614x333) */
+            object-fit: contain; /* Preserve aspect ratio (921x500) */
             transform: scale(1); /* Default scale for reference */
         }
         #controls { 
@@ -40,7 +40,7 @@
             display: flex; 
             justify-content: center; 
             flex-wrap: wrap; 
-            max-width: 614px; /* Match new canvas max width for consistency (landscape) */
+            max-width: 921px; /* Match new canvas max width for consistency (increased landscape) */
         }
         button { 
             padding: 15px 30px; 
@@ -51,24 +51,24 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, reduce height by another 5%, compact content by 35%, landscape) */
+        /* Desktop-specific adjustments (laptops and larger screens, increase width and height by 50%, compact content by 35%, landscape) */
         @media (min-width: 768px) {
             #score {
-                max-width: 614px; /* Match new canvas width (landscape) */
+                max-width: 921px; /* Match new canvas width (increased by 50%, landscape) */
             }
             canvas {
-                max-width: 614px; /* New width on desktop (landscape) */
-                width: 614px; /* Ensure exact width on desktop (landscape) */
-                max-height: 333px; /* Reduce height to 95% of 350px (another 5% reduction) */
+                max-width: 921px; /* New width on desktop (increased by 50% to 921px, landscape) */
+                width: 921px; /* Ensure exact width on desktop (increased landscape) */
+                max-height: 500px; /* New height on desktop (increased by 50% to 500px, landscape) */
                 height: auto; /* Maintain aspect ratio */
-                transform: scale(0.65); /* Compact content (including border) by 35% vertically, maintaining width */
+                transform: scale(0.65); /* Compact content (including border) by 35% vertically and horizontally, maintaining aspect ratio */
                 transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
-                max-width: 614px; /* Match new canvas width (landscape) */
+                max-width: 921px; /* Match new canvas width (increased landscape) */
             }
             #score {
-                max-width: 614px; /* Match new canvas width (landscape) */
+                max-width: 921px; /* Match new canvas width (increased landscape) */
             }
         }
 
@@ -93,7 +93,7 @@
 </head>
 <body>
     <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
-    <canvas id="gameCanvas" width="614" height="333"></canvas> <!-- Updated height to 333px -->
+    <canvas id="gameCanvas" width="921" height="500"></canvas> <!-- Updated width to 921px and height to 500px -->
     <div id="controls">
         <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
         <button ontouchstart="moveRight()" ontouchend="stopMove()">Right</button>
