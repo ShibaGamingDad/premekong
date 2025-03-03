@@ -32,8 +32,7 @@
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
             object-fit: contain; /* Preserve aspect ratio (672x768) */
-            transform: scale(0.7); /* Compact content (including border) by 30% vertically, maintaining width */
-            transform-origin: top center; /* Scale from the top to keep content aligned */
+            transform: scale(1); /* Default scale for reference */
         }
         #controls { 
             margin-top: 10px; 
@@ -52,7 +51,7 @@
             border-radius: 5px; 
         }
 
-        /* Desktop-specific adjustments (laptops and larger screens, maintain compacted height) */
+        /* Desktop-specific adjustments (laptops and larger screens, compact content by 35%) */
         @media (min-width: 768px) {
             #score {
                 max-width: 672px; /* Match canvas width */
@@ -62,8 +61,13 @@
                 width: 672px; /* Ensure exact width on desktop */
                 max-height: 768px; /* Original height (restored) */
                 height: auto; /* Maintain aspect ratio */
+                transform: scale(0.65); /* Compact content (including border) by 35% vertically, maintaining width */
+                transform-origin: top center; /* Scale from the top to keep content aligned */
             }
             #controls {
+                max-width: 672px; /* Match canvas width */
+            }
+            #score {
                 max-width: 672px; /* Match canvas width */
             }
         }
