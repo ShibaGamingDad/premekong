@@ -31,7 +31,7 @@
             width: 100%; /* Ensure full width on all devices */
             max-height: 100vh; /* Limit height to viewport height */
             height: auto; /* Maintain aspect ratio */
-            object-fit: contain; /* Preserve aspect ratio (614x412) */
+            object-fit: contain; /* Preserve aspect ratio (614x350) */
             transform: scale(1); /* Default scale for reference */
         }
         #controls { 
@@ -59,7 +59,7 @@
             canvas {
                 max-width: 614px; /* New width on desktop (landscape) */
                 width: 614px; /* Ensure exact width on desktop (landscape) */
-                max-height: 412px; /* Reduce height to 85% of 485px (another 15% reduction) */
+                max-height: 350px; /* Reduce height to 85% of 412px (another 15% reduction) */
                 height: auto; /* Maintain aspect ratio */
                 transform: scale(0.65); /* Compact content (including border) by 35% vertically, maintaining width */
                 transform-origin: top center; /* Scale from the top to keep content aligned */
@@ -93,7 +93,7 @@
 </head>
 <body>
     <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME</div>
-    <canvas id="gameCanvas" width="614" height="412"></canvas> <!-- Updated height to 412px -->
+    <canvas id="gameCanvas" width="614" height="350"></canvas> <!-- Updated height to 350px -->
     <div id="controls">
         <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
         <button ontouchstart="moveRight()" ontouchend="stopMove()">Right</button>
