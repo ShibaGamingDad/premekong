@@ -57,6 +57,7 @@ let fireballImg = new Image(); // Global fireball image
 let cementPieImg = new Image(); // Global cement pie image
 let perfectRunsToday = 0; // Track perfect runs (simulated, limit to 5 per day)
 let lastPerfectRunTime = 0; // Track last perfect run timestamp (in milliseconds)
+let premeEarned = 0; // Track $PREME Tokens earned from perfect runs
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -68,8 +69,8 @@ if (Telegram && Telegram.WebApp) {
 function updateScore() {
     const jackpot = 0; // Bot integration later
     const burn = 0;
-    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME  Perfect Runs Today: ${perfectRunsToday}/5`;
-    console.log('Current score:', score); // Debug log for scoring verification
+    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
+    console.log('Current score:', score, 'Perfect Runs:', perfectRunsToday, '$PREME Earned:', premeEarned); // Debug log for scoring verification
 }
 
 function checkCollision(obj1, obj2) {
@@ -81,9 +82,37 @@ function checkCollision(obj1, obj2) {
 
 function levelUp() {
     level = level % 4 + 1;
-    initLevel();
-    score += 100;
+    if (level === 1) {
+        resetGame(); // Reset game when returning to Level 1 after Level 4
+    } else {
+        initLevel();
+        score += 300; // Award 300 points for reaching Pauline
+    }
     checkPerfectRun(); // Check for perfect run after level completion
+}
+
+function resetGame() {
+    score = 0; // Reset score to 0
+    mario.x = 50;
+    mario.y = 318; // Reset Mario to bottom platform
+    mario.hasHammer = false;
+    mario.hammerTime = 0;
+    mario.onLadder = false;
+    mario.dy = 0;
+    premekong.x = 50;
+    premekong.y = 36;
+    premekong.bounceDir = 1;
+    pauline.x = 124;
+    pauline.y = 68;
+    barrels = [];
+    conveyors = [];
+    elevators = [];
+    springs = [];
+    hammers = [];
+    rivets = [];
+    fireballs = [];
+    ladders = [];
+    initLevel(); // Reinitialize the level
 }
 
 function checkPerfectRun() {
@@ -102,7 +131,8 @@ function checkPerfectRun() {
 
     if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
         perfectRunsToday++;
-        console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday);
+        premeEarned += 50; // Award 50 $PREME Tokens for perfect run
+        console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned);
         // In a real implementation, this would trigger a Telegram API call to award 50 $PREME Tokens
         alert('Perfect run! You earned 50 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today.');
     }
@@ -145,7 +175,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
-// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64, spread out)
+// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64, spread out, fixes)
 function initLevel() {
     barrels = [];
     conveyors = [];
@@ -191,11 +221,13 @@ function initLevel() {
             rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
             rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
-    } else if (level === 2) { // 50m - Conveyors (moved up to top platform at y: 100)
+    } else if (level === 2) { // 50m - Conveyors
         conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 1 }); // Top platform at y: 100, 672x10
         conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -1 }); // Third platform at y: 200, 672x10
-        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
-        ladders.push({ x: 350, y: platformY[3] - 100, width: 20, height: 100 });
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 }); // Bottom ladder
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 }); // Second ladder
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 }); // Third ladder
+        ladders.push({ x: 350, y: platformY[3] - 100, width: 20, height: 100 }); // Top ladder
         hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
         // Add 16 rivets (4 per platform, spread out more, 50 points each)
         for (let i = 0; i < 4; i++) {
@@ -211,7 +243,9 @@ function initLevel() {
     } else if (level === 3) { // 75m - Elevators and Fireballs
         elevators.push({ x: 150, y: 300, width: 40, height: 20, dy: 2, minY: 100, maxY: 400 }); // Adjusted for new platform heights, 672x10 platforms
         elevators.push({ x: 450, y: 200, width: 40, height: 20, dy: -2, minY: 100, maxY: 400 }); // Adjusted for new platform heights
-        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 }); // Bottom ladder
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 }); // Second ladder
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 }); // Third ladder
         // Add 16 rivets (4 per platform, spread out more, 50 points each)
         for (let i = 0; i < 4; i++) {
             rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
@@ -223,7 +257,18 @@ function initLevel() {
             rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
             rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
-    } else if (level === 4) { // 100m - Rivets
+    } else if (level === 4) { // 100m - Rivets (hardest level with all hazards)
+        // Add conveyors for difficulty
+        conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 2 }); // Top platform at y: 100, faster speed, 672x10
+        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -2 }); // Third platform at y: 200, faster speed, 672x10
+        conveyors.push({ x: 0, y: platformY[1], width: canvas.width, height: 10, speed: 2 }); // Second platform at y: 300, faster speed, 672x10
+        conveyors.push({ x: 0, y: platformY[0], width: canvas.width, height: 10, speed: -2 }); // Bottom platform at y: 400, faster speed, 672x10
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 }); // Bottom ladder
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 }); // Second ladder
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 }); // Third ladder
+        // Add barrels, fireballs, springs, and cement pies with higher frequency
+        hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
+        // Add 16 rivets (4 per platform, spread out more, 50 points each)
         for (let i = 0; i < 4; i++) {
             rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false }); // Bottom platform
             rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
@@ -234,15 +279,12 @@ function initLevel() {
             rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false }); // Top platform
             rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
         }
-        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
-        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
-        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
     }
     updateScore();
     console.log('Canvas size after scaling:', canvas.width, canvas.height); // Verify rendered dimensions
 }
 
-// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, spread out)
+// Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, spread out, fixes)
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -367,15 +409,15 @@ function update() {
             // Ensure Mario stays within ladder bounds vertically
             if (mario.y < ladder.y) mario.y = ladder.y;
             if (mario.y + mario.height > ladder.y + ladder.height) mario.y = ladder.y + ladder.height - mario.height;
-            // Allow Mario to exit ladder if moving horizontally off it
-            if (mario.dx !== 0 && !checkCollision(mario, ladder)) mario.onLadder = false;
+            // Allow Mario to exit ladder if moving horizontally off it or stopping climbing
+            if ((mario.dx !== 0 && !checkCollision(mario, ladder)) || (mario.dy === 0 && mario.onLadder)) mario.onLadder = false;
         } else if (!checkCollision(mario, ladder)) {
             mario.onLadder = false; // Exit ladder if not touching
         }
     });
 
     // Preme Kong barrel throwing (bouncing vertically, tossing barrels to the right, scaled for landscape, 672x500, platforms 672x10)
-    if (Math.random() < 0.03) { // Slightly increased chance for visibility
+    if (Math.random() < 0.05) { // Increased frequency for Level 4 difficulty
         if (level === 1) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
@@ -398,7 +440,7 @@ function update() {
                 dy: 0, 
                 type: 'spring'
             });
-            if (Math.random() < 0.02) { // Less frequent fireballs
+            if (Math.random() < 0.03) { // Slightly increased frequency for fireballs
                 fireballs.push({
                     x: premekong.x + premekong.width, 
                     y: premekong.y + premekong.height, 
@@ -407,6 +449,35 @@ function update() {
                     type: 'fireball'
                 });
             }
+        } else if (level === 4) { // Hardest level with all hazards, higher frequency
+            if (Math.random() < 0.07) barrels.push({ // Increased barrel frequency
+                x: premekong.x + premekong.width, 
+                y: premekong.y + premekong.height, 
+                dx: 3, // Slightly faster barrels
+                dy: 0, 
+                type: 'barrel'
+            });
+            if (Math.random() < 0.05) barrels.push({ // Add cement pies
+                x: premekong.x + premekong.width, 
+                y: premekong.y + premekong.height, 
+                dx: 3, 
+                dy: 0, 
+                type: 'cement_pie'
+            });
+            if (Math.random() < 0.04) barrels.push({ // Add springs
+                x: premekong.x + premekong.width, 
+                y: premekong.y + premekong.height, 
+                dx: 5, // Faster springs
+                dy: 0, 
+                type: 'spring'
+            });
+            if (Math.random() < 0.04) fireballs.push({ // Increased fireball frequency
+                x: premekong.x + premekong.width, 
+                y: premekong.y + premekong.height, 
+                dx: 7, // Faster fireballs
+                dy: 0, 
+                type: 'fireball'
+            });
         }
     }
 
@@ -499,14 +570,17 @@ function update() {
             score += 50; // 50 points per rivet
             console.log('Rivet collected, score +50:', score); // Debug log
             rivets.splice(i, 1);
+            if (level === 4 && rivets.length === 0) {
+                resetGame(); // Reset game to Level 1 when last rivet in Level 4 is collected
+            }
         }
     });
 
     // Hammer, ladder, rivet logic remains the same, but ensure adjustments for new features...
 
-    // Level completion (reach Pauline only after collecting all rivets, except Level 4), considering landscape, 672x500, platforms 672x10, adjusted positions
-    if (level !== 4 && mario.y < 68 + 50 && Math.abs(mario.x - pauline.x) < 100 && rivets.length === 0) {
-        levelUp(); // Only transition to next level when reaching Pauline and all rivets are collected
+    // Level completion (reach Pauline for 300 points, except Level 4 resets on last rivet), considering landscape, 672x500, platforms 672x10, adjusted positions
+    if (level !== 4 && mario.y < 68 + 50 && Math.abs(mario.x - pauline.x) < 100) {
+        levelUp(); // Only transition to next level when reaching Pauline
     }
 
     // Hammer logic
