@@ -2,19 +2,19 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Adjust canvas for mobile and Telegram Web App (landscape setup, 672x500)
+// Canvas setup for mobile and Telegram Web App (landscape setup, 672x500)
 canvas.width = 672;
 canvas.height = 500;
 ctx.scale(1, 1);
 
-// Persistent P2E state (moved outside reset scope per Issue #5)
-let perfectRunsToday = 0; // Resets daily, max 5
-let lastPerfectRunTime = 0; // Track daily reset
-let premeEarned = 0; // Persistent across sessions
-let premeBurn = 0; // Persistent until monthly reset by Replit
-let jackpot = 0; // Placeholder for shop/ticket system (Issue #6)
+// Persistent P2E state with localStorage as fallback
+let perfectRunsToday = localStorage.getItem('perfectRunsToday') ? parseInt(localStorage.getItem('perfectRunsToday')) : 0;
+let lastPerfectRunTime = localStorage.getItem('lastPerfectRunTime') ? parseInt(localStorage.getItem('lastPerfectRunTime')) : Date.now();
+let premeEarned = localStorage.getItem('premeEarned') ? parseFloat(localStorage.getItem('premeEarned')) : 0;
+let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0; // Local fallback; will sync with server
+let jackpot = localStorage.getItem('jackpot') ? parseFloat(localStorage.getItem('jackpot')) : 0;
 
-// Game state (original with lives and timer added)
+// Game state
 let mario = {
     x: 50,
     y: 318,
@@ -54,8 +54,8 @@ let ladders = [];
 let score = 0;
 let level = 1;
 let gameActive = true;
-let lives = 3; // Added per your request
-let bonusTimer = 5000; // Added per your request
+let lives = 3;
+let bonusTimer = 5000;
 let backgrounds = [];
 let platformImg = new Image();
 let ladderImg = new Image();
@@ -75,6 +75,12 @@ if (Telegram && Telegram.WebApp) {
 function updateScore() {
     document.getElementById('score').innerText = `Score: ${score} Lives: ${lives} Timer: ${Math.floor(bonusTimer / 60)} Jackpot: ${jackpot} $PREME  Burn This Month: ${premeBurn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
     console.log('Current score:', score, 'Lives:', lives, 'Timer:', bonusTimer, 'Perfect Runs:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn, 'Jackpot:', jackpot);
+    // Save to localStorage as fallback
+    localStorage.setItem('perfectRunsToday', perfectRunsToday);
+    localStorage.setItem('lastPerfectRunTime', lastPerfectRunTime);
+    localStorage.setItem('premeEarned', premeEarned);
+    localStorage.setItem('premeBurn', premeBurn);
+    localStorage.setItem('jackpot', jackpot);
 }
 
 function checkCollision(obj1, obj2) {
@@ -91,7 +97,8 @@ function levelUp() {
     } else {
         initLevel();
         score += 300;
-        checkPerfectRun(); // Ensure perfect run check on level-up (non-Level 4)
+        bonusTimer = 5000; // Level-based timer reset
+        checkPerfectRun();
     }
 }
 
@@ -120,40 +127,66 @@ function resetGame() {
     fireballs = [];
     ladders = [];
     initLevel();
-    // perfectRunsToday, premeEarned, premeBurn, jackpot persist per Issue #5
 }
 
 function checkPerfectRun() {
     const currentTime = Date.now();
     const twentyFourHours = 24 * 60 * 60 * 1000;
 
-    // Daily reset for perfectRunsToday (Issue #5)
     if (currentTime - lastPerfectRunTime > twentyFourHours) {
         perfectRunsToday = 0;
         lastPerfectRunTime = currentTime;
     }
 
-    // Restored original perfect run logic with popup
     const remainingRivets = rivets.length;
-    const damageTaken = score < 0 || (score % 10 !== 0 && score > 0); // Original damage check
+    const damageTaken = score < 0 || (score % 10 !== 0 && score > 0);
     if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
         perfectRunsToday++;
-        premeEarned += 50;
-        const burnAmount = 50 * 0.01; // 1% of 50 $PREME
+        premeEarned += 49.5; // 49.5 to player
+        const burnAmount = 0.5; // 0.5 to burn (total 50 $PREME)
         premeBurn += burnAmount;
-        console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn);
-        alert('Perfect run! You earned 50 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today. 1% ($0.50) added to PREME Burn.');
+        console.log('Perfect run achieved! Earned 49.5 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn);
+        alert('Perfect run! You earned 49.5 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today. 0.5 $PREME added to PREME Burn.');
+        syncWithServer(); // Sync burn contribution immediately
     }
+    updateScore();
 }
 
-// Placeholder for jackpot ticket purchase (Issue #6)
+// Placeholder for jackpot ticket purchase
 function buyJackpotTicket() {
     if (premeEarned >= 10) {
         premeEarned -= 10;
         jackpot += 10;
-        premeBurn += 0.1; // 1% of 10 $PREME
+        premeBurn += 0.1;
         updateScore();
+        syncWithServer(); // Sync burn contribution
         console.log('Jackpot ticket purchased! Jackpot:', jackpot, 'PREME Burn:', premeBurn);
+    }
+}
+
+// Server sync function
+function syncWithServer() {
+    if (Telegram && Telegram.WebApp) {
+        const data = {
+            perfectRunsToday,
+            lastPerfectRunTime,
+            premeEarned,
+            premeBurnContribution: 0.5, // Only send the new contribution
+            jackpot
+        };
+        Telegram.WebApp.sendData(JSON.stringify(data));
+        // TODO: Replace with actual server sync logic
+        // Example with Replit (uncomment and configure):
+        /*
+        fetch('https://yourproject.yourusername.repl.co/updateBurn', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ burnAmount: 0.5 })
+        })
+        .then(response => response.json())
+        .then(data => { premeBurn = data.globalBurn; updateScore(); })
+        .catch(error => console.error('Server sync failed:', error));
+        */
     }
 }
 
@@ -369,16 +402,25 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (original with restored P2E and timer/lives)
+// Update game logic
 function update() {
     if (!gameActive) return;
 
-    // Timer and lives logic
     bonusTimer--;
     if (bonusTimer <= 0) {
         lives--;
-        bonusTimer = 5000;
-        if (lives <= 0) resetGame();
+        if (lives > 0) {
+            mario.x = 50;
+            mario.y = 318;
+            mario.dx = 0;
+            mario.dy = 0;
+            mario.jumping = false;
+            mario.onLadder = false;
+            bonusTimer = 5000;
+            initLevel();
+        } else {
+            resetGame();
+        }
     }
 
     if (!mario.onLadder) {
@@ -557,7 +599,7 @@ function update() {
             console.log('Rivet collected, score +50:', score);
             rivets.splice(i, 1);
             if (level === 4 && rivets.length === 0) {
-                checkPerfectRun(); // Ensure perfect run check before reset
+                checkPerfectRun();
                 resetGame();
             }
         }
@@ -565,7 +607,7 @@ function update() {
 
     if (mario.y < pauline.y + 50 && Math.abs(mario.x - pauline.x) < pauline.width / 2 && mario.y + mario.height <= pauline.y + pauline.height) {
         if (level === 4) {
-            checkPerfectRun(); // Ensure perfect run check before reset
+            checkPerfectRun();
             resetGame();
         } else {
             levelUp();
@@ -589,9 +631,9 @@ function update() {
     updateScore();
 }
 
-// Controls with mouse and touch support (Issue #3 fix + laptop mouse support)
+// Controls with mouse and touch support
 let lastTouchTime = 0;
-const debounceDelay = 100; // Debounce for touch (Issue #3)
+const debounceDelay = 100;
 function moveLeft() {
     const now = Date.now();
     if (gameActive && !mario.hasHammer && now - lastTouchTime > debounceDelay) {
@@ -630,7 +672,7 @@ function climbDown() {
 function stopMove() { mario.dx = 0; }
 function stopClimb() { mario.dy = 0; mario.onLadder = false; }
 
-// Telegram data handler (original)
+// Telegram data handler with server sync
 function handleTelegramData() {
     if (Telegram && Telegram.WebApp) {
         Telegram.WebApp.onEvent('web_app_data', (data) => {
@@ -639,9 +681,12 @@ function handleTelegramData() {
                 score = gameData.score || score;
                 perfectRunsToday = gameData.perfectRunsToday || perfectRunsToday;
                 premeEarned = gameData.premeEarned || premeEarned;
+                premeBurn = gameData.premeBurn || premeBurn; // Load global burn from server
+                jackpot = gameData.jackpot || jackpot;
                 updateScore();
             }
         });
+        setInterval(syncWithServer, 60000); // Sync every minute
     }
 }
 
