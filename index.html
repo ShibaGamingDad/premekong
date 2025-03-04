@@ -20,65 +20,86 @@
         }
         #score { 
             color: white; 
-            font-size: 18px; 
+            font-size: 20px; 
             text-align: center; 
-            max-width: 672px; 
-            padding: 10px; 
-            white-space: pre-wrap;
+            max-width: 672px; /* Match new canvas max width for consistency (672x500, landscape) */
         }
         canvas {
             border: 1px solid white;
             max-width: 100%;
-            width: 100%;
-            max-height: 100vh;
-            height: auto;
-            object-fit: contain;
+            width: 100%; /* Ensure full width on all devices */
+            max-height: 100vh; /* Limit height to viewport height */
+            height: auto; /* Maintain aspect ratio */
+            object-fit: contain; /* Preserve aspect ratio (672x500) */
+            transform: scale(1); /* Default scale for reference */
         }
         #controls { 
             width: 100%; 
-            max-width: 672px; 
-            display: grid; 
-            grid-template-columns: repeat(5, 1fr); 
-            gap: 5px; 
-            padding: 10px; 
+            display: flex; 
+            justify-content: center; 
+            flex-wrap: wrap; 
+            max-width: 672px; /* Match new canvas max width for consistency (672x500, landscape) */
         }
         button { 
-            padding: 15px 20px; 
-            margin: 0; 
-            font-size: 16px; 
+            padding: 15px 30px; 
+            margin: 5px; 
+            font-size: 18px; 
             background: #FFD700; 
             border: none; 
             border-radius: 5px; 
-            touch-action: manipulation;
         }
 
+        /* Desktop-specific adjustments (laptops and larger screens, 672x500, landscape, centered layout) */
         @media (min-width: 768px) {
-            #score { max-width: 672px; margin-top: 20px; }
-            canvas { max-width: 672px; width: 672px; max-height: 500px; }
-            #controls { max-width: 672px; }
-            body { justify-content: center; }
+            #score {
+                max-width: 672px; /* Match new canvas width (672x500, landscape) */
+                margin-top: 20px; /* Add space at the top to center the layout vertically */
+            }
+            canvas {
+                max-width: 672px; /* New width on desktop (672x500, landscape) */
+                width: 672px; /* Ensure exact width on desktop */
+                max-height: 500px; /* Unchanged height on desktop */
+                height: auto; /* Maintain aspect ratio */
+                transform: scale(1); /* No scaling to use natural canvas size */
+                transform-origin: top center; /* Scale from the top to keep content aligned */
+            }
+            #controls {
+                max-width: 672px; /* Match new canvas width (672x500, landscape) */
+                margin-top: 0; /* Remove the margin to eliminate space below the canvas */
+            }
+            body {
+                justify-content: center; /* Center the flex column vertically on desktop */
+            }
         }
 
+        /* Mobile-specific adjustments (maintain responsive width, adjust height as is, landscape) */
         @media (max-width: 767px) {
-            #score { padding: 0 10px; font-size: 16px; }
-            canvas { width: 100%; max-height: 80vh; }
-            #controls { 
-                grid-template-columns: repeat(3, 1fr); 
-                padding: 5px; 
+            #score {
+                padding: 0 10px; /* Add padding for mobile readability */
             }
-            button { font-size: 14px; padding: 10px 15px; }
+            canvas {
+                width: 100%; /* Full width on mobile (landscape, adapts to screen) */
+                max-height: 80vh; /* Limit height to 80% of viewport height to fit all elements */
+            }
+            #controls {
+                padding: 0 10px; /* Add padding for mobile touch targets */
+            }
+            button {
+                font-size: 16px; /* Slightly smaller buttons on mobile */
+                padding: 12px 24px; /* Adjust padding for mobile */
+            }
         }
     </style>
 </head>
 <body>
-    <div id="score">Score: 0 Lives: 3 Timer: 83 Jackpot: 0 $PREME Burn: 0 Perfect: 0/5 $PREME Earned: 0</div>
-    <canvas id="gameCanvas" width="672" height="500"></canvas>
+    <div id="score">Score: 0  Jackpot: 0 $PREME  Burn This Month: 0 $PREME  Perfect: 0/5  $PREME Earned: 0</div>
+    <canvas id="gameCanvas" width="672" height="500"></canvas> <!-- New canvas size (672x500, landscape) -->
     <div id="controls">
-        <button ontouchstart="moveLeft()" ontouchend="stopMove()" onmousedown="event.preventDefault()">Left</button>
-        <button ontouchstart="moveRight()" ontouchend="stopMove()" onmousedown="event.preventDefault()">Right</button>
-        <button ontouchstart="jump()" onmousedown="event.preventDefault()">Jump</button>
-        <button ontouchstart="climbUp()" ontouchend="stopClimb()" onmousedown="event.preventDefault()">Up</button>
-        <button ontouchstart="climbDown()" ontouchend="stopClimb()" onmousedown="event.preventDefault()">Down</button>
+        <button ontouchstart="moveLeft()" ontouchend="stopMove()">Left</button>
+        <button ontouchstart="moveRight()" ontouchend="stopMove()">Right</button>
+        <button ontouchstart="jump()">Jump</button>
+        <button ontouchstart="climbUp()" ontouchend="stopClimb()">Up</button>
+        <button ontouchstart="climbDown()" ontouchend="stopClimb()">Down</button>
     </div>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
