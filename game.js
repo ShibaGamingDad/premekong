@@ -55,9 +55,11 @@ let barrelImg = new Image(); // Global barrel image
 let rivetImg = new Image(); // Global rivet image
 let fireballImg = new Image(); // Global fireball image
 let cementPieImg = new Image(); // Global cement pie image
-let perfectRunsToday = 0; // Track perfect runs (simulated, limit to 5 per day)
+let perfectRunsToday = 0; // Track perfect runs per player (reset daily, account-based)
 let lastPerfectRunTime = 0; // Track last perfect run timestamp (in milliseconds)
-let premeEarned = 0; // Track $PREME Tokens earned from perfect runs
+let premeEarned = 0; // Track $PREME Tokens earned per player (persistent, account-based, unless withdrawn/spent)
+let premeBurn = 0; // Global counter for $PREME Burn (1% of perfect run earnings, resets monthly, shared across players)
+let jackpot = 0; // Global counter for Jackpot (shared across players, persists unless reset by bot)
 
 // Telegram setup
 if (Telegram && Telegram.WebApp) {
@@ -67,10 +69,9 @@ if (Telegram && Telegram.WebApp) {
 
 // Utility functions
 function updateScore() {
-    const jackpot = 0; // Bot integration later
-    const burn = 0;
-    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${burn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
-    console.log('Current score:', score, 'Perfect Runs:', perfectRunsToday, '$PREME Earned:', premeEarned); // Debug log for scoring verification
+    const burn = 0; // Placeholder for bot integration (monthly reset)
+    document.getElementById('score').innerText = `Score: ${score}  Jackpot: ${jackpot} $PREME  Burn This Month: ${premeBurn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
+    console.log('Current score:', score, 'Perfect Runs:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn, 'Jackpot:', jackpot); // Debug log for scoring verification
 }
 
 function checkCollision(obj1, obj2) {
@@ -92,7 +93,7 @@ function levelUp() {
 }
 
 function resetGame() {
-    score = 0; // Reset score to 0
+    score = 0; // Reset score to 0 (account-based)
     level = 1; // Reset to Level 1
     mario.x = 50;
     mario.y = 318; // Reset Mario to bottom platform
@@ -114,16 +115,25 @@ function resetGame() {
     fireballs = [];
     ladders = [];
     initLevel(); // Reinitialize the level
+    // Do not reset premeEarned or perfectRunsToday here—they are account-based and persist
 }
 
 function checkPerfectRun() {
     const currentTime = Date.now();
     const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds (simplified for monthly reset)
 
-    // Check if 24 hours have passed since the last perfect run reset
+    // Check if 24 hours have passed since the last perfect run reset for perfectRunsToday
     if (currentTime - lastPerfectRunTime > twentyFourHours) {
-        perfectRunsToday = 0; // Reset perfect runs if a day has passed
+        perfectRunsToday = 0; // Reset perfect runs daily
         lastPerfectRunTime = currentTime;
+    }
+
+    // Simulate monthly reset for premeBurn (in a real implementation, this would be managed by a server)
+    // For now, keep premeBurn persistent unless manually reset (e.g., via bot after a month)
+    if (currentTime - /* lastBurnResetTime (not implemented, assume persistent) */ > oneMonth) {
+        premeBurn = 0; // Reset premeBurn monthly (simulated, would be server-side)
+        // lastBurnResetTime = currentTime; // Would be implemented in a real system
     }
 
     // Count remaining rivets in the current level (16 per level, total 64)
@@ -132,10 +142,12 @@ function checkPerfectRun() {
 
     if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
         perfectRunsToday++;
-        premeEarned += 50; // Award 50 $PREME Tokens for perfect run
-        console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned);
-        // In a real implementation, this would trigger a Telegram API call to award 50 $PREME Tokens
-        alert('Perfect run! You earned 50 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today.');
+        premeEarned += 50; // Award 50 $PREME Tokens for perfect run (account-based, persists unless withdrawn/spent)
+        const burnAmount = 50 * 0.01; // 1% of 50 $PREME for burn
+        premeBurn += burnAmount; // Add to global premeBurn counter (shared across players, resets monthly)
+        console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn);
+        // In a real implementation, this would trigger a Telegram API call to award 50 $PREME Tokens and update premeBurn globally
+        alert('Perfect run! You earned 50 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today. 1% ($0.50) added to PREME Burn.');
     }
 }
 
@@ -273,7 +285,7 @@ function initLevel() {
         ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 }); // Bottom ladder
         ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 }); // Second ladder
         ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 }); // Third ladder
-        // Add barrels, fireballs, springs, and cement pies with higher frequency
+        // Add barrels, fireballs, springs, and cement pies with higher frequency, slower speeds
         hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
         // Add 16 rivets (4 per platform, spread out more, 50 points each, remove rivet at Pauline’s position)
         for (let i = 0; i < 4; i++) {
@@ -366,7 +378,7 @@ function draw() {
     if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, 32, pauline.height); // Keep visual size 32px wide, but use 16px collision width
     else ctx.fillRect(pauline.x, pauline.y, 32, pauline.height); // Visual size remains 32px for sprite
 
-    // Draw barrels, cement pies, springs (tossing to the right, fall immediately at ladders)
+    // Draw barrels, cement pies, springs (tossing to the right, fall immediately at ladders, slower speeds)
     barrels.forEach(barrel => {
         if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
         else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
@@ -425,19 +437,19 @@ function update() {
         }
     });
 
-    // Preme Kong barrel throwing (bouncing vertically, tossing barrels to the right, scaled for landscape, 672x500, platforms 672x10)
+    // Preme Kong barrel throwing (bouncing vertically, tossing barrels to the right, scaled for landscape, 672x500, platforms 672x10, slower speeds)
     if (Math.random() < 0.05) { // Increased frequency for Level 4 difficulty
         if (level === 1) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: 2, // Toss barrels to the right toward Mario
+            dx: 1.5, // Slower barrels to prevent skipping ladders
             dy: 0, 
             type: 'barrel'
         });
         else if (level === 2) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
-            dx: 2, // Toss barrels to the right toward Mario
+            dx: 1.5, // Slower cement pies
             dy: 0, 
             type: 'cement_pie'
         });
@@ -445,7 +457,7 @@ function update() {
             barrels.push({
                 x: premekong.x + premekong.width, // Start from right edge of Preme Kong
                 y: premekong.y + premekong.height, 
-                dx: 4, // Toss barrels to the right toward Mario, faster for springs
+                dx: 2.5, // Slower springs
                 dy: 0, 
                 type: 'spring'
             });
@@ -453,37 +465,37 @@ function update() {
                 fireballs.push({
                     x: premekong.x + premekong.width, 
                     y: premekong.y + premekong.height, 
-                    dx: 6, // Faster speed for fireballs
+                    dx: 3.5, // Slower fireballs
                     dy: 0, 
                     type: 'fireball'
                 });
             }
-        } else if (level === 4) { // Hardest level with all hazards, higher frequency
+        } else if (level === 4) { // Hardest level with all hazards, higher frequency, slower speeds
             if (Math.random() < 0.07) barrels.push({ // Increased barrel frequency
                 x: premekong.x + premekong.width, 
                 y: premekong.y + premekong.height, 
-                dx: 3, // Slightly faster barrels
+                dx: 2, // Slower barrels
                 dy: 0, 
                 type: 'barrel'
             });
             if (Math.random() < 0.05) barrels.push({ // Add cement pies
                 x: premekong.x + premekong.width, 
                 y: premekong.y + premekong.height, 
-                dx: 3, 
+                dx: 2, // Slower cement pies
                 dy: 0, 
                 type: 'cement_pie'
             });
             if (Math.random() < 0.04) barrels.push({ // Add springs
                 x: premekong.x + premekong.width, 
                 y: premekong.y + premekong.height, 
-                dx: 5, // Faster springs
+                dx: 3, // Slower springs
                 dy: 0, 
                 type: 'spring'
             });
             if (Math.random() < 0.04) fireballs.push({ // Increased fireball frequency
                 x: premekong.x + premekong.width, 
                 y: premekong.y + premekong.height, 
-                dx: 7, // Faster fireballs
+                dx: 4, // Slower fireballs
                 dy: 0, 
                 type: 'fireball'
             });
@@ -496,7 +508,7 @@ function update() {
         premekong.bounceDir *= -1; // Reverse direction when hitting bounce range limits
     }
 
-    // Barrel/spring/cement pie movement (scaled for landscape, 672x500, platforms 672x10, fall immediately at ladders)
+    // Barrel/spring/cement pie movement (scaled for landscape, 672x500, platforms 672x10, fall immediately at ladders, slower speeds)
     barrels.forEach((barrel, i) => {
         barrel.x += barrel.dx;
         barrel.y += barrel.dy || 2; // Apply gravity for barrels
@@ -535,7 +547,7 @@ function update() {
         }
     });
 
-    // Fireball movement (scaled for landscape, 672x500, platforms 672x10, fall immediately at ladders)
+    // Fireball movement (scaled for landscape, 672x500, platforms 672x10, fall immediately at ladders, slower speeds)
     fireballs.forEach((fireball, i) => {
         fireball.x += fireball.dx;
         fireball.y += fireball.dy || 2; // Apply gravity for fireballs
@@ -580,6 +592,7 @@ function update() {
             console.log('Rivet collected, score +50:', score); // Debug log
             rivets.splice(i, 1);
             if (level === 4 && rivets.length === 0) {
+                checkPerfectRun(); // Ensure perfect run is checked before reset
                 resetGame(); // Reset game to Level 1 when last rivet in Level 4 is collected
             }
         }
@@ -587,18 +600,19 @@ function update() {
 
     // Hammer, ladder, rivet logic remains the same, but ensure adjustments for new features...
 
-    // Level completion or reset (reach Pauline for 300 points, reset Level 4 on Pauline or last rivet), considering landscape, 672x500, platforms 672x10, adjusted positions
-    if (mario.y < pauline.y + 50 && Math.abs(mario.x - pauline.x) < pauline.width / 2 && (level !== 4 || (level === 4 && rivets.length === 0))) { // Use reduced collision width for Pauline
+    // Level completion or reset (reach Pauline for 300 points, reset Level 4 on Pauline or last rivet), considering landscape, 672x500, platforms 672x10, adjusted positions, allow jumping over Pauline
+    if (mario.y < pauline.y + 50 && Math.abs(mario.x - pauline.x) < pauline.width / 2 && mario.y + mario.height <= pauline.y + pauline.height) { // Use reduced collision width and ensure Mario is below Pauline’s top to prevent jump-over trigger
         if (level === 4) {
+            checkPerfectRun(); // Ensure perfect run is checked before reset
             resetGame(); // Reset to Level 1 when reaching Pauline in Level 4
         } else {
             levelUp(); // Advance to next level for Levels 1–3, award 300 points
         }
     }
 
-    // Allow Mario to jump over Pauline to reach Preme Kong’s rivet (no level transition unless within reduced x-range)
+    // Allow Mario to jump over Pauline to reach Preme Kong’s rivet (no level transition unless within reduced x-range and below Pauline)
     if (mario.y < pauline.y + mario.height && mario.y + mario.height > pauline.y && Math.abs(mario.x - pauline.x) > pauline.width / 2) {
-        // No level transition if Mario is jumping over Pauline but not within her reduced collision area
+        // No level transition if Mario is jumping over Pauline but not within her reduced collision area and below her top
     }
 
     // Hammer logic
@@ -633,6 +647,8 @@ function handleTelegramData() {
             if (data.data) {
                 const gameData = JSON.parse(data.data);
                 score = gameData.score || score;
+                perfectRunsToday = gameData.perfectRunsToday || perfectRunsToday;
+                premeEarned = gameData.premeEarned || premeEarned; // Persist $PREME Earned
                 updateScore();
             }
         });
