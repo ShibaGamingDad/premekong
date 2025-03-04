@@ -6,6 +6,13 @@ const ctx = canvas.getContext('2d');
 canvas.width = 672;
 canvas.height = 500;
 
+// Persistent P2E state (outside reset scope)
+let premeEarned = 0; // Persistent across sessions
+let perfectRunsToday = 0; // Resets daily, max 5
+let lastPerfectRunTime = Date.now(); // Track daily reset
+let premeBurn = 0; // Persistent until monthly reset by Replit
+let jackpot = 0; // Placeholder for shop/ticket system
+
 // Game state
 let mario = {
     x: 50,
@@ -38,7 +45,6 @@ let pauline = {
 };
 let barrels = [], conveyors = [], elevators = [], springs = [], hammers = [], rivets = [], fireballs = [], ladders = [];
 let score = 0, level = 1, gameActive = true, lives = 3, bonusTimer = 5000;
-let perfectRunsToday = 0, lastPerfectRunTime = 0, premeEarned = 0, premeBurn = 0, jackpot = 0;
 let backgrounds = [], platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(),
     rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image();
 
@@ -94,6 +100,7 @@ function resetGame() {
     fireballs = [];
     ladders = [];
     initLevel();
+    // premeEarned, perfectRunsToday, premeBurn, jackpot persist
 }
 
 function checkPerfectRun() {
@@ -107,10 +114,17 @@ function checkPerfectRun() {
     if ((level !== 4 && checkCollision(mario, pauline)) || (level === 4 && rivets.length === 0 && noDamage && perfectRunsToday < 5)) {
         perfectRunsToday++;
         premeEarned += 50;
-        premeBurn += 0.5;
-        jackpot += 10;
-        alert(`Perfect Run! +50 $PREME, Jackpot: ${jackpot}`);
+        premeBurn += 0.5; // 1% of 50 $PREME
+        alert(`Perfect Run! +50 $PREME, 0.5 Burned`);
     }
+}
+
+// Placeholder for jackpot ticket purchase (for future shop)
+function buyJackpotTicket() {
+    premeEarned -= 10;
+    jackpot += 10;
+    premeBurn += 0.1; // 1% of 10 $PREME
+    updateScore();
 }
 
 // Load assets
@@ -219,7 +233,7 @@ function draw() {
     if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, 32, pauline.height);
     else ctx.fillRect(pauline.x, pauline.y, 32, pauline.height);
 
-    premekong.y += premekong.bounceDir * 0.125;
+    premekong.y += premekong.bounceDir * 0.05; // Slower bounce
     if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) premekong.bounceDir *= -1;
 
     requestAnimationFrame(draw);
@@ -256,15 +270,18 @@ function update() {
 
     ladders.forEach(l => {
         if (checkCollision(mario, l) && (!l.retractable || Math.sin(Date.now() / 1000) > 0)) {
-            mario.onLadder = true;
-            mario.dy = Math.max(Math.min(mario.dy, 3), -3);
-            mario.y += mario.dy;
-            mario.x = l.x + (l.width - mario.width) / 2;
-        } else if (!checkCollision(mario, l)) mario.onLadder = false;
+            if (mario.dy !== 0) { // Only climb if moving
+                mario.onLadder = true;
+                mario.dy = Math.max(Math.min(mario.dy, 3), -3);
+                mario.y += mario.dy;
+                mario.x = l.x + (l.width - mario.width) / 2;
+            }
+        } else {
+            mario.onLadder = false;
+        }
     });
 
-    // Limit barrels and fireballs to 5 each in Level 4
-    if (level === 4 && barrels.length < 5 && Math.random() < 0.05) {
+    if (level === 4 && barrels.length < 3 && Math.random() < 0.03) {
         let type = Math.random() < 0.33 ? 'barrel' : Math.random() < 0.66 ? 'cement_pie' : 'spring';
         barrels.push({ x: premekong.x + premekong.width, y: premekong.y + premekong.height, dx: 1.5, dy: 0, type, springImg: type === 'spring' ? new Image() : null });
         if (type === 'spring') barrels[barrels.length - 1].springImg.src = 'spring.png';
@@ -273,7 +290,7 @@ function update() {
         barrels.push({ x: premekong.x + premekong.width, y: premekong.y + premekong.height, dx: 1.5, dy: 0, type, springImg: type === 'spring' ? new Image() : null });
         if (type === 'spring') barrels[barrels.length - 1].springImg.src = 'spring.png';
     }
-    if (level === 4 && fireballs.length < 5 && Math.random() < 0.03) {
+    if (level === 4 && fireballs.length < 3 && Math.random() < 0.02) {
         fireballs.push({ x: premekong.x + premekong.width, y: premekong.y + premekong.height, dx: 2, dy: 0 });
     }
 
@@ -291,7 +308,7 @@ function update() {
         });
         if (!onPlatform) b.dy += mario.gravity;
         if (b.type === 'spring' && Math.random() < 0.1) b.dy = Math.random() < 0.5 ? -10 : -5;
-        if (b.x > canvas.width + 32 || b.y > canvas.height || b.x < -32) barrels.splice(i, 1); // Cull off-screen
+        if (b.x > canvas.width + 32 || b.y > canvas.height || b.x < -32) barrels.splice(i, 1);
         if (checkCollision(mario, b)) {
             if (mario.hasHammer) { barrels.splice(i, 1); score += 100; }
             else { score -= 10; barrels.splice(i, 1); if (score < 0) score = 0; }
@@ -311,7 +328,7 @@ function update() {
             }
         });
         if (!onPlatform) f.dy += mario.gravity;
-        if (f.x > canvas.width + 32 || f.y > canvas.height || f.x < -32) fireballs.splice(i, 1); // Cull off-screen
+        if (f.x > canvas.width + 32 || f.y > canvas.height || f.x < -32) fireballs.splice(i, 1);
         if (checkCollision(mario, f)) { score -= 20; fireballs.splice(i, 1); if (score < 0) score = 0; }
     });
 
@@ -327,21 +344,18 @@ function update() {
             score += 50;
             rivets.splice(i, 1);
             if (level === 4 && rivets.length === 0) {
-                console.log("All rivets collected, triggering cutscene"); // Debug log
                 checkPerfectRun();
                 gameActive = false;
                 ctx.fillStyle = 'black';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = 'white';
                 ctx.fillText('Preme Kong Falls!', canvas.width / 2 - 50, canvas.height / 2);
-                setTimeout(() => { resetGame(); gameActive = true; }, 3000); // Extended to 3s
+                setTimeout(() => { resetGame(); gameActive = true; }, 3000);
             }
         }
     });
 
-    // Only trigger level-up if not Level 4 and Mario is precisely on Pauline
     if (level !== 4 && checkCollision(mario, pauline) && mario.y + mario.height <= pauline.y + pauline.height && Math.abs(mario.x - pauline.x) < 10) {
-        console.log("Level up triggered by Pauline collision"); // Debug log
         levelUp();
     }
 
@@ -360,12 +374,44 @@ function update() {
     updateScore();
 }
 
-// Controls
-function moveLeft() { if (gameActive && !mario.hasHammer) mario.dx = -1; }
-function moveRight() { if (gameActive && !mario.hasHammer) mario.dx = 1; }
-function jump() { if (gameActive && !mario.jumping && !mario.onLadder && !mario.hasHammer) mario.jumping = true; }
-function climbUp() { if (gameActive && mario.onLadder) mario.dy = -1; }
-function climbDown() { if (gameActive && mario.onLadder) mario.dy = 1; }
+// Controls with debounce
+let lastTouchTime = 0;
+const debounceDelay = 100; // 100ms debounce
+function moveLeft() {
+    const now = Date.now();
+    if (gameActive && !mario.hasHammer && now - lastTouchTime > debounceDelay) {
+        mario.dx = -1;
+        lastTouchTime = now;
+    }
+}
+function moveRight() {
+    const now = Date.now();
+    if (gameActive && !mario.hasHammer && now - lastTouchTime > debounceDelay) {
+        mario.dx = 1;
+        lastTouchTime = now;
+    }
+}
+function jump() {
+    const now = Date.now();
+    if (gameActive && !mario.jumping && !mario.onLadder && !mario.hasHammer && now - lastTouchTime > debounceDelay) {
+        mario.jumping = true;
+        lastTouchTime = now;
+    }
+}
+function climbUp() {
+    const now = Date.now();
+    if (gameActive && mario.onLadder && now - lastTouchTime > debounceDelay) {
+        mario.dy = -1;
+        lastTouchTime = now;
+    }
+}
+function climbDown() {
+    const now = Date.now();
+    if (gameActive && mario.onLadder && now - lastTouchTime > debounceDelay) {
+        mario.dy = 1;
+        lastTouchTime = now;
+    }
+}
 function stopMove() { mario.dx = 0; }
 function stopClimb() { mario.dy = 0; }
 
