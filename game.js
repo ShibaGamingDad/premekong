@@ -176,7 +176,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png'; console.log('Background 4:', backgrounds[4].src);
 }
 
-// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64, spread out, fixes)
+// Initialize level (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64, spread out, fixed duplication)
 function initLevel() {
     barrels = [];
     conveyors = [];
@@ -290,7 +290,7 @@ function initLevel() {
         }
     }
     updateScore();
-    console.log('Canvas size after scaling:', canvas.width, canvas.height); // Verify rendered dimensions
+    console.log('Canvas size after scaling:', canvas.width, canvas.height, 'Rivets in level:', rivets.length); // Verify rendered dimensions and rivet count
 }
 
 // Draw game (with direct canvas dimensions for landscape, 672x500, platforms 672x10, 16 rivets per level, total 64, spread out, fixes)
