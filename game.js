@@ -73,7 +73,6 @@ if (Telegram && Telegram.WebApp) {
 
 // Utility functions
 function updateScore() {
-    const burn = 0; // Placeholder for bot integration (monthly reset)
     document.getElementById('score').innerText = `Score: ${score} Lives: ${lives} Timer: ${Math.floor(bonusTimer / 60)} Jackpot: ${jackpot} $PREME  Burn This Month: ${premeBurn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
     console.log('Current score:', score, 'Lives:', lives, 'Timer:', bonusTimer, 'Perfect Runs:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn, 'Jackpot:', jackpot);
 }
@@ -92,15 +91,15 @@ function levelUp() {
     } else {
         initLevel();
         score += 300;
+        checkPerfectRun(); // Ensure perfect run check on level-up (non-Level 4)
     }
-    checkPerfectRun();
 }
 
 function resetGame() {
     score = 0;
     level = 1;
-    lives = 3; // Reset lives
-    bonusTimer = 5000; // Reset timer
+    lives = 3;
+    bonusTimer = 5000;
     mario.x = 50;
     mario.y = 318;
     mario.hasHammer = false;
@@ -134,9 +133,9 @@ function checkPerfectRun() {
         lastPerfectRunTime = currentTime;
     }
 
-    // Original perfect run logic with updated burn and persistence (Issue #5)
+    // Restored original perfect run logic with popup
     const remainingRivets = rivets.length;
-    const damageTaken = score < 0 || (score % 10 !== 0 && score > 0);
+    const damageTaken = score < 0 || (score % 10 !== 0 && score > 0); // Original damage check
     if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
         perfectRunsToday++;
         premeEarned += 50;
@@ -370,7 +369,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (original with timer and lives logic)
+// Update game logic (original with restored P2E and timer/lives)
 function update() {
     if (!gameActive) return;
 
@@ -558,6 +557,7 @@ function update() {
             console.log('Rivet collected, score +50:', score);
             rivets.splice(i, 1);
             if (level === 4 && rivets.length === 0) {
+                checkPerfectRun(); // Ensure perfect run check before reset
                 resetGame();
             }
         }
@@ -565,6 +565,7 @@ function update() {
 
     if (mario.y < pauline.y + 50 && Math.abs(mario.x - pauline.x) < pauline.width / 2 && mario.y + mario.height <= pauline.y + pauline.height) {
         if (level === 4) {
+            checkPerfectRun(); // Ensure perfect run check before reset
             resetGame();
         } else {
             levelUp();
@@ -644,7 +645,7 @@ function handleTelegramData() {
     }
 }
 
-// Start game (original with timer/lives integration)
+// Start game
 loadAssets();
 initLevel();
 setInterval(update, 1000 / 60);
