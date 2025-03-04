@@ -129,12 +129,15 @@ function checkPerfectRun() {
         lastPerfectRunTime = currentTime;
     }
 
-    // Simulate monthly reset for premeBurn (in a real implementation, this would be managed by a server)
-    // For now, keep premeBurn persistent unless manually reset (e.g., via bot after a month)
-    if (currentTime - /* lastBurnResetTime (not implemented, assume persistent) */ > oneMonth) {
-        premeBurn = 0; // Reset premeBurn monthly (simulated, would be server-side)
-        // lastBurnResetTime = currentTime; // Would be implemented in a real system
+    // Since burns are handled by Replit, simplify the premeBurn reset logic locally
+    // This will be managed externally, so we’ll keep premeBurn persistent unless reset via Replit
+    // For now, comment out the monthly reset logic to avoid syntax errors
+    /*
+    if (currentTime - lastBurnResetTime > oneMonth) {
+        premeBurn = 0; // Reset premeBurn monthly (simulated, would be server-side/Replit)
+        lastBurnResetTime = currentTime; // Would be implemented in a real system
     }
+    */
 
     // Count remaining rivets in the current level (16 per level, total 64)
     const remainingRivets = rivets.length;
@@ -144,9 +147,9 @@ function checkPerfectRun() {
         perfectRunsToday++;
         premeEarned += 50; // Award 50 $PREME Tokens for perfect run (account-based, persists unless withdrawn/spent)
         const burnAmount = 50 * 0.01; // 1% of 50 $PREME for burn
-        premeBurn += burnAmount; // Add to global premeBurn counter (shared across players, resets monthly)
+        premeBurn += burnAmount; // Add to global premeBurn counter (shared across players, resets via Replit)
         console.log('Perfect run achieved! Earned 50 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn);
-        // In a real implementation, this would trigger a Telegram API call to award 50 $PREME Tokens and update premeBurn globally
+        // In a real implementation, this would trigger a Telegram API call to award 50 $PREME Tokens and update premeBurn globally via Replit
         alert('Perfect run! You earned 50 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today. 1% ($0.50) added to PREME Burn.');
     }
 }
