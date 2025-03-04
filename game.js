@@ -9,24 +9,24 @@ ctx.scale(1, 1); // Ensure no unintended scaling
 
 // Game state (restored original positions, with direct canvas dimensions for landscape, 672x500, adjusted positions)
 let mario = {
-    x: 50, 
+    x: 50,
     y: 318, // 1 platform level up (from y: 450 to y: 350 - 32 for height 32, on bottom platform at y: 400)
-    width: 32, 
-    height: 32, 
-    dx: 0, 
-    dy: 0, 
-    speed: 3, 
-    gravity: 0.5, 
-    jumping: false, 
-    onLadder: false, 
-    hasHammer: false, 
+    width: 32,
+    height: 32,
+    dx: 0,
+    dy: 0,
+    speed: 3,
+    gravity: 0.5,
+    jumping: false,
+    onLadder: false,
+    hasHammer: false,
     hammerTime: 0
 }; // Moved up 1 platform level to bottom platform
 let premekong = {
-    x: 50, 
+    x: 50,
     y: 36, // Base position on top platform (y: 100 - 64 for height 64)
-    width: 64, 
-    height: 64, 
+    width: 64,
+    height: 64,
     bounceDir: 1, // Vertical bounce direction (1 for up, -1 for down)
     bounceRange: 20 // Bounce range (up and down by 20px)
 }; // Top platform, left side, bouncing vertically
@@ -441,16 +441,16 @@ function update() {
     if (Math.random() < 0.05) { // Increased frequency for Level 4 difficulty
         if (level === 1) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
-            y: premekong.y + premekong.height, 
+            y: premekong.y + premekong.height,
             dx: 1.5, // Slower barrels to prevent skipping ladders
-            dy: 0, 
+            dy: 0,
             type: 'barrel'
         });
         else if (level === 2) barrels.push({
             x: premekong.x + premekong.width, // Start from right edge of Preme Kong
             y: premekong.y + premekong.height, 
             dx: 1.5, // Slower cement pies
-            dy: 0, 
+            dy: 0,
             type: 'cement_pie'
         });
         else if (level === 3) {
@@ -458,45 +458,45 @@ function update() {
                 x: premekong.x + premekong.width, // Start from right edge of Preme Kong
                 y: premekong.y + premekong.height, 
                 dx: 2.5, // Slower springs
-                dy: 0, 
+                dy: 0,
                 type: 'spring'
             });
             if (Math.random() < 0.03) { // Slightly increased frequency for fireballs
                 fireballs.push({
-                    x: premekong.x + premekong.width, 
-                    y: premekong.y + premekong.height, 
+                    x: premekong.x + premekong.width,
+                    y: premekong.y + premekong.height,
                     dx: 3.5, // Slower fireballs
-                    dy: 0, 
+                    dy: 0,
                     type: 'fireball'
                 });
             }
         } else if (level === 4) { // Hardest level with all hazards, higher frequency, slower speeds
             if (Math.random() < 0.07) barrels.push({ // Increased barrel frequency
-                x: premekong.x + premekong.width, 
-                y: premekong.y + premekong.height, 
+                x: premekong.x + premekong.width,
+                y: premekong.y + premekong.height,
                 dx: 2, // Slower barrels
-                dy: 0, 
+                dy: 0,
                 type: 'barrel'
             });
             if (Math.random() < 0.05) barrels.push({ // Add cement pies
-                x: premekong.x + premekong.width, 
-                y: premekong.y + premekong.height, 
+                x: premekong.x + premekong.width,
+                y: premekong.y + premekong.height,
                 dx: 2, // Slower cement pies
-                dy: 0, 
+                dy: 0,
                 type: 'cement_pie'
             });
             if (Math.random() < 0.04) barrels.push({ // Add springs
-                x: premekong.x + premekong.width, 
-                y: premekong.y + premekong.height, 
+                x: premekong.x + premekong.width,
+                y: premekong.y + premekong.height,
                 dx: 3, // Slower springs
-                dy: 0, 
+                dy: 0,
                 type: 'spring'
             });
             if (Math.random() < 0.04) fireballs.push({ // Increased fireball frequency
-                x: premekong.x + premekong.width, 
-                y: premekong.y + premekong.height, 
+                x: premekong.x + premekong.width,
+                y: premekong.y + premekong.height,
                 dx: 4, // Slower fireballs
-                dy: 0, 
+                dy: 0,
                 type: 'fireball'
             });
         }
