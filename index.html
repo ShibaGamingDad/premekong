@@ -13,8 +13,7 @@
         canvas { border: 1px solid white; max-width: 100%; width: 100%; max-height: 100vh; height: auto; object-fit: contain; transform: scale(1); }
         #controls { width: 100%; display: flex; justify-content: center; flex-wrap: wrap; max-width: 672px; margin-top: 10px; }
         button { padding: 15px 30px; margin: 5px; font-size: 18px; background: #FFD700; border: none; border-radius: 5px; touch-action: manipulation; }
-        #menu { display: none; } /* Hide the old menu div */
-        #leaderboard { display: none; position: absolute; top: 50px; right: 10px; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px; border-radius: 5px; max-width: 300px; }
+        #menu, #leaderboard, #shop { display: none; position: absolute; top: 50px; right: 10px; background: rgba(0, 0, 0, 0.8); color: white; padding: 10px; border-radius: 5px; max-width: 300px; }
         @media (min-width: 768px) {
             #score { max-width: 672px; margin-top: 20px; }
             canvas { max-width: 672px; width: 672px; max-height: 500px; height: auto; transform: scale(1); transform-origin: top center; }
@@ -38,9 +37,11 @@
         <button ontouchstart="jump()" onmousedown="jump()" onmousedown="event.preventDefault()">Jump</button>
         <button ontouchstart="climbUp()" ontouchend="stopClimb()" onmousedown="climbUp()" onmouseup="stopClimb()" onmousedown="event.preventDefault()">Up</button>
         <button ontouchstart="climbDown()" ontouchend="stopClimb()" onmousedown="climbDown()" onmouseup="stopClimb()" onmousedown="event.preventDefault()">Down</button>
-        <button onclick="showLeaderboard()">Menu</button> <!-- Moved here -->
+        <button onclick="showMenu()">Menu</button>
     </div>
+    <div id="menu"></div>
     <div id="leaderboard"></div>
+    <div id="shop"></div>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
         Telegram.WebApp.ready();
