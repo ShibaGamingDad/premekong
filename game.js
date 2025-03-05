@@ -29,7 +29,7 @@ let premekong = { x: 50, y: 36, width: 64, height: 64, bounceDir: 1, bounceRange
 let pauline = { x: 124, y: 68, width: 16, height: 32 };
 let barrels = [], conveyors = [], elevators = [], springs = [], hammers = [], rivets = [], fireballs = [], ladders = [];
 let score = 0, level = 1, gameActive = true, lives = 3, bonusTimer = 5000, message = null, messageTimer = 0, damageTakenThisLevel = false;
-let backgrounds = [], platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(), rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image(), marioSkinImg = null, springImg = new Image(); // Ensure all images are defined
+let backgrounds = {}, platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(), rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image(), marioSkinImg = null, springImg = new Image(); // Ensure all images are defined as objects
 
 if (Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
@@ -376,6 +376,7 @@ function applyVIPEffects(durationHours = 24) {
 
 // Load assets
 function loadAssets() {
+    // Initialize all images with default values and handlers
     mario.image = new Image();
     mario.image.src = 'mario.png';
     mario.image.onload = () => console.log('Mario image loaded');
@@ -399,7 +400,6 @@ function loadAssets() {
     cementPieImg.onload = () => console.log('Cement Pie image loaded');
     cementPieImg.onerror = () => console.error('Failed to load Cement Pie image');
 
-    springImg = new Image();
     springImg.src = 'spring.png';
     springImg.onload = () => console.log('Spring image loaded');
     springImg.onerror = () => console.error('Failed to load Spring image');
@@ -424,22 +424,25 @@ function loadAssets() {
     platformImg.onload = () => console.log('Platform image loaded');
     platformImg.onerror = () => console.error('Failed to load Platform image');
 
-    backgrounds[1] = new Image();
+    // Initialize backgrounds as an object with numbered keys
+    backgrounds = {
+        1: new Image(),
+        2: new Image(),
+        3: new Image(),
+        4: new Image()
+    };
     backgrounds[1].src = 'background1.png';
     backgrounds[1].onload = () => console.log('Background 1 image loaded');
     backgrounds[1].onerror = () => console.error('Failed to load Background 1 image');
 
-    backgrounds[2] = new Image();
     backgrounds[2].src = 'background2.png';
     backgrounds[2].onload = () => console.log('Background 2 image loaded');
     backgrounds[2].onerror = () => console.error('Failed to load Background 2 image');
 
-    backgrounds[3] = new Image();
     backgrounds[3].src = 'background3.png';
     backgrounds[3].onload = () => console.log('Background 3 image loaded');
     backgrounds[3].onerror = () => console.error('Failed to load Background 3 image');
 
-    backgrounds[4] = new Image();
     backgrounds[4].src = 'background4.png';
     backgrounds[4].onload = () => console.log('Background 4 image loaded');
     backgrounds[4].onerror = () => console.error('Failed to load Background 4 image');
@@ -755,8 +758,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const allImages = [
         mario.image, premekong.image, pauline.image, barrelImg, cementPieImg, springImg,
         hammerImg, ladderImg, rivetImg, fireballImg, platformImg,
-        ...Object.values(backgrounds).filter(bg => bg)
-    ];
+        backgrounds[1], backgrounds[2], backgrounds[3], backgrounds[4]
+    ].filter(img => img !== undefined && img !== null); // Filter out undefined/null images
     let loadedImages = 0;
 
     allImages.forEach(img => {
@@ -779,8 +782,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // If all images are already loaded, start immediately
-    if (loadedImages === allImages.length) {
+    // If all images are already loaded or none exist, start immediately
+    if (loadedImages === allImages.length || allImages.length === 0) {
         startGame();
     }
 });
