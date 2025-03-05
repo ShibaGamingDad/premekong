@@ -92,7 +92,7 @@ function checkCollision(obj1, obj2) {
            obj1.y + obj1.height > obj2.y;
 }
 
-function showMessage(text, duration = 300) {
+function showMessage(text, duration = 120) { // Shortened to ~2 seconds at 60 FPS
     message = text;
     messageTimer = duration;
 }
@@ -488,7 +488,7 @@ function update() {
                 type: 'barrel'
             });
             else if (level === 2) barrels.push({
-                x: premekong.x + premekong.width, // Fixed typo: 'prayer' → 'premekong'
+                x: premekong.x + premekong.width,
                 y: premekong.y + premekong.height,
                 dx: 1.5,
                 dy: 0,
@@ -621,7 +621,7 @@ function update() {
                     score += timerBonus;
                     console.log('Level 4 completed! Timer bonus:', timerBonus);
                     checkPerfectRun();
-                    setTimeout(resetGame, 5000);
+                    resetGame(); // Immediate reset
                 }
             }
         });
@@ -632,7 +632,7 @@ function update() {
                 score += timerBonus;
                 console.log('Level 4 completed via Pauline! Timer bonus:', timerBonus);
                 checkPerfectRun();
-                setTimeout(resetGame, 5000);
+                resetGame(); // Immediate reset
             } else {
                 levelUp();
             }
@@ -715,7 +715,7 @@ function handleTelegramData() {
                 updateScore();
             }
         });
-        setInterval(syncWithServer, 300000);
+        setInterval(syncWithServer, 300000); // Still 5 minutes
     }
 }
 
