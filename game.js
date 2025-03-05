@@ -58,7 +58,7 @@ let lives = 3;
 let bonusTimer = 5000;
 let message = null;
 let messageTimer = 0;
-let damageTakenThisLevel = false; // Track direct damage per level
+let damageTakenThisLevel = false;
 let backgrounds = [];
 let platformImg = new Image();
 let ladderImg = new Image();
@@ -109,7 +109,7 @@ function levelUp() {
         initLevel();
         score += 300;
         bonusTimer = 5000;
-        damageTakenThisLevel = false; // Reset damage tracking
+        damageTakenThisLevel = false;
         checkPerfectRun();
     }
 }
@@ -488,7 +488,7 @@ function update() {
                 type: 'barrel'
             });
             else if (level === 2) barrels.push({
-                x player.x + premekong.width,
+                x: premekong.x + premekong.width, // Fixed typo: 'prayer' → 'premekong'
                 y: premekong.y + premekong.height,
                 dx: 1.5,
                 dy: 0,
@@ -571,7 +571,7 @@ function update() {
                     console.log('Barrel hit with hammer, score +100:', score);
                 } else {
                     score -= 10;
-                    damageTakenThisLevel = true; // Track damage
+                    damageTakenThisLevel = true;
                     console.log('Barrel hit without hammer, score -10:', score);
                     barrels.splice(i, 1);
                     if (score < 0) score = 0;
@@ -596,7 +596,7 @@ function update() {
             if (fireball.x > canvas.width + 32 || fireball.y > canvas.height) fireballs.splice(i, 1);
             if (checkCollision(mario, fireball)) {
                 score -= 20;
-                damageTakenThisLevel = true; // Track damage
+                damageTakenThisLevel = true;
                 console.log('Fireball hit, score -20:', score);
                 fireballs.splice(i, 1);
                 if (score < 0) score = 0;
@@ -621,7 +621,7 @@ function update() {
                     score += timerBonus;
                     console.log('Level 4 completed! Timer bonus:', timerBonus);
                     checkPerfectRun();
-                    setTimeout(resetGame, 5000); // Delay reset to show message
+                    setTimeout(resetGame, 5000);
                 }
             }
         });
@@ -632,7 +632,7 @@ function update() {
                 score += timerBonus;
                 console.log('Level 4 completed via Pauline! Timer bonus:', timerBonus);
                 checkPerfectRun();
-                setTimeout(resetGame, 5000); // Delay reset to show message
+                setTimeout(resetGame, 5000);
             } else {
                 levelUp();
             }
@@ -715,7 +715,7 @@ function handleTelegramData() {
                 updateScore();
             }
         });
-        setInterval(syncWithServer, 300000); // Sync every 5 minutes to reduce crash risk
+        setInterval(syncWithServer, 300000);
     }
 }
 
