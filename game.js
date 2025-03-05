@@ -117,13 +117,16 @@ function syncWithServer() {
             jackpot
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        return response.json();
+    })
     .then(data => {
-        leaderboard = data.leaderboard;
-        premeEarned = data.premeEarned;
-        premeBurn = data.premeBurn;
-        perfectRunsToday = data.perfectRunsToday;
-        lastPerfectRunTime = data.lastPerfectRunTime;
+        leaderboard = data.leaderboard || [];
+        premeEarned = data.premeEarned || premeEarned;
+        premeBurn = data.premeBurn || premeBurn;
+        perfectRunsToday = data.perfectRunsToday || perfectRunsToday;
+        lastPerfectRunTime = data.lastPerfectRunTime || lastPerfectRunTime;
         updateScore();
     })
     .catch(error => console.error('Sync error:', error));
@@ -134,18 +137,29 @@ function showLeaderboard() {
     if (lbDiv.style.display === 'block') {
         lbDiv.style.display = 'none'; // Close if already open
     } else {
-        fetch(`${SERVER_URL}/leaderboard`)
-        .then(response => response.json())
+        fetch(`${SERVER_URL}/leaderboard`, { cache: 'no-cache' }) // Force fresh fetch
+        .then(response => {
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return response.json();
+        })
         .then(data => {
             leaderboard = data.leaderboard || [];
-            lbDiv.innerHTML = '<h3>Leaderboard</h3>';
-            leaderboard.slice(0, 10).forEach((entry, i) => { // Show top 10
-                const style = entry.isLastWinner ? 'color: gold;' : '';
-                lbDiv.innerHTML += `<p style="${style}">${i + 1}. ID: ${entry.telegramId} - Score: ${entry.score}${entry.isLastWinner ? ' (Last Week\'s Winner)' : ''}</p>`;
-            });
+            if (leaderboard.length === 0) {
+                lbDiv.innerHTML = '<h3>Leaderboard</h3><p>No scores yet.</p>';
+            } else {
+                lbDiv.innerHTML = '<h3>Leaderboard</h3>';
+                leaderboard.slice(0, 10).forEach((entry, i) => { // Show top 10
+                    const style = entry.isLastWinner ? 'color: gold;' : '';
+                    lbDiv.innerHTML += `<p style="${style}">${i + 1}. ID: ${entry.telegramId} - Score: ${entry.score}${entry.isLastWinner ? ' (Last Week\'s Winner)' : ''}</p>`;
+                });
+            }
             lbDiv.style.display = 'block';
         })
-        .catch(error => console.error('Leaderboard fetch error:', error));
+        .catch(error => {
+            console.error('Leaderboard fetch error:', error);
+            lbDiv.innerHTML = '<h3>Leaderboard</h3><p>Error loading leaderboard. Check server connection.</p>';
+            lbDiv.style.display = 'block';
+        });
     }
 }
 
