@@ -11,7 +11,7 @@ ctx.scale(1, 1);
 let perfectRunsToday = localStorage.getItem('perfectRunsToday') ? parseInt(localStorage.getItem('perfectRunsToday')) : 0;
 let lastPerfectRunTime = localStorage.getItem('lastPerfectRunTime') ? parseInt(localStorage.getItem('lastPerfectRunTime')) : Date.now();
 let premeEarned = localStorage.getItem('premeEarned') ? parseFloat(localStorage.getItem('premeEarned')) : 0;
-let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0; // Local fallback; needs server sync
+let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0;
 let jackpot = localStorage.getItem('jackpot') ? parseFloat(localStorage.getItem('jackpot')) : 0;
 
 // Game state
@@ -56,8 +56,9 @@ let level = 1;
 let gameActive = true;
 let lives = 3;
 let bonusTimer = 5000;
-let message = null; // For in-game messages
+let message = null;
 let messageTimer = 0;
+let damageTakenThisLevel = false; // Track direct damage per level
 let backgrounds = [];
 let platformImg = new Image();
 let ladderImg = new Image();
@@ -91,13 +92,13 @@ function checkCollision(obj1, obj2) {
            obj1.y + obj1.height > obj2.y;
 }
 
-function showMessage(text, duration = 300) { // Duration in frames (~5s at 60 FPS)
+function showMessage(text, duration = 300) {
     message = text;
     messageTimer = duration;
 }
 
 function levelUp() {
-    const timerBonus = Math.floor(bonusTimer / 60) * 10; // Timer bonus
+    const timerBonus = Math.floor(bonusTimer / 60) * 10;
     score += timerBonus;
     console.log('Level completed! Timer bonus:', timerBonus);
 
@@ -108,6 +109,7 @@ function levelUp() {
         initLevel();
         score += 300;
         bonusTimer = 5000;
+        damageTakenThisLevel = false; // Reset damage tracking
         checkPerfectRun();
     }
 }
@@ -136,6 +138,7 @@ function resetGame() {
     rivets = [];
     fireballs = [];
     ladders = [];
+    damageTakenThisLevel = false;
     initLevel();
 }
 
@@ -149,8 +152,7 @@ function checkPerfectRun() {
     }
 
     const remainingRivets = rivets.length;
-    const damageTaken = score < 0 || (score % 10 !== 0 && score > 0);
-    if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
+    if (remainingRivets === 0 && !damageTakenThisLevel && perfectRunsToday < 5) {
         perfectRunsToday++;
         premeEarned += 49.5;
         const burnAmount = 0.5;
@@ -174,16 +176,19 @@ function buyJackpotTicket() {
 }
 
 function syncWithServer() {
-    if (Telegram && Telegram.WebApp) {
-        const data = {
-            perfectRunsToday,
-            lastPerfectRunTime,
-            premeEarned,
-            premeBurnContribution: 0.5,
-            jackpot
-        };
-        Telegram.WebApp.sendData(JSON.stringify(data));
-        // TODO: Replace with Replit or Telegram Bot API sync
+    if (Telegram && Telegram.WebApp && Telegram.WebApp.isVersionAtLeast('6.0')) {
+        try {
+            const data = {
+                perfectRunsToday,
+                lastPerfectRunTime,
+                premeEarned,
+                premeBurnContribution: 0.5,
+                jackpot
+            };
+            Telegram.WebApp.sendData(JSON.stringify(data));
+        } catch (error) {
+            console.error('Server sync error:', error);
+        }
     }
 }
 
@@ -328,7 +333,7 @@ function initLevel() {
     console.log('Canvas size after scaling:', canvas.width, canvas.height, 'Rivets in level:', rivets.length);
 }
 
-// Draw game (with in-game message overlay)
+// Draw game
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -397,7 +402,6 @@ function draw() {
             else ctx.fillRect(barrel.x, barrel.y, 32, 32);
         });
 
-        // Draw in-game message
         if (message && messageTimer > 0) {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
             ctx.fillRect(canvas.width / 2 - 200, canvas.height / 2 - 30, 400, 60);
@@ -484,7 +488,7 @@ function update() {
                 type: 'barrel'
             });
             else if (level === 2) barrels.push({
-                x: premekong.x + premekong.width,
+                x prayer.x + premekong.width,
                 y: premekong.y + premekong.height,
                 dx: 1.5,
                 dy: 0,
@@ -567,6 +571,7 @@ function update() {
                     console.log('Barrel hit with hammer, score +100:', score);
                 } else {
                     score -= 10;
+                    damageTakenThisLevel = true; // Track damage
                     console.log('Barrel hit without hammer, score -10:', score);
                     barrels.splice(i, 1);
                     if (score < 0) score = 0;
@@ -591,6 +596,7 @@ function update() {
             if (fireball.x > canvas.width + 32 || fireball.y > canvas.height) fireballs.splice(i, 1);
             if (checkCollision(mario, fireball)) {
                 score -= 20;
+                damageTakenThisLevel = true; // Track damage
                 console.log('Fireball hit, score -20:', score);
                 fireballs.splice(i, 1);
                 if (score < 0) score = 0;
@@ -615,7 +621,7 @@ function update() {
                     score += timerBonus;
                     console.log('Level 4 completed! Timer bonus:', timerBonus);
                     checkPerfectRun();
-                    resetGame();
+                    setTimeout(resetGame, 5000); // Delay reset to show message
                 }
             }
         });
@@ -624,9 +630,9 @@ function update() {
             if (level === 4) {
                 const timerBonus = Math.floor(bonusTimer / 60) * 10;
                 score += timerBonus;
-                console.log('Level 4 completed! Timer bonus:', timerBonus);
+                console.log('Level 4 completed via Pauline! Timer bonus:', timerBonus);
                 checkPerfectRun();
-                resetGame();
+                setTimeout(resetGame, 5000); // Delay reset to show message
             } else {
                 levelUp();
             }
@@ -643,7 +649,7 @@ function update() {
                 hammer.taken = true;
                 mario.hasHammer = true;
                 mario.hammerTime = 300;
-                score += 75; // Hammer points
+                score += 75;
                 console.log('Hammer collected, score +75:', score);
             }
         });
@@ -709,7 +715,7 @@ function handleTelegramData() {
                 updateScore();
             }
         });
-        setInterval(syncWithServer, 60000);
+        setInterval(syncWithServer, 300000); // Sync every 5 minutes to reduce crash risk
     }
 }
 
