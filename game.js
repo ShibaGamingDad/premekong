@@ -13,12 +13,11 @@ let premeEarned = localStorage.getItem('premeEarned') ? parseFloat(localStorage.
 let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0;
 let jackpot = localStorage.getItem('jackpot') ? parseFloat(localStorage.getItem('jackpot')) : 0;
 
-// Leaderboard state (local fallback, synced with server)
+// Leaderboard state
 let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
-let telegramId = null; // Will fetch from Telegram API
-let leaderboard = []; // { telegramId, score, isLastWinner }
-let lastResetTime = localStorage.getItem('lastResetTime') ? parseInt(localStorage.getItem('lastResetTime')) : Date.now();
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000; // One week in milliseconds
+let telegramId = null;
+let leaderboard = [];
+const SERVER_URL = 'https://yourproject.yourusername.repl.co'; // Replace with your Replit URL
 
 // Game state
 let mario = { x: 50, y: 318, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0 };
@@ -31,7 +30,7 @@ let backgrounds = [], platformImg = new Image(), ladderImg = new Image(), hammer
 if (Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
-    telegramId = Telegram.WebApp.initDataUnsafe.user?.id || 'unknown'; // Fetch Telegram ID
+    telegramId = Telegram.WebApp.initDataUnsafe.user?.id || 'unknown';
 }
 
 // Utility functions
@@ -39,7 +38,12 @@ function updateScore() {
     document.getElementById('score').innerText = `Score: ${score} Lives: ${lives} Timer: ${Math.floor(bonusTimer / 60)} Jackpot: ${jackpot} $PREME  Burn: ${premeBurn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
     highScore = Math.max(highScore, score);
     localStorage.setItem('highScore', highScore);
-    syncLeaderboard();
+    localStorage.setItem('perfectRunsToday', perfectRunsToday);
+    localStorage.setItem('lastPerfectRunTime', lastPerfectRunTime);
+    localStorage.setItem('premeEarned', premeEarned);
+    localStorage.setItem('premeBurn', premeBurn);
+    localStorage.setItem('jackpot', jackpot);
+    syncWithServer();
 }
 
 function checkCollision(obj1, obj2) {
@@ -99,82 +103,53 @@ function checkPerfectRun() {
 }
 
 function syncWithServer() {
-    if (Telegram && Telegram.WebApp && Telegram.WebApp.isVersionAtLeast('6.0')) {
-        try {
-            const data = {
-                telegramId,
-                highScore,
-                perfectRunsToday,
-                lastPerfectRunTime,
-                premeEarned,
-                premeBurnContribution: 0.5,
-                jackpot
-            };
-            Telegram.WebApp.sendData(JSON.stringify(data));
-        } catch (error) {
-            console.error('Server sync error:', error);
-        }
-    }
-}
-
-function resetLeaderboardIfNeeded() {
-    const currentTime = Date.now();
-    if (currentTime - lastResetTime > WEEK_MS) {
-        fetchLeaderboardFromServer().then(newLeaderboard => {
-            const lastWinner = leaderboard.length ? leaderboard[0] : null;
-            leaderboard = [];
-            if (lastWinner) leaderboard.push({ ...lastWinner, isLastWinner: true });
-            lastResetTime = currentTime;
-            localStorage.setItem('lastResetTime', lastResetTime);
-            awardWeeklyPrize(lastWinner);
-        });
-    }
-}
-
-function awardWeeklyPrize(winner) {
-    if (winner) {
-        const prize = 100;
-        const burn = prize * 0.01; // 1% burn
-        premeEarned += prize - burn; // 99 to winner
-        premeBurn += burn; // 1 to burn
-        console.log(`Weekly winner ${winner.telegramId} awarded ${prize - burn} $PREME, ${burn} burned`);
-        syncWithServer();
-    }
-}
-
-function fetchLeaderboardFromServer() {
-    return new Promise(resolve => {
-        // Stub: Replace with actual server fetch when implemented
-        resolve(leaderboard);
-    });
-}
-
-function updateLeaderboard() {
-    resetLeaderboardIfNeeded();
-    const playerEntry = leaderboard.find(entry => entry.telegramId === telegramId);
-    if (playerEntry) playerEntry.score = Math.max(playerEntry.score, highScore);
-    else leaderboard.push({ telegramId, score: highScore, isLastWinner: false });
-    leaderboard.sort((a, b) => b.score - a.score);
-    leaderboard = leaderboard.slice(0, 10); // Top 10
-    localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
-}
-
-function syncLeaderboard() {
-    updateLeaderboard();
-    // TODO: Sync with server when implemented
+    if (!telegramId) return;
+    fetch(`${SERVER_URL}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            telegramId,
+            highScore,
+            perfectRunsToday,
+            lastPerfectRunTime,
+            premeEarned,
+            premeBurnContribution: 0.5,
+            jackpot
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        leaderboard = data.leaderboard;
+        premeEarned = data.premeEarned;
+        premeBurn = data.premeBurn;
+        perfectRunsToday = data.perfectRunsToday;
+        lastPerfectRunTime = data.lastPerfectRunTime;
+        updateScore();
+    })
+    .catch(error => console.error('Sync error:', error));
 }
 
 function showLeaderboard() {
     const lbDiv = document.getElementById('leaderboard');
-    lbDiv.innerHTML = '<h3>Leaderboard</h3>';
-    leaderboard.forEach((entry, i) => {
-        const style = entry.isLastWinner ? 'color: gold;' : '';
-        lbDiv.innerHTML += `<p style="${style}">${i + 1}. ID: ${entry.telegramId} - Score: ${entry.score}${entry.isLastWinner ? ' (Last Week\'s Winner)' : ''}</p>`;
-    });
-    lbDiv.style.display = 'block';
+    if (lbDiv.style.display === 'block') {
+        lbDiv.style.display = 'none'; // Close if already open
+    } else {
+        fetch(`${SERVER_URL}/leaderboard`)
+        .then(response => response.json())
+        .then(data => {
+            leaderboard = data.leaderboard || [];
+            lbDiv.innerHTML = '<h3>Leaderboard</h3>';
+            leaderboard.slice(0, 10).forEach((entry, i) => { // Show top 10
+                const style = entry.isLastWinner ? 'color: gold;' : '';
+                lbDiv.innerHTML += `<p style="${style}">${i + 1}. ID: ${entry.telegramId} - Score: ${entry.score}${entry.isLastWinner ? ' (Last Week\'s Winner)' : ''}</p>`;
+            });
+            lbDiv.style.display = 'block';
+        })
+        .catch(error => console.error('Leaderboard fetch error:', error));
+    }
 }
 
-// Load assets (unchanged)
+// Load assets
 function loadAssets() {
     mario.image = new Image(); mario.image.src = 'mario.png';
     premekong.image = new Image(); premekong.image.src = 'premekong.png';
@@ -188,7 +163,7 @@ function loadAssets() {
     backgrounds[4] = new Image(); backgrounds[4].src = 'background4.png';
 }
 
-// Initialize level (unchanged)
+// Initialize level
 function initLevel() {
     barrels = []; conveyors = []; elevators = []; springs = []; hammers = []; rivets = []; fireballs = []; ladders = [];
     mario.x = 50; mario.y = 318; mario.hasHammer = false; mario.hammerTime = 0; mario.onLadder = false; mario.dy = 0;
@@ -273,7 +248,7 @@ function initLevel() {
     }
 }
 
-// Draw game (unchanged except for leaderboard display handling)
+// Draw game
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -317,7 +292,7 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (unchanged except for Level 4 reset)
+// Update game logic
 function update() {
     if (!gameActive) return;
     try {
@@ -424,7 +399,7 @@ function update() {
     }
 }
 
-// Controls (unchanged)
+// Controls
 let lastTouchTime = 0;
 const debounceDelay = 100;
 function moveLeft() { const now = Date.now(); if (gameActive && !mario.hasHammer && now - lastTouchTime > debounceDelay) { mario.dx = -1; lastTouchTime = now; } }
