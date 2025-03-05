@@ -29,7 +29,7 @@ let premekong = { x: 50, y: 36, width: 64, height: 64, bounceDir: 1, bounceRange
 let pauline = { x: 124, y: 68, width: 16, height: 32 };
 let barrels = [], conveyors = [], elevators = [], springs = [], hammers = [], rivets = [], fireballs = [], ladders = [];
 let score = 0, level = 1, gameActive = true, lives = 3, bonusTimer = 5000, message = null, messageTimer = 0, damageTakenThisLevel = false;
-let backgrounds = [], platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(), rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image(), marioSkinImg = null; // New for Mario skin
+let backgrounds = [], platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(), rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image(), marioSkinImg = null, springImg = new Image(); // Ensure all images are defined
 
 if (Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
@@ -374,6 +374,206 @@ function applyVIPEffects(durationHours = 24) {
     }, durationHours * 60 * 60 * 1000); // Convert hours to milliseconds
 }
 
+// Load assets
+function loadAssets() {
+    mario.image = new Image();
+    mario.image.src = 'mario.png';
+    mario.image.onload = () => console.log('Mario image loaded');
+    mario.image.onerror = () => console.error('Failed to load Mario image');
+
+    premekong.image = new Image();
+    premekong.image.src = 'premekong.png';
+    premekong.image.onload = () => console.log('Premekong image loaded');
+    premekong.image.onerror = () => console.error('Failed to load Premekong image');
+
+    pauline.image = new Image();
+    pauline.image.src = 'pauline.png';
+    pauline.image.onload = () => console.log('Pauline image loaded');
+    pauline.image.onerror = () => console.error('Failed to load Pauline image');
+
+    barrelImg.src = 'barrel.png';
+    barrelImg.onload = () => console.log('Barrel image loaded');
+    barrelImg.onerror = () => console.error('Failed to load Barrel image');
+
+    cementPieImg.src = 'cement_pie.png';
+    cementPieImg.onload = () => console.log('Cement Pie image loaded');
+    cementPieImg.onerror = () => console.error('Failed to load Cement Pie image');
+
+    springImg = new Image();
+    springImg.src = 'spring.png';
+    springImg.onload = () => console.log('Spring image loaded');
+    springImg.onerror = () => console.error('Failed to load Spring image');
+
+    hammerImg.src = 'hammer.png';
+    hammerImg.onload = () => console.log('Hammer image loaded');
+    hammerImg.onerror = () => console.error('Failed to load Hammer image');
+
+    ladderImg.src = 'ladder.png';
+    ladderImg.onload = () => console.log('Ladder image loaded');
+    ladderImg.onerror = () => console.error('Failed to load Ladder image');
+
+    rivetImg.src = 'rivet.png';
+    rivetImg.onload = () => console.log('Rivet image loaded');
+    rivetImg.onerror = () => console.error('Failed to load Rivet image');
+
+    fireballImg.src = 'fireball.png';
+    fireballImg.onload = () => console.log('Fireball image loaded');
+    fireballImg.onerror = () => console.error('Failed to load Fireball image');
+
+    platformImg.src = 'platform.png';
+    platformImg.onload = () => console.log('Platform image loaded');
+    platformImg.onerror = () => console.error('Failed to load Platform image');
+
+    backgrounds[1] = new Image();
+    backgrounds[1].src = 'background1.png';
+    backgrounds[1].onload = () => console.log('Background 1 image loaded');
+    backgrounds[1].onerror = () => console.error('Failed to load Background 1 image');
+
+    backgrounds[2] = new Image();
+    backgrounds[2].src = 'background2.png';
+    backgrounds[2].onload = () => console.log('Background 2 image loaded');
+    backgrounds[2].onerror = () => console.error('Failed to load Background 2 image');
+
+    backgrounds[3] = new Image();
+    backgrounds[3].src = 'background3.png';
+    backgrounds[3].onload = () => console.log('Background 3 image loaded');
+    backgrounds[3].onerror = () => console.error('Failed to load Background 3 image');
+
+    backgrounds[4] = new Image();
+    backgrounds[4].src = 'background4.png';
+    backgrounds[4].onload = () => console.log('Background 4 image loaded');
+    backgrounds[4].onerror = () => console.error('Failed to load Background 4 image');
+}
+
+// Initialize level
+function initLevel() {
+    barrels = []; conveyors = []; elevators = []; springs = []; hammers = []; rivets = []; fireballs = []; ladders = [];
+    mario.x = 50; mario.y = 318; mario.hasHammer = false; mario.hammerTime = 0; mario.onLadder = false; mario.dy = 0;
+    mario.hasDoubleJump = false; mario.hasBarrelShield = false; mario.hasSpeedBoost = false; // Reset shop effects
+    premekong.x = 50; premekong.y = 36; premekong.bounceDir = 1; pauline.x = 124; pauline.y = 68;
+    const platformY = [400, 300, 200, 100];
+    if (level === 1) {
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
+        hammers.push({ x: 250, y: platformY[1] - 32, width: 32, height: 32, taken: false });
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            if (i !== 1 || (i === 1 && (50 + i * 75 !== 124 && 250 + i * 75 !== 124))) {
+                rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+                rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            }
+        }
+    } else if (level === 2) {
+        conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 1 });
+        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -1 });
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
+        ladders.push({ x: 350, y: platformY[3] - 100, width: 20, height: 100 });
+        hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            if (i !== 1 || (i === 1 && (50 + i * 75 !== 124 && 250 + i * 75 !== 124))) {
+                rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+                rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            }
+        }
+    } else if (level === 3) {
+        elevators.push({ x: 150, y: 300, width: 40, height: 20, dy: 2, minY: 100, maxY: 400 });
+        elevators.push({ x: 450, y: 200, width: 40, height: 20, dy: -2, minY: 100, maxY: 400 });
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            if (i !== 1 || (i === 1 && (50 + i * 75 !== 124 && 250 + i * 75 !== 124))) {
+                rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+                rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            }
+        }
+    } else if (level === 4) {
+        conveyors.push({ x: 0, y: platformY[3], width: canvas.width, height: 10, speed: 2 });
+        conveyors.push({ x: 0, y: platformY[2], width: canvas.width, height: 10, speed: -2 });
+        conveyors.push({ x: 0, y: platformY[1], width: canvas.width, height: 10, speed: 2 });
+        conveyors.push({ x: 0, y: platformY[0], width: canvas.width, height: 10, speed: -2 });
+        ladders.push({ x: 200, y: platformY[0] - 100, width: 20, height: 100 });
+        ladders.push({ x: 400, y: platformY[1] - 100, width: 20, height: 100 });
+        ladders.push({ x: 300, y: platformY[2] - 100, width: 20, height: 100 });
+        hammers.push({ x: 200, y: platformY[3] - 32, width: 32, height: 32, taken: false });
+        for (let i = 0; i < 4; i++) {
+            rivets.push({ x: 50 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[0] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[1] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 50 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            rivets.push({ x: 250 + i * 75, y: platformY[2] - 10, width: 20, height: 20, hit: false });
+            if (i !== 1 || (i === 1 && (50 + i * 75 !== 124 && 250 + i * 75 !== 124))) {
+                rivets.push({ x: 50 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+                rivets.push({ x: 250 + i * 75, y: platformY[3] - 10, width: 20, height: 20, hit: false });
+            }
+        }
+    }
+}
+
+// Draw game
+function draw() {
+    if (!gameActive) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    try {
+        if (backgrounds[level] && backgrounds[level].complete) ctx.drawImage(backgrounds[level], 0, 0, canvas.width, canvas.height);
+        const platformY = [400, 300, 200, 100];
+        if (platformImg.complete) platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10));
+        else { ctx.fillStyle = 'red'; platformY.forEach(py => ctx.fillRect(0, py, canvas.width, 10)); }
+        ctx.fillStyle = 'yellow'; conveyors.forEach(conveyor => ctx.fillRect(conveyor.x, conveyor.y, conveyor.width, conveyor.height));
+        ctx.fillStyle = 'orange'; elevators.forEach(elevator => ctx.fillRect(elevator.x, elevator.y, elevator.width, elevator.height));
+        ladders.forEach(ladder => ladderImg.complete ? ctx.drawImage(ladderImg, ladder.x, ladder.y, ladder.width, ladder.height) : ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height));
+        hammers.forEach(hammer => { if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height); });
+        rivets.forEach(rivet => rivetImg.complete && !rivet.hit ? ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width, rivet.height) : ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height));
+        fireballs.forEach(fireball => fireballImg.complete ? ctx.drawImage(fireballImg, fireball.x, fireball.y, 32, 32) : ctx.fillRect(fireball.x, fireball.y, 32, 32));
+        drawMario(); // Use custom Mario drawing function
+        if (premekong.image.complete) ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
+        premekong.y += premekong.bounceDir * 0.125;
+        if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) premekong.bounceDir *= -1;
+        if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, 32, pauline.height);
+        else ctx.fillRect(pauline.x, pauline.y, 32, pauline.height);
+        barrels.forEach(barrel => {
+            if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
+            else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
+            else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32);
+            else ctx.fillRect(barrel.x, barrel.y, 32, 32);
+        });
+        if (message && messageTimer > 0) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(canvas.width / 2 - 200, canvas.height / 2 - 30, 400, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+            messageTimer--;
+            if (messageTimer <= 0) message = null;
+        }
+    } catch (error) {
+        console.error('Draw error:', error);
+    }
+    requestAnimationFrame(draw);
+}
+
 // Update game logic (modified for shop items)
 function update() {
     if (!gameActive) return;
@@ -541,97 +741,46 @@ function update() {
     }
 }
 
-// Controls
-let lastTouchTime = 0;
-const debounceDelay = 100;
-function moveLeft() { const now = Date.now(); if (gameActive && !mario.hasHammer && now - lastTouchTime > debounceDelay) { mario.dx = -1; lastTouchTime = now; } }
-function moveRight() { const now = Date.now(); if (gameActive && !mario.hasHammer && now - lastTouchTime > debounceDelay) { mario.dx = 1; lastTouchTime = now; } }
-function jump() { const now = Date.now(); if (gameActive && !mario.jumping && !mario.onLadder && !mario.hasHammer && now - lastTouchTime > debounceDelay) { mario.jumping = true; lastTouchTime = now; } }
-function climbUp() { const now = Date.now(); if (gameActive && mario.onLadder && now - lastTouchTime > debounceDelay) { mario.dy = -1; lastTouchTime = now; } }
-function climbDown() { const now = Date.now(); if (gameActive && mario.onLadder && now - lastTouchTime > debounceDelay) { mario.dy = 1; lastTouchTime = now; } }
-function stopMove() { mario.dx = 0; }
-function stopClimb() { mario.dy = 0; mario.onLadder = false; }
-
-function handleTelegramData() {
-    if (Telegram && Telegram.WebApp) {
-        Telegram.WebApp.onEvent('web_app_data', (data) => {
-            if (data.data) {
-                const gameData = JSON.parse(data.data);
-                score = gameData.score || score;
-                perfectRunsToday = gameData.perfectRunsToday || perfectRunsToday;
-                premeEarned = gameData.premeEarned || premeEarned;
-                premeBurn = gameData.premeBurn || premeBurn;
-                jackpot = gameData.jackpot || jackpot;
-                leaderboard = gameData.leaderboard || leaderboard;
-                stars = gameData.stars || stars;
-                hasFirstBuyDoubleStars = gameData.hasFirstBuyDoubleStars !== undefined ? gameData.hasFirstBuyDoubleStars : hasFirstBuyDoubleStars;
-                jackpotTickets = gameData.jackpotTickets || jackpotTickets;
-                updateScore();
-            }
-        });
-        setInterval(syncWithServer, 300000);
-    }
+// Start game with asset loading check
+function startGame() {
+    loadAssets();
+    initLevel();
+    setInterval(update, 1000 / 60);
+    draw();
+    handleTelegramData();
 }
 
-// Draw Mario with potential skin
-function drawMario() {
-    if (marioSkinImg && marioSkinImg.complete) {
-        ctx.drawImage(marioSkinImg, mario.x, mario.y, mario.width, mario.height);
-    } else if (mario.image.complete) {
-        ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
-    } else {
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
-        console.log('Mario image not loaded, using fallback:', mario.image.src);
-    }
-}
+// Ensure assets are loaded before starting
+document.addEventListener('DOMContentLoaded', () => {
+    const allImages = [
+        mario.image, premekong.image, pauline.image, barrelImg, cementPieImg, springImg,
+        hammerImg, ladderImg, rivetImg, fireballImg, platformImg,
+        ...Object.values(backgrounds).filter(bg => bg)
+    ];
+    let loadedImages = 0;
 
-// Modified draw function to use custom Mario drawing
-function draw() {
-    if (!gameActive) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    try {
-        if (backgrounds[level] && backgrounds[level].complete) ctx.drawImage(backgrounds[level], 0, 0, canvas.width, canvas.height);
-        const platformY = [400, 300, 200, 100];
-        if (platformImg.complete) platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10));
-        else { ctx.fillStyle = 'red'; platformY.forEach(py => ctx.fillRect(0, py, canvas.width, 10)); }
-        ctx.fillStyle = 'yellow'; conveyors.forEach(conveyor => ctx.fillRect(conveyor.x, conveyor.y, conveyor.width, conveyor.height));
-        ctx.fillStyle = 'orange'; elevators.forEach(elevator => ctx.fillRect(elevator.x, elevator.y, elevator.width, elevator.height));
-        ladders.forEach(ladder => ladderImg.complete ? ctx.drawImage(ladderImg, ladder.x, ladder.y, ladder.width, ladder.height) : ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height));
-        hammers.forEach(hammer => { if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height); });
-        rivets.forEach(rivet => rivetImg.complete && !rivet.hit ? ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width, rivet.height) : ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height));
-        fireballs.forEach(fireball => fireballImg.complete ? ctx.drawImage(fireballImg, fireball.x, fireball.y, 32, 32) : ctx.fillRect(fireball.x, fireball.y, 32, 32));
-        drawMario(); // Use custom Mario drawing function
-        if (premekong.image.complete) ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
-        premekong.y += premekong.bounceDir * 0.125;
-        if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) premekong.bounceDir *= -1;
-        if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, 32, pauline.height);
-        else ctx.fillRect(pauline.x, pauline.y, 32, pauline.height);
-        barrels.forEach(barrel => {
-            if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
-            else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
-            else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32);
-            else ctx.fillRect(barrel.x, barrel.y, 32, 32);
-        });
-        if (message && messageTimer > 0) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(canvas.width / 2 - 200, canvas.height / 2 - 30, 400, 60);
-            ctx.fillStyle = 'white';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(message, canvas.width / 2, canvas.height / 2);
-            messageTimer--;
-            if (messageTimer <= 0) message = null;
+    allImages.forEach(img => {
+        if (img.complete) {
+            loadedImages++;
+        } else {
+            img.onload = () => {
+                loadedImages++;
+                if (loadedImages === allImages.length) {
+                    startGame();
+                }
+            };
+            img.onerror = () => {
+                console.error(`Failed to load image: ${img.src}`);
+                loadedImages++;
+                if (loadedImages === allImages.length) {
+                    startGame(); // Start even if some images fail to ensure game runs
+                }
+            };
         }
-    } catch (error) {
-        console.error('Draw error:', error);
-    }
-    requestAnimationFrame(draw);
-}
+    });
 
-// Start game
-loadAssets();
-initLevel();
-setInterval(update, 1000 / 60);
-draw();
-handleTelegramData();
+    // If all images are already loaded, start immediately
+    if (loadedImages === allImages.length) {
+        startGame();
+    }
+});
