@@ -7,11 +7,11 @@ canvas.width = 672;
 canvas.height = 500;
 ctx.scale(1, 1);
 
-// Persistent P2E state with localStorage as fallback
+// Persistent P2E state with localStorage
 let perfectRunsToday = localStorage.getItem('perfectRunsToday') ? parseInt(localStorage.getItem('perfectRunsToday')) : 0;
 let lastPerfectRunTime = localStorage.getItem('lastPerfectRunTime') ? parseInt(localStorage.getItem('lastPerfectRunTime')) : Date.now();
 let premeEarned = localStorage.getItem('premeEarned') ? parseFloat(localStorage.getItem('premeEarned')) : 0;
-let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0; // Local fallback; will sync with server
+let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0; // Local fallback; needs server sync
 let jackpot = localStorage.getItem('jackpot') ? parseFloat(localStorage.getItem('jackpot')) : 0;
 
 // Game state
@@ -56,6 +56,8 @@ let level = 1;
 let gameActive = true;
 let lives = 3;
 let bonusTimer = 5000;
+let message = null; // For in-game messages
+let messageTimer = 0;
 let backgrounds = [];
 let platformImg = new Image();
 let ladderImg = new Image();
@@ -75,7 +77,6 @@ if (Telegram && Telegram.WebApp) {
 function updateScore() {
     document.getElementById('score').innerText = `Score: ${score} Lives: ${lives} Timer: ${Math.floor(bonusTimer / 60)} Jackpot: ${jackpot} $PREME  Burn This Month: ${premeBurn} $PREME  Perfect: ${perfectRunsToday}/5  $PREME Earned: ${premeEarned}`;
     console.log('Current score:', score, 'Lives:', lives, 'Timer:', bonusTimer, 'Perfect Runs:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn, 'Jackpot:', jackpot);
-    // Save to localStorage as fallback
     localStorage.setItem('perfectRunsToday', perfectRunsToday);
     localStorage.setItem('lastPerfectRunTime', lastPerfectRunTime);
     localStorage.setItem('premeEarned', premeEarned);
@@ -90,14 +91,23 @@ function checkCollision(obj1, obj2) {
            obj1.y + obj1.height > obj2.y;
 }
 
+function showMessage(text, duration = 300) { // Duration in frames (~5s at 60 FPS)
+    message = text;
+    messageTimer = duration;
+}
+
 function levelUp() {
+    const timerBonus = Math.floor(bonusTimer / 60) * 10; // Timer bonus
+    score += timerBonus;
+    console.log('Level completed! Timer bonus:', timerBonus);
+
     level = level % 4 + 1;
     if (level === 1) {
         resetGame();
     } else {
         initLevel();
         score += 300;
-        bonusTimer = 5000; // Level-based timer reset
+        bonusTimer = 5000;
         checkPerfectRun();
     }
 }
@@ -142,51 +152,38 @@ function checkPerfectRun() {
     const damageTaken = score < 0 || (score % 10 !== 0 && score > 0);
     if (remainingRivets === 0 && !damageTaken && perfectRunsToday < 5) {
         perfectRunsToday++;
-        premeEarned += 49.5; // 49.5 to player
-        const burnAmount = 0.5; // 0.5 to burn (total 50 $PREME)
+        premeEarned += 49.5;
+        const burnAmount = 0.5;
         premeBurn += burnAmount;
         console.log('Perfect run achieved! Earned 49.5 $PREME Tokens. Perfect runs today:', perfectRunsToday, '$PREME Earned:', premeEarned, 'PREME Burn:', premeBurn);
-        alert('Perfect run! You earned 49.5 $PREME Tokens. You have ' + (5 - perfectRunsToday) + ' perfect runs left today. 0.5 $PREME added to PREME Burn.');
-        syncWithServer(); // Sync burn contribution immediately
+        showMessage('Perfect run! Earned 49.5 $PREME. ' + (5 - perfectRunsToday) + ' left today. 0.5 to Burn.');
+        syncWithServer();
     }
     updateScore();
 }
 
-// Placeholder for jackpot ticket purchase
 function buyJackpotTicket() {
     if (premeEarned >= 10) {
         premeEarned -= 10;
         jackpot += 10;
         premeBurn += 0.1;
         updateScore();
-        syncWithServer(); // Sync burn contribution
+        syncWithServer();
         console.log('Jackpot ticket purchased! Jackpot:', jackpot, 'PREME Burn:', premeBurn);
     }
 }
 
-// Server sync function
 function syncWithServer() {
     if (Telegram && Telegram.WebApp) {
         const data = {
             perfectRunsToday,
             lastPerfectRunTime,
             premeEarned,
-            premeBurnContribution: 0.5, // Only send the new contribution
+            premeBurnContribution: 0.5,
             jackpot
         };
         Telegram.WebApp.sendData(JSON.stringify(data));
-        // TODO: Replace with actual server sync logic
-        // Example with Replit (uncomment and configure):
-        /*
-        fetch('https://yourproject.yourusername.repl.co/updateBurn', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ burnAmount: 0.5 })
-        })
-        .then(response => response.json())
-        .then(data => { premeBurn = data.globalBurn; updateScore(); })
-        .catch(error => console.error('Server sync failed:', error));
-        */
+        // TODO: Replace with Replit or Telegram Bot API sync
     }
 }
 
@@ -331,73 +328,89 @@ function initLevel() {
     console.log('Canvas size after scaling:', canvas.width, canvas.height, 'Rivets in level:', rivets.length);
 }
 
-// Draw game (original)
+// Draw game (with in-game message overlay)
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    if (backgrounds[level] && backgrounds[level].complete) {
-        ctx.drawImage(backgrounds[level], 0, 0, canvas.width, canvas.height);
+    try {
+        if (backgrounds[level] && backgrounds[level].complete) {
+            ctx.drawImage(backgrounds[level], 0, 0, canvas.width, canvas.height);
+        }
+
+        const platformY = [400, 300, 200, 100];
+        if (platformImg.complete) {
+            platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10));
+        } else {
+            ctx.fillStyle = 'red';
+            platformY.forEach(py => ctx.fillRect(0, py, canvas.width, 10));
+        }
+
+        ctx.fillStyle = 'yellow';
+        conveyors.forEach(conveyor => ctx.fillRect(conveyor.x, conveyor.y, conveyor.width, conveyor.height));
+
+        ctx.fillStyle = 'orange';
+        elevators.forEach(elevator => ctx.fillRect(elevator.x, elevator.y, elevator.width, elevator.height));
+
+        ladders.forEach(ladder => {
+            if (ladderImg.complete) ctx.drawImage(ladderImg, ladder.x, ladder.y, ladder.width, ladder.height);
+            else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
+        });
+
+        hammers.forEach(hammer => {
+            if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height);
+        });
+
+        rivets.forEach(rivet => {
+            if (!rivet.hit && rivetImg.complete) ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width, rivet.height);
+            else ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height);
+        });
+
+        fireballs.forEach(fireball => {
+            if (fireballImg.complete) ctx.drawImage(fireballImg, fireball.x, fireball.y, 32, 32);
+            else ctx.fillRect(fireball.x, fireball.y, 32, 32);
+        });
+
+        if (mario.image.complete) {
+            ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
+        } else {
+            ctx.fillStyle = 'blue';
+            ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
+            console.log('Mario image not loaded, using fallback:', mario.image.src);
+        }
+
+        if (premekong.image.complete) {
+            ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
+        }
+        premekong.y += premekong.bounceDir * 0.125;
+        if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) {
+            premekong.bounceDir *= -1;
+        }
+
+        if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, 32, pauline.height);
+        else ctx.fillRect(pauline.x, pauline.y, 32, pauline.height);
+
+        barrels.forEach(barrel => {
+            if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
+            else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
+            else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32);
+            else ctx.fillRect(barrel.x, barrel.y, 32, 32);
+        });
+
+        // Draw in-game message
+        if (message && messageTimer > 0) {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(canvas.width / 2 - 200, canvas.height / 2 - 30, 400, 60);
+            ctx.fillStyle = 'white';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(message, canvas.width / 2, canvas.height / 2);
+            messageTimer--;
+            if (messageTimer <= 0) message = null;
+        }
+    } catch (error) {
+        console.error('Draw error:', error);
     }
-
-    const platformY = [400, 300, 200, 100];
-    if (platformImg.complete) {
-        platformY.forEach(py => ctx.drawImage(platformImg, 0, py, canvas.width, 10));
-    } else {
-        ctx.fillStyle = 'red';
-        platformY.forEach(py => ctx.fillRect(0, py, canvas.width, 10));
-    }
-
-    ctx.fillStyle = 'yellow';
-    conveyors.forEach(conveyor => ctx.fillRect(conveyor.x, conveyor.y, conveyor.width, conveyor.height));
-
-    ctx.fillStyle = 'orange';
-    elevators.forEach(elevator => ctx.fillRect(elevator.x, elevator.y, elevator.width, elevator.height));
-
-    ladders.forEach(ladder => {
-        if (ladderImg.complete) ctx.drawImage(ladderImg, ladder.x, ladder.y, ladder.width, ladder.height);
-        else ctx.fillRect(ladder.x, ladder.y, ladder.width, ladder.height);
-    });
-
-    hammers.forEach(hammer => {
-        if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height);
-    });
-
-    rivets.forEach(rivet => {
-        if (!rivet.hit && rivetImg.complete) ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width, rivet.height);
-        else ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height);
-    });
-
-    fireballs.forEach(fireball => {
-        if (fireballImg.complete) ctx.drawImage(fireballImg, fireball.x, fireball.y, 32, 32);
-        else ctx.fillRect(fireball.x, fireball.y, 32, 32);
-    });
-
-    if (mario.image.complete) {
-        ctx.drawImage(mario.image, mario.x, mario.y, mario.width, mario.height);
-    } else {
-        ctx.fillStyle = 'blue';
-        ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
-        console.log('Mario image not loaded, using fallback:', mario.image.src);
-    }
-
-    if (premekong.image.complete) {
-        ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
-    }
-    premekong.y += premekong.bounceDir * 0.125;
-    if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) {
-        premekong.bounceDir *= -1;
-    }
-
-    if (pauline.image.complete) ctx.drawImage(pauline.image, pauline.x, pauline.y, 32, pauline.height);
-    else ctx.fillRect(pauline.x, pauline.y, 32, pauline.height);
-
-    barrels.forEach(barrel => {
-        if (barrel.type === 'cement_pie' && cementPieImg.complete) ctx.drawImage(cementPieImg, barrel.x, barrel.y, 32, 32);
-        else if (barrel.type === 'spring' && springImg.complete) ctx.drawImage(springImg, barrel.x, barrel.y, 32, 32);
-        else if (barrelImg.complete) ctx.drawImage(barrelImg, barrel.x, barrel.y, 32, 32);
-        else ctx.fillRect(barrel.x, barrel.y, 32, 32);
-    });
 
     requestAnimationFrame(draw);
 }
@@ -406,229 +419,239 @@ function draw() {
 function update() {
     if (!gameActive) return;
 
-    bonusTimer--;
-    if (bonusTimer <= 0) {
-        lives--;
-        if (lives > 0) {
-            mario.x = 50;
-            mario.y = 318;
-            mario.dx = 0;
-            mario.dy = 0;
-            mario.jumping = false;
-            mario.onLadder = false;
-            bonusTimer = 5000;
-            initLevel();
+    try {
+        bonusTimer--;
+        if (bonusTimer <= 0) {
+            lives--;
+            if (lives > 0) {
+                mario.x = 50;
+                mario.y = 318;
+                mario.dx = 0;
+                mario.dy = 0;
+                mario.jumping = false;
+                mario.onLadder = false;
+                bonusTimer = 5000;
+                initLevel();
+            } else {
+                resetGame();
+            }
+        }
+
+        if (!mario.onLadder) {
+            mario.dy += mario.gravity;
+            mario.y += mario.dy;
+            if (mario.jumping) {
+                mario.dy = -10;
+                mario.jumping = false;
+            }
         } else {
-            resetGame();
-        }
-    }
-
-    if (!mario.onLadder) {
-        mario.dy += mario.gravity;
-        mario.y += mario.dy;
-        if (mario.jumping) {
-            mario.dy = -10;
-            mario.jumping = false;
-        }
-    } else {
-        mario.dy = 0;
-        mario.y += mario.dy * mario.speed;
-    }
-    mario.x += mario.dx * mario.speed;
-
-    const platformY = [400, 300, 200, 100];
-    platformY.forEach(py => {
-        if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
-            mario.y = py - mario.height;
             mario.dy = 0;
-            mario.onLadder = false;
+            mario.y += mario.dy * mario.speed;
         }
-        if (mario.y > canvas.height - mario.height) {
-            mario.y = canvas.height - mario.height;
-            mario.dy = 0;
-            mario.onLadder = false;
-        }
-    });
+        mario.x += mario.dx * mario.speed;
 
-    ladders.forEach(ladder => {
-        if (checkCollision(mario, ladder) && mario.y + mario.height > ladder.y && mario.y < ladder.y + ladder.height) {
-            mario.onLadder = true;
-            if (mario.y < ladder.y) mario.y = ladder.y;
-            if (mario.y + mario.height > ladder.y + ladder.height) mario.y = ladder.y + ladder.height - mario.height;
-            if ((mario.dx !== 0 && !checkCollision(mario, ladder)) || (mario.dy === 0 && mario.onLadder)) mario.onLadder = false;
-        } else if (!checkCollision(mario, ladder)) {
-            mario.onLadder = false;
-        }
-    });
+        const platformY = [400, 300, 200, 100];
+        platformY.forEach(py => {
+            if (mario.y + mario.height > py && mario.y + mario.height < py + 10 && mario.dy > 0 && !mario.onLadder) {
+                mario.y = py - mario.height;
+                mario.dy = 0;
+                mario.onLadder = false;
+            }
+            if (mario.y > canvas.height - mario.height) {
+                mario.y = canvas.height - mario.height;
+                mario.dy = 0;
+                mario.onLadder = false;
+            }
+        });
 
-    if (Math.random() < 0.05) {
-        if (level === 1) barrels.push({
-            x: premekong.x + premekong.width,
-            y: premekong.y + premekong.height,
-            dx: 1.5,
-            dy: 0,
-            type: 'barrel'
+        ladders.forEach(ladder => {
+            if (checkCollision(mario, ladder) && mario.y + mario.height > ladder.y && mario.y < ladder.y + ladder.height) {
+                mario.onLadder = true;
+                if (mario.y < ladder.y) mario.y = ladder.y;
+                if (mario.y + mario.height > ladder.y + ladder.height) mario.y = ladder.y + ladder.height - mario.height;
+                if ((mario.dx !== 0 && !checkCollision(mario, ladder)) || (mario.dy === 0 && mario.onLadder)) mario.onLadder = false;
+            } else if (!checkCollision(mario, ladder)) {
+                mario.onLadder = false;
+            }
         });
-        else if (level === 2) barrels.push({
-            x: premekong.x + premekong.width,
-            y: premekong.y + premekong.height,
-            dx: 1.5,
-            dy: 0,
-            type: 'cement_pie'
-        });
-        else if (level === 3) {
-            barrels.push({
+
+        if (Math.random() < 0.05) {
+            if (level === 1) barrels.push({
                 x: premekong.x + premekong.width,
                 y: premekong.y + premekong.height,
-                dx: 2.5,
+                dx: 1.5,
                 dy: 0,
-                type: 'spring'
+                type: 'barrel'
             });
-            if (Math.random() < 0.03) {
-                fireballs.push({
+            else if (level === 2) barrels.push({
+                x: premekong.x + premekong.width,
+                y: premekong.y + premekong.height,
+                dx: 1.5,
+                dy: 0,
+                type: 'cement_pie'
+            });
+            else if (level === 3) {
+                barrels.push({
                     x: premekong.x + premekong.width,
                     y: premekong.y + premekong.height,
-                    dx: 3.5,
+                    dx: 2.5,
+                    dy: 0,
+                    type: 'spring'
+                });
+                if (Math.random() < 0.03) {
+                    fireballs.push({
+                        x: premekong.x + premekong.width,
+                        y: premekong.y + premekong.height,
+                        dx: 3.5,
+                        dy: 0,
+                        type: 'fireball'
+                    });
+                }
+            } else if (level === 4) {
+                if (Math.random() < 0.07) barrels.push({
+                    x: premekong.x + premekong.width,
+                    y: premekong.y + premekong.height,
+                    dx: 2,
+                    dy: 0,
+                    type: 'barrel'
+                });
+                if (Math.random() < 0.05) barrels.push({
+                    x: premekong.x + premekong.width,
+                    y: premekong.y + premekong.height,
+                    dx: 2,
+                    dy: 0,
+                    type: 'cement_pie'
+                });
+                if (Math.random() < 0.04) barrels.push({
+                    x: premekong.x + premekong.width,
+                    y: premekong.y + premekong.height,
+                    dx: 3,
+                    dy: 0,
+                    type: 'spring'
+                });
+                if (Math.random() < 0.04) fireballs.push({
+                    x: premekong.x + premekong.width,
+                    y: premekong.y + premekong.height,
+                    dx: 4,
                     dy: 0,
                     type: 'fireball'
                 });
             }
-        } else if (level === 4) {
-            if (Math.random() < 0.07) barrels.push({
-                x: premekong.x + premekong.width,
-                y: premekong.y + premekong.height,
-                dx: 2,
-                dy: 0,
-                type: 'barrel'
-            });
-            if (Math.random() < 0.05) barrels.push({
-                x: premekong.x + premekong.width,
-                y: premekong.y + premekong.height,
-                dx: 2,
-                dy: 0,
-                type: 'cement_pie'
-            });
-            if (Math.random() < 0.04) barrels.push({
-                x: premekong.x + premekong.width,
-                y: premekong.y + premekong.height,
-                dx: 3,
-                dy: 0,
-                type: 'spring'
-            });
-            if (Math.random() < 0.04) fireballs.push({
-                x: premekong.x + premekong.width,
-                y: premekong.y + premekong.height,
-                dx: 4,
-                dy: 0,
-                type: 'fireball'
-            });
         }
-    }
 
-    barrels.forEach((barrel, i) => {
-        barrel.x += barrel.dx;
-        barrel.y += barrel.dy || 2;
-        const platformY = [400, 300, 200, 100];
-        platformY.forEach(py => {
-            if (barrel.y + 32 > py && barrel.y + 32 < py + 10 && barrel.dy >= 0) {
-                barrel.y = py - 32;
-                barrel.dy = 0;
-                ladders.forEach(ladder => {
-                    if (barrel.x >= ladder.x - 32 && barrel.x <= ladder.x + ladder.width) {
-                        barrel.dy = 2;
-                    }
-                });
-                conveyors.forEach(conveyor => {
-                    if (barrel.y === conveyor.y && barrel.x >= conveyor.x && barrel.x + 32 <= conveyor.x + conveyor.width) {
-                        barrel.x += conveyor.speed;
-                    }
-                });
+        barrels.forEach((barrel, i) => {
+            barrel.x += barrel.dx;
+            barrel.y += barrel.dy || 2;
+            platformY.forEach(py => {
+                if (barrel.y + 32 > py && barrel.y + 32 < py + 10 && barrel.dy >= 0) {
+                    barrel.y = py - 32;
+                    barrel.dy = 0;
+                    ladders.forEach(ladder => {
+                        if (barrel.x >= ladder.x - 32 && barrel.x <= ladder.x + ladder.width) {
+                            barrel.dy = 2;
+                        }
+                    });
+                    conveyors.forEach(conveyor => {
+                        if (barrel.y === conveyor.y && barrel.x >= conveyor.x && barrel.x + 32 <= conveyor.x + conveyor.width) {
+                            barrel.x += conveyor.speed;
+                        }
+                    });
+                }
+            });
+            if (barrel.type === 'spring' && barrel.x < canvas.width - 100 && Math.random() < 0.1) barrel.dy = -10;
+            if (barrel.x > canvas.width + 32 || barrel.y > canvas.height) barrels.splice(i, 1);
+            if (checkCollision(mario, barrel)) {
+                if (mario.hasHammer) {
+                    barrels.splice(i, 1);
+                    score += 100;
+                    console.log('Barrel hit with hammer, score +100:', score);
+                } else {
+                    score -= 10;
+                    console.log('Barrel hit without hammer, score -10:', score);
+                    barrels.splice(i, 1);
+                    if (score < 0) score = 0;
+                }
             }
         });
-        if (barrel.type === 'spring' && barrel.x < canvas.width - 100 && Math.random() < 0.1) barrel.dy = -10;
-        if (barrel.x > canvas.width + 32 || barrel.y > canvas.height) barrels.splice(i, 1);
-        if (checkCollision(mario, barrel)) {
-            if (mario.hasHammer) {
-                barrels.splice(i, 1);
-                score += 100;
-                console.log('Barrel hit with hammer, score +100:', score);
-            } else {
-                score -= 10;
-                console.log('Barrel hit without hammer, score -10:', score);
-                barrels.splice(i, 1);
+
+        fireballs.forEach((fireball, i) => {
+            fireball.x += fireball.dx;
+            fireball.y += fireball.dy || 2;
+            platformY.forEach(py => {
+                if (fireball.y + 32 > py && fireball.y + 32 < py + 10 && fireball.dy >= 0) {
+                    fireball.y = py - 32;
+                    fireball.dy = 0;
+                    ladders.forEach(ladder => {
+                        if (fireball.x >= ladder.x - 32 && fireball.x <= ladder.x + ladder.width) {
+                            fireball.dy = 2;
+                        }
+                    });
+                }
+            });
+            if (fireball.x > canvas.width + 32 || fireball.y > canvas.height) fireballs.splice(i, 1);
+            if (checkCollision(mario, fireball)) {
+                score -= 20;
+                console.log('Fireball hit, score -20:', score);
+                fireballs.splice(i, 1);
                 if (score < 0) score = 0;
             }
-        }
-    });
+        });
 
-    fireballs.forEach((fireball, i) => {
-        fireball.x += fireball.dx;
-        fireball.y += fireball.dy || 2;
-        const platformY = [400, 300, 200, 100];
-        platformY.forEach(py => {
-            if (fireball.y + 32 > py && fireball.y + 32 < py + 10 && fireball.dy >= 0) {
-                fireball.y = py - 32;
-                fireball.dy = 0;
-                ladders.forEach(ladder => {
-                    if (fireball.x >= ladder.x - 32 && fireball.x <= ladder.x + ladder.width) {
-                        fireball.dy = 2;
-                    }
-                });
+        conveyors.forEach(conveyor => {});
+
+        elevators.forEach(elevator => {
+            elevator.y += elevator.dy;
+            if (elevator.y <= elevator.minY || elevator.y >= elevator.maxY) elevator.dy *= -1;
+        });
+
+        rivets.forEach((rivet, i) => {
+            if (checkCollision(mario, rivet)) {
+                rivet.hit = true;
+                score += 50;
+                console.log('Rivet collected, score +50:', score);
+                rivets.splice(i, 1);
+                if (level === 4 && rivets.length === 0) {
+                    const timerBonus = Math.floor(bonusTimer / 60) * 10;
+                    score += timerBonus;
+                    console.log('Level 4 completed! Timer bonus:', timerBonus);
+                    checkPerfectRun();
+                    resetGame();
+                }
             }
         });
-        if (fireball.x > canvas.width + 32 || fireball.y > canvas.height) fireballs.splice(i, 1);
-        if (checkCollision(mario, fireball)) {
-            score -= 20;
-            console.log('Fireball hit, score -20:', score);
-            fireballs.splice(i, 1);
-            if (score < 0) score = 0;
-        }
-    });
 
-    conveyors.forEach(conveyor => {});
-
-    elevators.forEach(elevator => {
-        elevator.y += elevator.dy;
-        if (elevator.y <= elevator.minY || elevator.y >= elevator.maxY) elevator.dy *= -1;
-    });
-
-    rivets.forEach((rivet, i) => {
-        if (checkCollision(mario, rivet)) {
-            rivet.hit = true;
-            score += 50;
-            console.log('Rivet collected, score +50:', score);
-            rivets.splice(i, 1);
-            if (level === 4 && rivets.length === 0) {
+        if (mario.y < pauline.y + 50 && Math.abs(mario.x - pauline.x) < pauline.width / 2 && mario.y + mario.height <= pauline.y + pauline.height) {
+            if (level === 4) {
+                const timerBonus = Math.floor(bonusTimer / 60) * 10;
+                score += timerBonus;
+                console.log('Level 4 completed! Timer bonus:', timerBonus);
                 checkPerfectRun();
                 resetGame();
+            } else {
+                levelUp();
             }
         }
-    });
 
-    if (mario.y < pauline.y + 50 && Math.abs(mario.x - pauline.x) < pauline.width / 2 && mario.y + mario.height <= pauline.y + pauline.height) {
-        if (level === 4) {
-            checkPerfectRun();
-            resetGame();
-        } else {
-            levelUp();
+        if (mario.y < pauline.y + mario.height && mario.y + mario.height > pauline.y && Math.abs(mario.x - pauline.x) > pauline.width / 2) {}
+
+        if (mario.hasHammer) {
+            mario.hammerTime--;
+            if (mario.hammerTime <= 0) mario.hasHammer = false;
         }
+        hammers.forEach(hammer => {
+            if (!hammer.taken && checkCollision(mario, hammer)) {
+                hammer.taken = true;
+                mario.hasHammer = true;
+                mario.hammerTime = 300;
+                score += 75; // Hammer points
+                console.log('Hammer collected, score +75:', score);
+            }
+        });
+
+        updateScore();
+    } catch (error) {
+        console.error('Update error:', error);
     }
-
-    if (mario.y < pauline.y + mario.height && mario.y + mario.height > pauline.y && Math.abs(mario.x - pauline.x) > pauline.width / 2) {}
-
-    if (mario.hasHammer) {
-        mario.hammerTime--;
-        if (mario.hammerTime <= 0) mario.hasHammer = false;
-    }
-    hammers.forEach(hammer => {
-        if (!hammer.taken && checkCollision(mario, hammer)) {
-            hammer.taken = true;
-            mario.hasHammer = true;
-            mario.hammerTime = 300;
-        }
-    });
-
-    updateScore();
 }
 
 // Controls with mouse and touch support
@@ -681,12 +704,12 @@ function handleTelegramData() {
                 score = gameData.score || score;
                 perfectRunsToday = gameData.perfectRunsToday || perfectRunsToday;
                 premeEarned = gameData.premeEarned || premeEarned;
-                premeBurn = gameData.premeBurn || premeBurn; // Load global burn from server
+                premeBurn = gameData.premeBurn || premeBurn;
                 jackpot = gameData.jackpot || jackpot;
                 updateScore();
             }
         });
-        setInterval(syncWithServer, 60000); // Sync every minute
+        setInterval(syncWithServer, 60000);
     }
 }
 
