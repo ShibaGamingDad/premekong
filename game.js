@@ -488,7 +488,7 @@ function update() {
                 type: 'barrel'
             });
             else if (level === 2) barrels.push({
-                x prayer.x + premekong.width,
+                x player.x + premekong.width,
                 y: premekong.y + premekong.height,
                 dx: 1.5,
                 dy: 0,
