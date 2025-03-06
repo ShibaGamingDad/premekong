@@ -12,24 +12,25 @@ let lastPerfectRunTime = localStorage.getItem('lastPerfectRunTime') ? parseInt(l
 let premeEarned = localStorage.getItem('premeEarned') ? parseFloat(localStorage.getItem('premeEarned')) : 0;
 let premeBurn = localStorage.getItem('premeBurn') ? parseFloat(localStorage.getItem('premeBurn')) : 0;
 let jackpot = localStorage.getItem('jackpot') ? parseFloat(localStorage.getItem('jackpot')) : 0;
-let stars = localStorage.getItem('stars') ? parseInt(localStorage.getItem('stars')) : 0; // New: Track stars
-let hasFirstBuyDoubleStars = localStorage.getItem('hasFirstBuyDoubleStars') ? JSON.parse(localStorage.getItem('hasFirstBuyDoubleStars')) : true; // New: Track first buy promotion
-let dailyDealItem = null; // New: Track daily deal (randomized daily)
-let jackpotTickets = localStorage.getItem('jackpotTickets') ? parseInt(localStorage.getItem('jackpotTickets')) : 0; // New: Track jackpot tickets
+let stars = localStorage.getItem('stars') ? parseInt(localStorage.getItem('stars')) : 0;
+let hasFirstBuyDoubleStars = localStorage.getItem('hasFirstBuyDoubleStars') ? JSON.parse(localStorage.getItem('hasFirstBuyDoubleStars')) : true;
+let dailyDealItem = null;
+let jackpotTickets = localStorage.getItem('jackpotTickets') ? parseInt(localStorage.getItem('jackpotTickets')) : 0;
 
 // Leaderboard state
 let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
 let telegramId = null;
 let leaderboard = [];
-const SERVER_URL = 'https://premekong.shibagamingdad.repl.co'; // Replace with your actual Replit URL
+// Update SERVER_URL to the exact Replit URL (e.g., https://premekong.shibagamingdad.repl.co)
+const SERVER_URL = 'https://premekong.shibagamingdad.repl.co';
 
 // Game state
-let mario = { x: 50, y: 318, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0, hasDoubleJump: false, hasBarrelShield: false, hasSpeedBoost: false }; // Updated for shop items
+let mario = { x: 50, y: 318, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0, hasDoubleJump: false, hasBarrelShield: false, hasSpeedBoost: false };
 let premekong = { x: 50, y: 36, width: 64, height: 64, bounceDir: 1, bounceRange: 20 };
 let pauline = { x: 124, y: 68, width: 16, height: 32 };
 let barrels = [], conveyors = [], elevators = [], springs = [], hammers = [], rivets = [], fireballs = [], ladders = [];
 let score = 0, level = 1, gameActive = true, lives = 3, bonusTimer = 5000, message = null, messageTimer = 0, damageTakenThisLevel = false;
-let backgrounds = {}, platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(), rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image(), marioSkinImg = null, springImg = new Image(); // Ensure all images are defined as objects
+let backgrounds = {}, platformImg = new Image(), ladderImg = new Image(), hammerImg = new Image(), barrelImg = new Image(), rivetImg = new Image(), fireballImg = new Image(), cementPieImg = new Image(), marioSkinImg = null, springImg = new Image();
 
 if (Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
@@ -39,22 +40,22 @@ if (Telegram && Telegram.WebApp) {
 
 // Shop items and pricing (1 $PREME = $0.01, so multiply original $PREME by 100; stars = $0.05 each)
 const shopItems = {
-    doubleJump: { stars: 12, preme: 60 }, // 0.6 $PREME * 100 = 60 $PREME
-    extraLife: { stars: 20, preme: 100 }, // 1 $PREME * 100 = 100 $PREME
-    marioSkin: { stars: 40, preme: 200 }, // 2 $PREME * 100 = 200 $PREME
-    barrelShield: { stars: 20, preme: 100 }, // 1 $PREME * 100 = 100 $PREME
-    speedBoost: { stars: 16, preme: 80 }, // 0.8 $PREME * 100 = 80 $PREME
-    bonusPoints: { stars: 30, preme: 150 }, // 1.5 $PREME * 100 = 150 $PREME
-    paulineGift: { stars: 24, preme: 120 }, // 1.2 $PREME * 100 = 120 $PREME
-    superHammer: { stars: 40, preme: 200 }, // 2 $PREME * 100 = 200 $PREME
-    levelSkip: { stars: 50, preme: 250 }, // 2.5 $PREME * 100 = 250 $PREME
-    vipBasic: { stars: 50, preme: 250 }, // 2.5 $PREME * 100 = 250 $PREME
-    vipPremium: { stars: 100, preme: 500 }, // 5 $PREME * 100 = 500 $PREME
-    jackpotTicket: { stars: 0, preme: 10 }, // 10 $PREME per ticket
-    jackpotBundle: { stars: 0, preme: 100 } // 100 $PREME for 12 tickets
+    doubleJump: { stars: 12, preme: 60 },
+    extraLife: { stars: 20, preme: 100 },
+    marioSkin: { stars: 40, preme: 200 },
+    barrelShield: { stars: 20, preme: 100 },
+    speedBoost: { stars: 16, preme: 80 },
+    bonusPoints: { stars: 30, preme: 150 },
+    paulineGift: { stars: 24, preme: 120 },
+    superHammer: { stars: 40, preme: 200 },
+    levelSkip: { stars: 50, preme: 250 },
+    vipBasic: { stars: 50, preme: 250 },
+    vipPremium: { stars: 100, preme: 500 },
+    jackpotTicket: { stars: 0, preme: 10 },
+    jackpotBundle: { stars: 0, preme: 100 }
 };
 
-const dailyDeals = Object.keys(shopItems).filter(item => item !== 'jackpotTicket' && item !== 'jackpotBundle'); // Exclude jackpot items from daily deals
+const dailyDeals = Object.keys(shopItems).filter(item => item !== 'jackpotTicket' && item !== 'jackpotBundle');
 
 // Utility functions
 function updateScore() {
@@ -108,7 +109,7 @@ function resetGame() {
     barrels = []; conveyors = []; elevators = []; springs = []; hammers = []; rivets = []; fireballs = []; ladders = [];
     damageTakenThisLevel = false;
     initLevel();
-    applyVIPEffects(); // Reset VIP effects
+    applyVIPEffects();
 }
 
 function checkPerfectRun() {
@@ -148,28 +149,33 @@ function syncWithServer() {
         })
     })
     .then(response => {
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        if (!response.ok) {
+            console.warn(`Server sync failed with status: ${response.status}`);
+            return;
+        }
         return response.json();
     })
     .then(data => {
-        leaderboard = data.leaderboard || [];
-        premeEarned = data.premeEarned || premeEarned;
-        premeBurn = data.premeBurn || premeBurn;
-        perfectRunsToday = data.perfectRunsToday || perfectRunsToday;
-        lastPerfectRunTime = data.lastPerfectRunTime || lastPerfectRunTime;
-        stars = data.stars || stars;
-        hasFirstBuyDoubleStars = data.hasFirstBuyDoubleStars !== undefined ? data.hasFirstBuyDoubleStars : hasFirstBuyDoubleStars;
-        jackpot = data.jackpot || jackpot;
-        jackpotTickets = data.jackpotTickets || jackpotTickets;
-        updateScore();
+        if (data) {
+            leaderboard = data.leaderboard || [];
+            premeEarned = data.premeEarned || premeEarned;
+            premeBurn = data.premeBurn || premeBurn;
+            perfectRunsToday = data.perfectRunsToday || perfectRunsToday;
+            lastPerfectRunTime = data.lastPerfectRunTime || lastPerfectRunTime;
+            stars = data.stars || stars;
+            hasFirstBuyDoubleStars = data.hasFirstBuyDoubleStars !== undefined ? data.hasFirstBuyDoubleStars : hasFirstBuyDoubleStars;
+            jackpot = data.jackpot || jackpot;
+            jackpotTickets = data.jackpotTickets || jackpotTickets;
+            updateScore();
+        }
     })
-    .catch(error => console.error('Sync error:', error));
+    .catch(error => console.warn('Sync failed, server may be down:', error));
 }
 
 function showMenu() {
     const menuDiv = document.getElementById('menu');
     if (menuDiv.style.display === 'block') {
-        menuDiv.style.display = 'none'; // Close if already open
+        menuDiv.style.display = 'none';
     } else {
         menuDiv.innerHTML = `
             <h3>Menu</h3>
@@ -183,7 +189,7 @@ function showMenu() {
 function showLeaderboard() {
     const lbDiv = document.getElementById('leaderboard');
     if (lbDiv.style.display === 'block') {
-        lbDiv.style.display = 'none'; // Close if already open
+        lbDiv.style.display = 'none';
     } else {
         fetch(`${SERVER_URL}/leaderboard`, { cache: 'no-cache' })
         .then(response => {
@@ -205,7 +211,7 @@ function showLeaderboard() {
         })
         .catch(error => {
             console.error('Leaderboard fetch error:', error);
-            lbDiv.innerHTML = '<h3>Leaderboard</h3><p>Error loading leaderboard. Check server connection or ensure Replit is running.</p>';
+            lbDiv.innerHTML = '<h3>Leaderboard</h3><p>Leaderboard unavailable (server down).</p>';
             lbDiv.style.display = 'block';
         });
     }
@@ -214,7 +220,7 @@ function showLeaderboard() {
 function showShop() {
     const shopDiv = document.getElementById('shop');
     if (shopDiv.style.display === 'block') {
-        shopDiv.style.display = 'none'; // Close if already open
+        shopDiv.style.display = 'none';
     } else {
         const today = new Date().toDateString();
         if (!localStorage.getItem('lastDailyDealDate') || localStorage.getItem('lastDailyDealDate') !== today) {
@@ -247,10 +253,10 @@ function showShop() {
 }
 
 function buyItem(item, starCost, premeCost) {
-    const effectiveStarCost = hasFirstBuyDoubleStars && starCost > 0 ? starCost / 2 : starCost; // First buy double stars
-    const discount = dailyDealItem === item ? 0.8 : 1; // 20% discount for daily deal (excludes jackpot items)
+    const effectiveStarCost = hasFirstBuyDoubleStars && starCost > 0 ? starCost / 2 : starCost;
+    const discount = dailyDealItem === item ? 0.8 : 1;
     const finalStarCost = Math.ceil(effectiveStarCost * discount);
-    const finalPremeCost = Math.ceil(premeCost * discount); // Round up for whole $PREME
+    const finalPremeCost = Math.ceil(premeCost * discount);
 
     if (stars >= finalStarCost || premeEarned >= finalPremeCost) {
         if (stars >= finalStarCost) {
@@ -265,17 +271,17 @@ function buyItem(item, starCost, premeCost) {
             let jackpotIncrease = 0;
 
             if (item === 'jackpotTicket') {
-                jackpotIncrease = finalPremeCost * 0.9; // 90% to jackpot
-                burnAmount = finalPremeCost * 0.1; // 10% to burn
+                jackpotIncrease = finalPremeCost * 0.9;
+                burnAmount = finalPremeCost * 0.1;
                 jackpotTickets += 1;
                 showMessage(`Purchased 1 Jackpot Ticket. ${jackpotIncrease.toFixed(2)} $PREME added to jackpot, ${burnAmount.toFixed(2)} $PREME burned.`);
             } else if (item === 'jackpotBundle') {
-                jackpotIncrease = finalPremeCost * 0.9; // 90% to jackpot
-                burnAmount = finalPremeCost * 0.1; // 10% to burn
+                jackpotIncrease = finalPremeCost * 0.9;
+                burnAmount = finalPremeCost * 0.1;
                 jackpotTickets += 12;
                 showMessage(`Purchased Jackpot Bundle (12 Tickets). ${jackpotIncrease.toFixed(2)} $PREME added to jackpot, ${burnAmount.toFixed(2)} $PREME burned.`);
             } else {
-                burnAmount = finalPremeCost * 0.01; // 1% burn for other items
+                burnAmount = finalPremeCost * 0.01;
                 showMessage(`Purchased with ${finalPremeCost} $PREME. ${burnAmount.toFixed(2)} $PREME burned.`);
             }
 
@@ -294,7 +300,6 @@ function buyItem(item, starCost, premeCost) {
 function applyShopItem(item) {
     switch (item) {
         case 'unlock':
-            // Already unlocked, no action needed (could be used for future features)
             break;
         case 'doubleJump':
             mario.hasDoubleJump = true;
@@ -306,7 +311,7 @@ function applyShopItem(item) {
             break;
         case 'marioSkin':
             marioSkinImg = new Image();
-            marioSkinImg.src = 'mario_skin.png'; // Add your custom Mario skin image
+            marioSkinImg.src = 'mario_skin.png';
             showMessage('Mario skin applied!');
             break;
         case 'barrelShield':
@@ -314,10 +319,10 @@ function applyShopItem(item) {
             showMessage('Barrel Shield activated for this game!');
             break;
         case 'speedBoost':
-            mario.speed = 5; // Increase speed
+            mario.speed = 5;
             mario.hasSpeedBoost = true;
             showMessage('Speed Boost activated for this game!');
-            setTimeout(() => { mario.speed = 3; mario.hasSpeedBoost = false; showMessage('Speed Boost expired.'); }, 30000); // 30 seconds
+            setTimeout(() => { mario.speed = 3; mario.hasSpeedBoost = false; showMessage('Speed Boost expired.'); }, 30000);
             break;
         case 'bonusPoints':
             score += 500;
@@ -329,7 +334,7 @@ function applyShopItem(item) {
             break;
         case 'superHammer':
             mario.hasHammer = true;
-            mario.hammerTime = 600; // Double duration (10 seconds)
+            mario.hammerTime = 600;
             showMessage('Super Hammer activated for 10 seconds!');
             break;
         case 'levelSkip':
@@ -342,18 +347,17 @@ function applyShopItem(item) {
             }
             break;
         case 'vipBasic':
-            applyVIPEffects(3); // 3 boosts for 24 hours
+            applyVIPEffects(3);
             showMessage('Basic VIP activated for 24 hours!');
             break;
         case 'vipPremium':
-            applyVIPEffects(24); // All boosts for 24 hours + 5000 $PREME
-            premeEarned += 5000; // 50 $PREME * 100 = 5000 $PREME
-            premeBurn += 50; // 1% burn of 5000 $PREME = 50 $PREME
+            applyVIPEffects(24);
+            premeEarned += 5000;
+            premeBurn += 50;
             showMessage('Premium VIP activated for 24 hours! +5000 $PREME earned.');
             break;
         case 'jackpotTicket':
         case 'jackpotBundle':
-            // No immediate gameplay effect, just tracking tickets
             showMessage(`You now have ${jackpotTickets} Jackpot Tickets!`);
             break;
     }
@@ -363,7 +367,7 @@ function applyVIPEffects(durationHours = 24) {
     mario.hasDoubleJump = true;
     mario.hasBarrelShield = true;
     mario.hasSpeedBoost = true;
-    mario.speed = 5; // Speed boost
+    mario.speed = 5;
     showMessage('VIP effects activated for 24 hours!');
     setTimeout(() => {
         mario.hasDoubleJump = false;
@@ -371,12 +375,11 @@ function applyVIPEffects(durationHours = 24) {
         mario.hasSpeedBoost = false;
         mario.speed = 3;
         showMessage('VIP effects expired.');
-    }, durationHours * 60 * 60 * 1000); // Convert hours to milliseconds
+    }, durationHours * 60 * 60 * 1000);
 }
 
 // Load assets
 function loadAssets() {
-    // Initialize all images with default values and handlers
     mario.image = new Image();
     mario.image.src = 'mario.png';
     mario.image.onload = () => console.log('Mario image loaded');
@@ -424,7 +427,6 @@ function loadAssets() {
     platformImg.onload = () => console.log('Platform image loaded');
     platformImg.onerror = () => console.error('Failed to load Platform image');
 
-    // Initialize backgrounds as an object with numbered keys
     backgrounds = {
         1: new Image(),
         2: new Image(),
@@ -452,7 +454,7 @@ function loadAssets() {
 function initLevel() {
     barrels = []; conveyors = []; elevators = []; springs = []; hammers = []; rivets = []; fireballs = []; ladders = [];
     mario.x = 50; mario.y = 318; mario.hasHammer = false; mario.hammerTime = 0; mario.onLadder = false; mario.dy = 0;
-    mario.hasDoubleJump = false; mario.hasBarrelShield = false; mario.hasSpeedBoost = false; // Reset shop effects
+    mario.hasDoubleJump = false; mario.hasBarrelShield = false; mario.hasSpeedBoost = false;
     premekong.x = 50; premekong.y = 36; premekong.bounceDir = 1; pauline.x = 124; pauline.y = 68;
     const platformY = [400, 300, 200, 100];
     if (level === 1) {
@@ -549,7 +551,7 @@ function draw() {
         hammers.forEach(hammer => { if (!hammer.taken && hammerImg.complete) ctx.drawImage(hammerImg, hammer.x, hammer.y, hammer.width, hammer.height); });
         rivets.forEach(rivet => rivetImg.complete && !rivet.hit ? ctx.drawImage(rivetImg, rivet.x, rivet.y, rivet.width, rivet.height) : ctx.fillRect(rivet.x, rivet.y, rivet.width, rivet.height));
         fireballs.forEach(fireball => fireballImg.complete ? ctx.drawImage(fireballImg, fireball.x, fireball.y, 32, 32) : ctx.fillRect(fireball.x, fireball.y, 32, 32));
-        drawMario(); // Use custom Mario drawing function
+        drawMario();
         if (premekong.image.complete) ctx.drawImage(premekong.image, premekong.x, premekong.y, premekong.width, premekong.height);
         premekong.y += premekong.bounceDir * 0.125;
         if (premekong.y <= 36 - premekong.bounceRange || premekong.y >= 36 + premekong.bounceRange) premekong.bounceDir *= -1;
@@ -577,7 +579,24 @@ function draw() {
     requestAnimationFrame(draw);
 }
 
-// Update game logic (modified for shop items)
+// Draw Mario function
+function drawMario() {
+    try {
+        const marioImg = marioSkinImg && marioSkinImg.complete ? marioSkinImg : mario.image;
+        if (marioImg && marioImg.complete) {
+            ctx.drawImage(marioImg, mario.x, mario.y, mario.width, mario.height);
+        } else {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
+        }
+    } catch (error) {
+        console.error('Error drawing Mario:', error);
+        ctx.fillStyle = 'red';
+        ctx.fillRect(mario.x, mario.y, mario.width, mario.height);
+    }
+}
+
+// Update game logic
 function update() {
     if (!gameActive) return;
     try {
@@ -592,8 +611,8 @@ function update() {
             mario.dy += mario.gravity;
             mario.y += mario.dy;
             if (mario.jumping) {
-                mario.dy = mario.hasDoubleJump ? -15 : -10; // Double jump height
-                mario.jumping = !mario.hasDoubleJump; // Allow second jump if double jump is active
+                mario.dy = mario.hasDoubleJump ? -15 : -10;
+                mario.jumping = !mario.hasDoubleJump;
             }
         } else {
             mario.dy = 0;
@@ -759,7 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mario.image, premekong.image, pauline.image, barrelImg, cementPieImg, springImg,
         hammerImg, ladderImg, rivetImg, fireballImg, platformImg,
         backgrounds[1], backgrounds[2], backgrounds[3], backgrounds[4]
-    ].filter(img => img !== undefined && img !== null); // Filter out undefined/null images
+    ].filter(img => img !== undefined && img !== null);
     let loadedImages = 0;
 
     allImages.forEach(img => {
@@ -776,14 +795,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.error(`Failed to load image: ${img.src}`);
                 loadedImages++;
                 if (loadedImages === allImages.length) {
-                    startGame(); // Start even if some images fail to ensure game runs
+                    startGame();
                 }
             };
         }
     });
 
-    // If all images are already loaded or none exist, start immediately
     if (loadedImages === allImages.length || allImages.length === 0) {
         startGame();
     }
 });
+
+// Control functions for HTML buttons
+function moveLeft() { mario.dx = -1; }
+function moveRight() { mario.dx = 1; }
+function stopMove() { mario.dx = 0; }
+function jump() { if (!mario.jumping && !mario.onLadder) mario.jumping = true; }
+function climbUp() { if (mario.onLadder) mario.dy = -1; }
+function climbDown() { if (mario.onLadder) mario.dy = 1; }
+function stopClimb() { if (mario.onLadder) mario.dy = 0; }
+function handleTelegramData() { /* Placeholder */ }
