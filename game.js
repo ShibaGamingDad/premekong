@@ -21,7 +21,7 @@ let jackpotTickets = localStorage.getItem('jackpotTickets') ? parseInt(localStor
 let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
 let telegramId = null;
 let leaderboard = [];
-const SERVER_URL = 'https://premekong.yourusername.repl.co'; // Replace with your actual Replit URL
+const SERVER_URL = 'https://premekong.shibagamingdad.repl.co'; // Replace with your actual Replit URL
 
 // Game state
 let mario = { x: 50, y: 318, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0, hasDoubleJump: false, hasBarrelShield: false, hasSpeedBoost: false }; // Updated for shop items
