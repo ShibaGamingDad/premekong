@@ -22,7 +22,7 @@ let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getIte
 let telegramId = null;
 let leaderboard = [];
 // Update SERVER_URL to the exact Replit URL (e.g., https://premekong.shibagamingdad.repl.co)
-const SERVER_URL = 'https://premekong.shibagamingdad.repl.co';
+const SERVER_URL = 'https://192fbb5c-0f1f-4afc-b192-14a114f412b4-00-3kfuv4qyf9htk.spock.replit.dev/';
 
 // Game state
 let mario = { x: 50, y: 318, width: 32, height: 32, dx: 0, dy: 0, speed: 3, gravity: 0.5, jumping: false, onLadder: false, hasHammer: false, hammerTime: 0, hasDoubleJump: false, hasBarrelShield: false, hasSpeedBoost: false };
